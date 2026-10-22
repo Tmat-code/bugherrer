@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #f6f6f7;
+  color: #1c1c1f;
+}
+
+/* Lille "tape"-effekt til kort-hjoerner (byggeplads-vibe) */
+.tape-top::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 70px;
+  height: 20px;
+  background: rgba(245, 166, 35, 0.55);
+  border: 1px dashed rgba(28, 28, 31, 0.3);
+  z-index: 10;
+}
+
+/* Fokus-ring i hjelmegul i stedet for browser-blaa */
+*:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-hjelm-500 text-asfalt-900 hover:bg-hjelm-400 px-5 py-2.5;
+  }
+  .btn-secondary {
+    @apply btn bg-asfalt-800 text-hjelm-300 hover:bg-asfalt-700 px-5 py-2.5;
+  }
+  .btn-ghost {
+    @apply btn bg-white border-2 border-asfalt-200 text-asfalt-700 hover:border-hjelm-500 px-4 py-2;
+  }
+  .kort {
+    @apply bg-white rounded-lg border-2 border-asfalt-200 shadow-sm hover:shadow-md hover:border-hjelm-400 transition-all;
+  }
+  .input {
+    @apply w-full rounded-md border-2 border-asfalt-200 px-4 py-2.5 text-asfalt-900 focus:border-hjelm-500 focus:outline-none;
+  }
+  .label {
+    @apply block text-sm font-bold text-asfalt-700 mb-1.5;
+  }
+}

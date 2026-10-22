@@ -1,0 +1,2 @@
+# Denne mappe holder SQLite-databasen i produktion (Docker-volume).
+# Selve .db-filerne er git-ignoreret — kun denne placeholder er med i repo'et.

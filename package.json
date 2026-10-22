@@ -1,0 +1,32 @@
+{
+  "name": "bygherrer-listen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Uafhaengigt fejl-board for Zeekr-ejere",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "fuse.js": "^7.0.0",
+    "pdfkit": "^0.15.2",
+    "next": "14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/pdfkit": "^0.13.9",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}
