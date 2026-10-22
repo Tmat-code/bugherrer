@@ -59,7 +59,7 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
       {/* Soegebar */}
       <div className="mb-6">
         <label htmlFor="soeg" className="sr-only">
-          Søg efter en bygherre
+          Søg efter en bugherre
         </label>
         <div className="relative">
           <span
@@ -73,7 +73,7 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Søg efter en 'bygherre' (fejl)…"
+            placeholder="Søg efter en 'bugherre' (fejl)…"
             className="input !pl-12 !py-4 text-lg shadow-sm"
           />
         </div>
@@ -85,7 +85,7 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
       {/* Sortering + antal */}
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-bold text-asfalt-600">
-          {visteFejl.length} {visteFejl.length === 1 ? 'bygherre' : 'bygherrer'}
+          {visteFejl.length} {visteFejl.length === 1 ? 'bugherre' : 'bugherrer'}
           {query && ' fundet'}
         </p>
         <div className="flex gap-1 rounded-lg bg-asfalt-100 p-1">
@@ -113,13 +113,13 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
         <div className="kort p-10 text-center">
           <p className="text-4xl" aria-hidden>🚧</p>
           <p className="mt-3 font-bold text-asfalt-700">
-            Ingen bygherrer matcher &quot;{query}&quot;
+            Ingen bugherrer matcher &quot;{query}&quot;
           </p>
           <p className="mt-1 text-sm text-asfalt-500">
             Fandt du ikke din fejl? Så er det måske en helt ny en.
           </p>
           <Link href={`/opret?q=${encodeURIComponent(query)}`} className="btn-primary mt-4">
-            Meld en ny bygherre
+            Meld en ny bugherre
           </Link>
         </div>
       ) : (

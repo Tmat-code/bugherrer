@@ -2,7 +2,7 @@
 // Alt kan overstyres via environment-variabler i Coolify.
 
 export const SITE = {
-  name: process.env.SITE_NAME || 'Bygherrer-Listen',
+  name: process.env.SITE_NAME || 'Bugherre',
   domain: process.env.SITE_DOMAIN || 'bugherrer.dk',
 };
 
@@ -11,11 +11,21 @@ export const DISCLAIMER =
   `bilentusiaster. Siden er ikke tilknyttet, sponsoreret eller godkendt af ` +
   `ZEEKR Denmark ApS, Geely eller deres datterselskaber.`;
 
-// Bilmodeller til dropdown. Tilfoej flere her hvis faellesskabet vokser.
-export const BILMODELLER = ['Zeekr 001', 'Zeekr X', 'Zeekr 7GT', 'Andet'] as const;
+// Boardet er PT. begraenset til Zeekr 7GT. Strukturen er bevidst bevaret, saa det
+// er en lille aendring at aabne for flere modeller hvis faellesskabet vokser:
+//  - saet KUN_EN_MODEL = false
+//  - tilfoej modellerne til BILMODELLER
+// Saa dukker dropdownen op igen i opret-formularen af sig selv.
+export const BILMODELLER = ['Zeekr 7GT'] as const;
 export type Bilmodel = (typeof BILMODELLER)[number];
 
-// Status-flow for en bygherre (fejl).
+// Standardmodel for nye fejl (bruges naar der kun er én model).
+export const STANDARD_BILMODEL: Bilmodel = 'Zeekr 7GT';
+
+// Når true: ingen dropdown, alt antages at vaere STANDARD_BILMODEL.
+export const KUN_EN_MODEL = BILMODELLER.length === 1;
+
+// Status-flow for en bugherre (fejl).
 export const STATUSSER = [
   'Undersøges',
   'Bekræftet',

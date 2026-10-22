@@ -1,6 +1,37 @@
-# HANDOVER — Bygherrer-Listen
+# HANDOVER — Bugherre
 
 Løbende status-log. Opdateres ved hver ændring.
+
+---
+
+## 2026-10-22 (opdatering 2) — Navn + 7GT-fokus
+
+**Beslutninger truffet med Torben:**
+- Domæne landede på **bugherrer.dk** (ikke bygherrer-listen.dk). Bedre ordspil (bug → bugherre).
+- **Navn samlet under ét: "Bugherre"** — ændret overalt i UI, PDF, titler, SITE_NAME-default.
+  (Tekniske navne som db-fil, cookies og pakkenavn er bevidst IKKE omdøbt — usynlige for brugeren.)
+- **Boardet er pt. begrænset til Zeekr 7GT.** Model-dropdownen er væk fra opret-formularen;
+  bilmodel vises som fast info-boks og tvinges server-side til "Zeekr 7GT".
+  Model-CHIPPEN på kortene er BEHOLDT, så vi er forberedt hvis det senere åbnes for flere modeller.
+  Åbning for flere modeller = sæt BILMODELLER-arrayet i lib/config.ts til flere værdier;
+  så dukker dropdownen op af sig selv (KUN_EN_MODEL beregnes af array-længden).
+- Seed-data er opdateret: alle 8 eksempelfejl er nu Zeekr 7GT med OS 1.2.x/1.3.x-versioner.
+  (Opdigtede versionsnumre — Torben kan indsætte rigtige 7GT-versioner; seed vaskes alligevel
+  væk af de første ægte indlæg.)
+
+**Testet igen efter ændringerne:**
+- ✅ Build kompilerer rent
+- ✅ Forside viser "Bugherre" + "Zeekr 7GT"; gammelt navn helt væk
+- ✅ Opret UDEN bilmodel i payload lykkes (backend tvinger 7GT), oprettet fejl får 7GT
+- ✅ PDF-rapport: "BUGHERRE-RAPPORT", "Zeekr 7GT-ejere", alle poster Model: Zeekr 7GT, disclaimer OK
+
+**Drøftet men IKKE bygget (bevidst):**
+- Brugeroprettelse/login: fravalgt for v1. Siden skal være ligetil og ikke overtage FB-gruppen.
+  "Finde tilbage" + "svare" dækkes uden konti (kommentarspor er åbent; delbar fejl-URL).
+  Login (evt. magic-link) gemmes til hvis et konkret behov melder sig.
+- Endnu ikke bygget: "Mine bugherrer" (localStorage), kvittering m. delbar URL,
+  samt Turnstile + rate-limiting (spam-værn inden linket deles bredt i FB-gruppen).
+  → Næste oplagte opgave før go-live.
 
 ---
 

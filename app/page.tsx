@@ -16,18 +16,18 @@ export default function Forside() {
         <div className="px-6 py-8 sm:px-10 sm:py-10">
           <h1 className="text-2xl font-black leading-tight sm:text-4xl">
             Velkommen til {''}
-            <span className="text-hjelm-400">Bygherrer-Listen</span>
+            <span className="text-hjelm-400">Bugherre</span>
             <span className="ml-2" aria-hidden>🛠️</span>
           </h1>
           <p className="mt-3 max-w-2xl text-asfalt-200">
-            Det uafhængige fejl-board for Zeekr-ejere. Her samler vi de{' '}
-            <em>&quot;bygherrer&quot;</em> (ja, det er sådan bil-appen oversætter{' '}
+            Det uafhængige fejl-board for <strong className="text-white">Zeekr 7GT</strong>-ejere.
+            Her samler vi de <em>&quot;bugherrer&quot;</em> (ja, det er sådan bil-appen oversætter{' '}
             <span className="font-mono text-hjelm-300">bugs</span> 😅) som vi oplever —
             stemmer dem op, bekræfter dem sammen, og sender de værste videre til producenten.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/opret" className="btn-primary">
-              + Meld en bygherre
+              + Meld en bugherre
             </Link>
             <a href="#listen" className="btn-secondary">
               Se listen ↓

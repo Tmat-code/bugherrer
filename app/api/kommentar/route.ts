@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Kommentaren er for lang.' }, { status: 422 });
 
   const fejl = queries.fejlById.get(fejl_id);
-  if (!fejl) return NextResponse.json({ error: 'Bygherren findes ikke' }, { status: 404 });
+  if (!fejl) return NextResponse.json({ error: 'Bugherren findes ikke' }, { status: 404 });
 
   queries.opretKommentar.run({ fejl_id, navn, tekst });
   return NextResponse.json({ ok: true }, { status: 201 });

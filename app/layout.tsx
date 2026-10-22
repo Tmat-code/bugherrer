@@ -5,9 +5,9 @@ import Footer from '@/components/Footer';
 import { SITE } from '@/lib/config';
 
 export const metadata: Metadata = {
-  title: `${SITE.name} – Uafhængigt fejl-board for Zeekr-ejere`,
+  title: `${SITE.name} – Uafhængigt fejl-board for Zeekr 7GT-ejere`,
   description:
-    'Fællesskabsdrevet, uafhængigt fejl-board hvor Zeekr-ejere kan samle og stemme på softwarefejl ("bygherrer") og sende dem videre til producenten.',
+    'Fællesskabsdrevet, uafhængigt fejl-board hvor Zeekr 7GT-ejere kan samle og stemme på softwarefejl ("bugherrer") og sende dem videre til producenten.',
   robots: { index: true, follow: true },
 };
 

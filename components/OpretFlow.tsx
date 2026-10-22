@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { BILMODELLER } from '@/lib/config';
+import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL } from '@/lib/config';
 import type { Fejl } from '@/lib/db';
 import StatusTag from '@/components/StatusTag';
 
@@ -142,7 +142,7 @@ export default function OpretFlow() {
               ) : (
                 <div className="rounded-lg border-2 border-graes bg-green-50 p-4">
                   <p className="font-bold text-asfalt-800">
-                    ✅ Ingen dubletter fundet — din bygherre ser ud til at være ny!
+                    ✅ Ingen dubletter fundet — din bugherre ser ud til at være ny!
                   </p>
                   <button onClick={() => setTrin('fejl40')} className="btn-primary mt-3">
                     Fortsæt →
@@ -168,7 +168,7 @@ export default function OpretFlow() {
               til skærmen slukker og starter forfra.
             </p>
             <p className="mt-2 text-sm text-asfalt-500">
-              (Rygtet siger at ca. 40% af alle bygherrer forsvinder efter en genstart. Deraf navnet. 😉)
+              (Rygtet siger at ca. 40% af alle bugherrer forsvinder efter en genstart. Deraf navnet. 😉)
             </p>
           </div>
 
@@ -220,7 +220,8 @@ function Formular({
 }) {
   const router = useRouter();
   const [titel, setTitel] = useState(startTitel);
-  const [bilmodel, setBilmodel] = useState<string>('');
+  // Naar der kun er én model, saettes den fast og dropdownen vises ikke.
+  const [bilmodel, setBilmodel] = useState<string>(KUN_EN_MODEL ? STANDARD_BILMODEL : '');
   const [softwareversion, setSoftwareversion] = useState('');
   const [beskrivelse, setBeskrivelse] = useState('');
   const [fejlbesked, setFejlbesked] = useState('');
@@ -251,7 +252,7 @@ function Formular({
 
   return (
     <form onSubmit={submit} className="kort space-y-4 p-6">
-      <h2 className="text-lg font-bold text-asfalt-900">📋 Beskriv bygherren</h2>
+      <h2 className="text-lg font-bold text-asfalt-900">📋 Beskriv bugherren</h2>
 
       <div>
         <label htmlFor="titel" className="label">Titel på fejlen *</label>
@@ -267,28 +268,38 @@ function Formular({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="bilmodel" className="label">Bilmodel *</label>
-          <select
-            id="bilmodel"
-            value={bilmodel}
-            onChange={(e) => setBilmodel(e.target.value)}
-            className="input"
-            required
-          >
-            <option value="" disabled>Vælg model…</option>
-            {BILMODELLER.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
+        {KUN_EN_MODEL ? (
+          // Kun én model: vis den som en fast info-boks i stedet for en dropdown.
+          <div>
+            <span className="label">Bilmodel</span>
+            <div className="input flex items-center gap-2 bg-asfalt-50 font-bold text-asfalt-700">
+              🚗 {STANDARD_BILMODEL}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="bilmodel" className="label">Bilmodel *</label>
+            <select
+              id="bilmodel"
+              value={bilmodel}
+              onChange={(e) => setBilmodel(e.target.value)}
+              className="input"
+              required
+            >
+              <option value="" disabled>Vælg model…</option>
+              {BILMODELLER.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label htmlFor="version" className="label">Nuværende softwareversion *</label>
           <input
             id="version"
             value={softwareversion}
             onChange={(e) => setSoftwareversion(e.target.value)}
-            placeholder="fx OS 1.2.1"
+            placeholder="fx OS 1.3.0"
             className="input"
             required
           />
@@ -322,7 +333,7 @@ function Formular({
           ← Tilbage
         </button>
         <button type="submit" disabled={sender} className="btn-primary">
-          {sender ? 'Opretter…' : '🛠️ Meld bygherren'}
+          {sender ? 'Opretter…' : '🛠️ Meld bugherren'}
         </button>
       </div>
     </form>

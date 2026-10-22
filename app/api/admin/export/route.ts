@@ -45,12 +45,12 @@ export async function GET(req: Request) {
       .fillColor(GUL)
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text('BYGHERRER-RAPPORT', 50, 35);
+      .text('BUGHERRE-RAPPORT', 50, 35);
     doc
       .fillColor('#ffffff')
       .fontSize(11)
       .font('Helvetica')
-      .text(`Uafhængigt fejl-board for Zeekr-ejere — ${SITE.domain}`, 50, 66);
+      .text(`Uafhængigt fejl-board for Zeekr 7GT-ejere — ${SITE.domain}`, 50, 66);
     doc
       .fillColor('#a3a3ac')
       .fontSize(9)
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
       .fontSize(10)
       .font('Helvetica')
       .text(
-        'Denne rapport samler de softwarefejl ("bygherrer"), som flest ejere i fællesskabet ' +
+        'Denne rapport samler de softwarefejl ("bugherrer"), som flest ejere i fællesskabet ' +
           'har bekræftet at opleve. Hver post viser antal bekræftelser (stemmer), berørt model, ' +
           'softwareversion samt beskrivelse af, hvordan fejlen genskabes.',
         { width: sideBredde, align: 'left' }

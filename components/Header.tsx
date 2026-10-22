@@ -16,7 +16,7 @@ export default function Header() {
             Oversigt
           </Link>
           <Link href="/opret" className="btn-primary !py-1.5 !px-3 text-sm">
-            + Meld en bygherre
+            + Meld en bugherre
           </Link>
         </nav>
       </div>

@@ -1,9 +1,12 @@
-# 🛠️ Bygherrer-Listen
+# 🛠️ Bugherre
 
-Et uafhængigt, fællesskabsdrevet fejl-board for Zeekr-ejere. Samler software­fejl
-("bygherrer" — ja, det er sådan bil-appen oversætter _bugs_ 😅), lader ejere stemme
+Et uafhængigt, fællesskabsdrevet fejl-board for **Zeekr 7GT**-ejere. Samler software­fejl
+("bugherrer" — ja, det er sådan bil-appen oversætter _bugs_ 😅), lader ejere stemme
 dem op og bekræfte dem sammen, og eksporterer de mest bekræftede fejl i en pæn
 rapport, der kan sendes til producenten/importøren.
+
+> Boardet er pt. begrænset til Zeekr 7GT. Vil du åbne for flere modeller: tilføj dem til
+> `BILMODELLER` i `lib/config.ts` — så dukker model-dropdownen op i opret-formularen igen.
 
 Humoristisk byggeplads-tema, men et seriøst værktøj.
 
@@ -75,7 +78,7 @@ Databasen seedes automatisk første gang volumen er tom.
    | `SESSION_SECRET` | en lang tilfældig streng (`openssl rand -hex 32`) |
    | `DATABASE_PATH` | `/app/data/bygherrer.db` |
    | `SITE_DOMAIN` | `bugherrer.dk` (eller hvad du vælger) |
-   | `SITE_NAME` | `Bygherrer-Listen` |
+   | `SITE_NAME` | `Bugherre` |
 6. Peg dit domæne på applikationen, og lad Coolify stå for TLS.
 7. Deploy. Health-check: `GET /api/health`.
 

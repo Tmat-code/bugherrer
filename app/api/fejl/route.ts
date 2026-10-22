@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, queries } from '@/lib/db';
 import { findLignende } from '@/lib/search';
-import { BILMODELLER } from '@/lib/config';
+import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL } from '@/lib/config';
 
 // GET /api/fejl?q=...  -> returnerer lignende fejl (bruges af tvungen-soegning-filteret)
 export async function GET(req: Request) {
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
   }
 
   const titel = String(body.titel || '').trim();
-  const bilmodel = String(body.bilmodel || '').trim();
+  // Naar boardet kun daekker én model, tvinges den fast uanset hvad klienten sender.
+  const bilmodel = KUN_EN_MODEL ? STANDARD_BILMODEL : String(body.bilmodel || '').trim();
   const softwareversion = String(body.softwareversion || '').trim();
   const beskrivelse = String(body.beskrivelse || '').trim();
 
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
   const lignende = findLignende(alle, titel);
   if (lignende.length > 0 && lignende[0].titel.toLowerCase() === titel.toLowerCase()) {
     return NextResponse.json(
-      { error: 'Der findes allerede en bygherre med næsten samme titel. Giv den en stemme i stedet.', lignende },
+      { error: 'Der findes allerede en bugherre med næsten samme titel. Giv den en stemme i stedet.', lignende },
       { status: 409 }
     );
   }

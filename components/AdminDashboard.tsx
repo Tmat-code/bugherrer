@@ -26,7 +26,7 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
   }
 
   async function slet(id: number, titel: string) {
-    if (!confirm(`Slet bygherren "${titel}" permanent? Dette kan ikke fortrydes.`)) return;
+    if (!confirm(`Slet bugherren "${titel}" permanent? Dette kan ikke fortrydes.`)) return;
     setTravl(id);
     try {
       await fetch('/api/admin/slet', {
@@ -52,7 +52,7 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
           <h1 className="text-2xl font-black text-asfalt-900">
             🏗️ Byggeledelse (admin)
           </h1>
-          <p className="text-sm text-asfalt-500">{fejl.length} bygherrer i databasen.</p>
+          <p className="text-sm text-asfalt-500">{fejl.length} bugherrer i databasen.</p>
         </div>
         <button onClick={logUd} className="btn-ghost text-sm">Log ud</button>
       </div>
@@ -61,7 +61,7 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
       <div className="kort mt-6 p-6">
         <h2 className="text-lg font-bold text-asfalt-900">📤 Eksport til Zeekr-importør</h2>
         <p className="mt-1 text-sm text-asfalt-500">
-          Generér en rapport med de mest upvotede bygherrer — klar til at sende videre.
+          Generér en rapport med de mest upvotede bugherrer — klar til at sende videre.
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>

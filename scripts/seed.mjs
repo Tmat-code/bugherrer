@@ -45,8 +45,8 @@ if (antal > 0) {
 const fejl = [
   {
     titel: 'Opladning stopper ved 80% uden grund',
-    bilmodel: 'Zeekr 001',
-    softwareversion: 'OS 1.2.1',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.3.0',
     beskrivelse:
       'Bilen afbryder opladningen ved 80% selv om graensen er sat til 100% i menuen. Sker kun paa AC-ladere, ikke paa lynladere. Ingen fejlmeddelelse paa skaermen.',
     status: 'Bekræftet',
@@ -54,8 +54,8 @@ const fejl = [
   },
   {
     titel: 'Bagagerum (el-bagklap) lukker af sig selv igen',
-    bilmodel: 'Zeekr 001',
-    softwareversion: 'OS 1.2.1',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.3.1',
     beskrivelse:
       'Naar man aabner bagklappen via knappen, koerer den halvt op og lukker saa igen. Skal trykkes 2-3 gange. Virker igen efter en skaerm-genstart, men kommer tilbage.',
     status: 'Undersøges',
@@ -63,8 +63,8 @@ const fejl = [
   },
   {
     titel: 'CarPlay afbryder ved hvert vejsving',
-    bilmodel: 'Zeekr X',
-    softwareversion: 'OS 1.1.8',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.2.9',
     beskrivelse:
       'Traadloes CarPlay mister forbindelsen hver gang bilen drejer skarpt. Lyden hakker og navigationen fryser i 2-3 sekunder. Kablet CarPlay har ikke problemet.',
     status: 'Sendt til Zeekr',
@@ -81,8 +81,8 @@ const fejl = [
   },
   {
     titel: 'Fartpilot-ikon forsvinder fra skaermen',
-    bilmodel: 'Zeekr 001',
-    softwareversion: 'OS 1.2.0',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.2.8',
     beskrivelse:
       'Adaptiv fartpilot virker fint, men selve ikonet/statusvisningen forsvinder fra instrumentpanelet, saa man ikke kan se den indstillede hastighed. Kommer tilbage ved genstart.',
     status: 'Løst!',
@@ -90,8 +90,8 @@ const fejl = [
   },
   {
     titel: 'Stemmestyring forstaar ikke dansk',
-    bilmodel: 'Zeekr X',
-    softwareversion: 'OS 1.1.8',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.2.9',
     beskrivelse:
       'Stemmeassistenten er sat til dansk i menuen, men svarer paa engelsk og misforstaar naesten alle kommandoer. "Ring til mor" bliver til en websoegning.',
     status: 'Bekræftet',
@@ -108,8 +108,8 @@ const fejl = [
   },
   {
     titel: 'Navigation sender til forkert adresse-nummer',
-    bilmodel: 'Zeekr 001',
-    softwareversion: 'OS 1.2.1',
+    bilmodel: 'Zeekr 7GT',
+    softwareversion: 'OS 1.3.1',
     beskrivelse:
       'Indbygget navigation lander konsekvent paa det modsatte husnummer paa lige/ulige side af vejen. Sker specielt i mindre byer.',
     status: 'Undersøges',
@@ -142,7 +142,7 @@ const tx = db.transaction(() => {
       insertKommentar.run(id, 'CarPlay-Camilla', 'Bekræftet paa min X. Super irriterende i roundabouts.');
     }
     if (i === 4) {
-      insertKommentar.run(id, 'Admin', 'Dette er rettet i OS 1.2.2 — husk at opdatere!');
+      insertKommentar.run(id, 'Admin', 'Dette er rettet i OS 1.3.2 — husk at opdatere!');
     }
   });
 });

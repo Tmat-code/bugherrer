@@ -8,7 +8,7 @@ export default function NotFound() {
         404 — Byggegrunden er tom
       </h1>
       <p className="mt-2 text-asfalt-500">
-        Den bygherre eller side findes ikke (eller er allerede revet ned).
+        Den bugherre eller side findes ikke (eller er allerede revet ned).
       </p>
       <Link href="/" className="btn-primary mt-6">
         Tilbage til listen

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   const fejl = queries.fejlById.get(id);
   if (!fejl) {
-    return NextResponse.json({ error: 'Bygherren findes ikke' }, { status: 404 });
+    return NextResponse.json({ error: 'Bugherren findes ikke' }, { status: 404 });
   }
 
   const token = getVoteToken();
