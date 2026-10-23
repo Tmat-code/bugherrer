@@ -1,4 +1,4 @@
-# 🛠️ Bugherre
+# 🛠️ Bugherrer
 
 Et uafhængigt, fællesskabsdrevet fejl-board for **Zeekr 7GT**-ejere. Samler software­fejl
 ("bugherrer" — ja, det er sådan bil-appen oversætter _bugs_ 😅), lader ejere stemme
@@ -78,7 +78,7 @@ Databasen seedes automatisk første gang volumen er tom.
    | `SESSION_SECRET` | en lang tilfældig streng (`openssl rand -hex 32`) |
    | `DATABASE_PATH` | `/app/data/bygherrer.db` |
    | `SITE_DOMAIN` | `bugherrer.dk` (eller hvad du vælger) |
-   | `SITE_NAME` | `Bugherre` |
+   | `SITE_NAME` | `Bugherrer` |
 6. Peg dit domæne på applikationen, og lad Coolify stå for TLS.
 7. Deploy. Health-check: `GET /api/health`.
 

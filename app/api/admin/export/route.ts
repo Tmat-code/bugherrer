@@ -45,7 +45,7 @@ export async function GET(req: Request) {
       .fillColor(GUL)
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text('BUGHERRE-RAPPORT', 50, 35);
+      .text('BUGHERRER-RAPPORT', 50, 35);
     doc
       .fillColor('#ffffff')
       .fontSize(11)

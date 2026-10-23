@@ -5,7 +5,7 @@ set -e
 # Selve seed-scriptet tjekker selv om der allerede er data og springer over i saa fald.
 DB_FILE="${DATABASE_PATH:-/app/data/bygherrer.db}"
 
-echo "🏗️  Bugherre starter op…"
+echo "🏗️  Bugherrer starter op…"
 
 if [ ! -f "$DB_FILE" ]; then
   echo "📦 Ingen database fundet ($DB_FILE) — seeder med eksempeldata…"

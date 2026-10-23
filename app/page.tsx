@@ -16,7 +16,7 @@ export default function Forside() {
         <div className="px-6 py-8 sm:px-10 sm:py-10">
           <h1 className="text-2xl font-black leading-tight sm:text-4xl">
             Velkommen til {''}
-            <span className="text-hjelm-400">Bugherre</span>
+            <span className="text-hjelm-400">Bugherrer</span>
             <span className="ml-2" aria-hidden>🛠️</span>
           </h1>
           <p className="mt-3 max-w-2xl text-asfalt-200">

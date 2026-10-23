@@ -2,7 +2,7 @@
 // Alt kan overstyres via environment-variabler i Coolify.
 
 export const SITE = {
-  name: process.env.SITE_NAME || 'Bugherre',
+  name: process.env.SITE_NAME || 'Bugherrer',
   domain: process.env.SITE_DOMAIN || 'bugherrer.dk',
 };
 

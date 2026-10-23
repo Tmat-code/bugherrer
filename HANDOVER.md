@@ -4,6 +4,72 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-23 (opdatering 5) — Brandnavn: ental → flertal (Bugherrer)
+
+**Beslutning:** Brandnavnet skiftet fra "Bugherre" (ental) til "Bugherrer" (flertal).
+Begrundelse (Torbens): Zeekr-appen skriver selv fejloversættelsen i FLERTAL
+("Bygherrer"), så flertal er den tro form at læne sig op ad — og siden er en
+samling af fejl, ikke én. Nu matcher navn (Bugherrer) og domæne (bugherrer.dk).
+
+Ændret: SITE_NAME-default (config.ts) + .env.example, banner (page.tsx),
+PDF-titel ("BUGHERRER-RAPPORT"), entrypoint-echo, README.
+IKKE ændret: grammatisk ental/flertal i UI ("Meld en bugherre" = én fejl,
+"8 bugherrer" = antal) — det er korrekt dansk i konteksten og skal blive.
+Verificeret med render-test: banner "Velkommen til Bugherrer", titel korrekt,
+"Meld en bugherre" stadig ental.
+
+**Domæne:** bugherrer.dk (flertal, med U) — begge bugherre.dk og bugherrer.dk var
+ledige; valgt flertal. Skift i Coolify: SITE_NAME=Bugherrer (eller lad den stå tom,
+da default nu er Bugherrer), SITE_DOMAIN=bugherrer.dk (allerede sat).
+
+---
+
+## 2026-10-23 (status) — Klar til ekstern adgang via Cloudflare Tunnel
+
+**Appen er live lokalt på Pixa** (http://192.168.1.18:3000 via port-mapping 3000:3000)
+og fuldt funktionel: dansk sprog rigtigt overalt, database re-seedet med pæne
+7GT-eksempler, admin + PDF virker, login-link i footer.
+
+**Næste opgave: Cloudflare Tunnel** så bugherrer.dk kan tilgås udefra.
+Forudsætninger:
+- Torben HAR en Cloudflare-konto ✅
+- Mangler: at købe domænet bugherrer.dk (hos dansk registrar, skal kunne flytte
+  nameservers til Cloudflare — .dk understøttes af Cloudflare free plan)
+
+Vigtig arkitektur-note:
+- Cloudflare Tunnel kræver INGEN fast offentlig IP (udgående forbindelse fra Pixa).
+  Dynamisk IP fra udbyder er helt fint.
+- Lokal IP 192.168.1.18 bør reserveres i routeren (DHCP-reservation) hvis tunnelen
+  peger direkte på den; ellers kan tunnelen tale med appen via Coolifys interne
+  Docker-netværk (coolify-proxy) og så er den lokale IP ligegyldig.
+
+Plan (4 etaper) når domænet er købt:
+1. Læg bugherrer.dk på Cloudflare → flyt nameservers → vent på propagering
+2. Opret tunnel i Cloudflare Zero Trust (Networks → Tunnels) → få Docker-token
+3. Kør cloudflared-connector på Pixa som container (via Coolify: Docker Image
+   cloudflare/cloudflared, command: tunnel --no-autoupdate run --token <TOKEN>)
+4. Public hostname bugherrer.dk → service (coolify-proxy:80 med domæne sat i
+   Coolify Manage Domains, ELLER direkte http://192.168.1.18:3000)
+→ Når tunnelen kører, tilføjes Lejesyn senere bare som ekstra public hostname i
+  SAMME tunnel (trin 3 er engangsarbejde).
+
+Husk: slet ALDRIG /app/data-volumen igen efter rigtige brugerindlæg er kommet —
+det ville slette ægte data. DB-reset er kun sikkert nu med ren eksempeldata.
+
+---
+
+## 2026-10-23 (opdatering 4) — Sidste sprogfejl: disclaimer
+
+**Fundet:** Footer-disclaimeren (DISCLAIMER i lib/config.ts) sagde "uafhaengigt"
+→ rettet til "uafhængigt". Vises både i footeren og i PDF-rapporten.
+
+**Verificeret med render-test:** Byggede, kørte serveren, hentede forside, /opret,
+/fejl/[id], /admin OG PDF-rapporten, og søgte i det FAKTISKE renderede output efter
+danske ae/oe/aa-ord. Resultat: alle sider + PDF 100% rene. Nu er alt brugervendt
+korrekt dansk. (Kun kode-kommentarer/variabelnavne har stadig ae/oe/aa — usynligt.)
+
+---
+
 ## 2026-10-23 (opdatering 3) — Login-link på forsiden + dansk sprog-gennemgang
 
 **Login på forsiden:** Tilføjet diskret "🔐 Formandens login"-link i footeren
