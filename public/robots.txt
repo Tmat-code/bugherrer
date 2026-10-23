@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Admin-området skal ikke indekseres
+Disallow: /admin
