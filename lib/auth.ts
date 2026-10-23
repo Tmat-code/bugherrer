@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import crypto from 'node:crypto';
 
 const COOKIE = 'bygherrer_admin';
@@ -21,10 +21,16 @@ export function tjekKodeord(indtastet: string): boolean {
 }
 
 export function startSession() {
+  // Saet kun 'secure' hvis forbindelsen faktisk er HTTPS. Bag en reverse proxy
+  // (Traefik/Cloudflare) staar den rigtige protokol i x-forwarded-proto.
+  // Saa virker login BAADE over lokal HTTP (fx http://192.168.1.18:3000) OG
+  // over HTTPS i produktion — uden at skulle pille ved konfigurationen.
+  const proto = headers().get('x-forwarded-proto');
+  const erHttps = proto === 'https';
   cookies().set(COOKIE, forventetToken(), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: erHttps,
     maxAge: 60 * 60 * 8, // 8 timer
     path: '/',
   });
