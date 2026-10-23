@@ -7,7 +7,7 @@ export const SITE = {
 };
 
 export const DISCLAIMER =
-  `${SITE.domain} er et 100% uafhaengigt, privat initiativ drevet af og for ` +
+  `${SITE.domain} er et 100% uafhængigt, privat initiativ drevet af og for ` +
   `bilentusiaster. Siden er ikke tilknyttet, sponsoreret eller godkendt af ` +
   `ZEEKR Denmark ApS, Geely eller deres datterselskaber.`;
 
