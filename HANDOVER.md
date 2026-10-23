@@ -4,6 +4,78 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-23 (opdatering 3) — Login-link på forsiden + dansk sprog-gennemgang
+
+**Login på forsiden:** Tilføjet diskret "🔐 Formandens login"-link i footeren
+(Footer.tsx) → fører til /admin. Findes på alle sider inkl. forsiden.
+
+**Dansk sprog:** Rettet ae/oe/aa → æøå i al BRUGERVENDT tekst:
+- seed.mjs: alle 8 eksempelfejls titler/beskrivelser + kommentarer (Klimaanlæg,
+  skærmen, forstår, blæser, værdier, på, når, kører, åbner osv.)
+- Rettede også to gamle modelreferencer i seed-kommentarer ("min 001"/"min X" → "min 7GT")
+  og "roundabouts" → "rundkørsler".
+- UI-strenge, PDF-rapport og fejlbeskeder var ALLEREDE korrekt dansk — de eneste
+  ae/oe/aa dér er variabelnavne/CSS-klasser/kode-kommentarer, som brugeren aldrig ser.
+
+**VIGTIGT — databasen skal nulstilles for at se de pæne seed-data:**
+Den kørende DB på Pixa blev seedet med de GAMLE (ae/oe/aa) eksempeldata, og seed
+kører kun når DB er tom. For at få de pæne danske eksempler ind:
+→ Slet volume i Coolify (Storages → fjern /app/data-volumen) ELLER slet de 8
+  eksempelfejl i /admin, og redeploy. Da der kun er eksempeldata (ingen rigtige
+  brugerindlæg endnu), er det helt harmløst.
+(Når rigtige brugere begynder at melde fejl, er seed-data irrelevant alligevel.)
+
+**Stadig åbne kommentarer i koden:** Kode-KOMMENTARER (ikke brugervendt) har stadig
+ae/oe/aa flere steder. Rent kosmetisk, usynligt for brugeren — kan ryddes senere hvis ønsket.
+
+---
+
+## 2026-10-23 (opdatering 2) — Admin-login virker nu over HTTP
+
+**Problem:** Admin-login hang på "Logger ind…" ved lokal test via
+http://192.168.1.18:3000. Årsag: session-cookien havde `secure: true` i
+produktion (NODE_ENV=production), men secure-cookies afvises af browseren
+over HTTP. Så login lykkedes server-side, men cookien blev aldrig gemt.
+
+**Fiks:** `startSession()` i lib/auth.ts sætter nu `secure` dynamisk ud fra
+`x-forwarded-proto`-headeren (true kun når forbindelsen faktisk er HTTPS).
+Virker automatisk både over lokal HTTP og over HTTPS via Cloudflare/Traefik —
+ingen env-variabel at huske.
+
+**Status:** Appen kører og er verificeret lokalt på Pixa via port-mapping
+3000:3000 (http://192.168.1.18:3000). Forside, 7GT-data, søgning, temaet — alt virker.
+Ingen ekstern adgang endnu (Cloudflare Tunnel ikke sat op — hverken Lejesyn
+eller Bugherre er tilgængelige udefra pt.).
+
+---
+
+## 2026-10-23 — Første Coolify-deploy: fiks af tom public-mappe
+
+**Problem:** Første deploy på Pixa/Coolify fejlede i Docker-buildet på
+`COPY --from=builder /app/public ./public: "/app/public": not found`.
+Byggeriet kørte ellers rent hele vejen (npm ci, next build, standalone).
+Årsag: `public/` var tom, og git tager ikke tomme mapper med i en commit —
+så mappen manglede på GitHub, og Dockerfilens COPY fandt ingenting.
+
+**Fiks (to lag):**
+1. Tilføjet `public/robots.txt` (rigtig fil → mappen findes permanent i git;
+   og nyttig for en offentlig side — tillader alt, dog Disallow: /admin).
+2. Gjort Dockerfilen robust: `RUN mkdir -p public` i builder-stagen, så et
+   fremtidigt tomt public aldrig vælter buildet igen.
+
+**Deploy-status:** Miljøet i Coolify er sat op korrekt:
+- Build strategy: Dockerfile, port 3000, base dir /
+- Env: ADMIN_PASSWORD, SESSION_SECRET, DATABASE_PATH=/app/data/bugherrer.db,
+  SITE_DOMAIN=bugherrer.dk, SITE_NAME=Bugherre
+- Persistent volume monteret på /app/data (databasen overlever redeploys)
+Efter push af denne fiks skulle redeploy gå igennem.
+
+**Note:** Coolify-build advarer om `SecretsUsedInArgOrEnv` (ADMIN_PASSWORD/SESSION_SECRET
+som ENV) — det er kun en advarsel, ikke en fejl. Kan ignoreres for en hobby-app;
+hvis det senere skal være pænere, kan de flyttes til Docker build secrets.
+
+---
+
 ## 2026-10-22 (opdatering 2) — Navn + 7GT-fokus
 
 **Beslutninger truffet med Torben:**

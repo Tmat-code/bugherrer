@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { DISCLAIMER, SITE } from '@/lib/config';
 
 export default function Footer() {
@@ -10,9 +11,17 @@ export default function Footer() {
           <strong className="text-hjelm-400">Juridisk disclaimer:</strong>{' '}
           {DISCLAIMER}
         </p>
-        <p className="mt-4 text-xs text-asfalt-400">
-          © {new Date().getFullYear()} {SITE.name} · Bygget af fællesskabet, for fællesskabet 🛠️
-        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-asfalt-400">
+            © {new Date().getFullYear()} {SITE.name} · Bygget af fællesskabet, for fællesskabet 🛠️
+          </p>
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1 text-xs font-bold text-asfalt-400 hover:text-hjelm-400"
+          >
+            🔐 Formandens login
+          </Link>
+        </div>
       </div>
     </footer>
   );
