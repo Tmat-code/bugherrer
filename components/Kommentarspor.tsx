@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Kommentar } from '@/lib/db';
+import Turnstile from '@/components/Turnstile';
 
 export default function Kommentarspor({
   fejlId,
@@ -16,6 +17,9 @@ export default function Kommentarspor({
   const [tekst, setTekst] = useState('');
   const [sender, setSender] = useState(false);
   const [fejl, setFejl] = useState('');
+  // Spam-værn: Turnstile-token + honeypot.
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [honeypot, setHoneypot] = useState('');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +29,7 @@ export default function Kommentarspor({
       const res = await fetch('/api/kommentar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fejlId, navn, tekst }),
+        body: JSON.stringify({ fejlId, navn, tekst, turnstileToken, honeypot }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -104,6 +108,21 @@ export default function Kommentarspor({
             placeholder="Fx: 'Dette er faktisk en indstilling — gå ind i menuen under…'"
           />
         </div>
+        {/* Honeypot: usynligt for mennesker, bots udfylder det. */}
+        <input
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          className="absolute left-[-9999px] h-0 w-0 opacity-0"
+          aria-hidden="true"
+        />
+
+        {/* Usynlig captcha (vises kun hvis værnet er sat op). */}
+        <Turnstile onToken={setTurnstileToken} />
+
         {fejl && <p className="text-sm font-bold text-murstensroed">{fejl}</p>}
         <div className="flex justify-end">
           <button type="submit" disabled={sender} className="btn-primary">

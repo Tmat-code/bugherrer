@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL } from '@/lib/config';
 import type { Fejl } from '@/lib/db';
 import StatusTag from '@/components/StatusTag';
+import Turnstile from '@/components/Turnstile';
 
 type Trin = 'soeg' | 'fejl40' | 'formular';
 
@@ -226,6 +227,9 @@ function Formular({
   const [beskrivelse, setBeskrivelse] = useState('');
   const [fejlbesked, setFejlbesked] = useState('');
   const [sender, setSender] = useState(false);
+  // Spam-værn: Turnstile-token + honeypot (skjult felt kun bots udfylder).
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [honeypot, setHoneypot] = useState('');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -235,7 +239,14 @@ function Formular({
       const res = await fetch('/api/fejl', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titel, bilmodel, softwareversion, beskrivelse }),
+        body: JSON.stringify({
+          titel,
+          bilmodel,
+          softwareversion,
+          beskrivelse,
+          turnstileToken,
+          honeypot,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -321,6 +332,21 @@ function Formular({
         />
         <p className="mt-1 text-xs text-asfalt-400">{beskrivelse.length} tegn</p>
       </div>
+
+      {/* Honeypot: usynligt for mennesker, men bots udfylder det ofte. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        className="absolute left-[-9999px] h-0 w-0 opacity-0"
+        aria-hidden="true"
+      />
+
+      {/* Usynlig captcha (vises kun hvis værnet er sat op). */}
+      <Turnstile onToken={setTurnstileToken} />
 
       {fejlbesked && (
         <p className="rounded-md border-2 border-murstensroed bg-red-50 p-3 text-sm font-bold text-murstensroed">

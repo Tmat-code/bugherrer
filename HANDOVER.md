@@ -4,6 +4,75 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-23 (opdatering) — Spam-værn bygget (Turnstile + honeypot + rate-limit)
+
+Fire lag, designet til minimal brugerfriktion + nul server-belastning (meste på
+Cloudflare-niveau). Bygget FØR linket deles bredt i FB-gruppen.
+
+**Kode (bygget, testet, i repo):**
+- lib/turnstile.ts — verificerer Cloudflare Turnstile server-side + klient-IP (CF-Connecting-IP).
+- lib/ratelimit.ts — in-memory rate-limit: opret 5/time, kommentar 15/time pr. IP.
+- components/Turnstile.tsx — usynlig captcha-widget (frontend).
+- Honeypot-felt (skjult "website"-input) i opret- + kommentar-formular.
+- Backend håndhæver alle tre i /api/fejl + /api/kommentar.
+- ALT er GRACEFUL: uden Turnstile-nøgler er captcha'en bare slukket, og appen
+  virker præcis som før. Værnet "tænder" automatisk når nøglerne sættes.
+
+**Testet lokalt:** normal oprettelse 201 ✅, honeypot-bot gemmes ikke (id:0) ✅,
+rate-limit giver 429 efter grænse ✅, build grønt ✅.
+
+**MANGLER — Torben skal gøre dette i Cloudflare (dashboard):**
+1. Turnstile-nøgler: Cloudflare → Turnstile → Add widget (domæne bugherrer.dk) →
+   få Site Key + Secret Key. Sæt i Coolify env:
+     NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site key>
+     TURNSTILE_SECRET_KEY=<secret key>
+   → redeploy. SÅ er captcha'en aktiv.
+2. Bot Fight Mode: Cloudflare → bugherrer.dk → Security → Bots → slå til (gratis, ét klik).
+3. (Valgfrit) Cloudflare Rate Limiting-regel som ekstra lag på /opret.
+
+Rate-limit + honeypot virker ALLEREDE efter push (kræver ingen nøgler). Turnstile
+tænder først når nøglerne er sat i Coolify.
+
+---
+
+## 2026-10-23 (MILEPÆL) — bugherrer.dk er LIVE via Cloudflare Tunnel 🎉
+
+Bugherrer er nu tilgængelig udefra på https://bugherrer.dk med gratis HTTPS.
+Verificeret: HTTPS-hængelås ✅, virker fra telefon på mobildata (altså ægte
+ekstern adgang, ikke kun LAN) ✅, admin-login virker over HTTPS ✅.
+
+**Sådan er det sat op (vigtigt for Lejesyn + fremtid):**
+- Domæne: bugherrer.dk købt hos Simply.com (.dk via DK Hostmaster).
+- DNS flyttet til Cloudflare: DNSSEC slået FRA hos Simply FØRST, derefter
+  nameservers skiftet til Cloudflares (javon.ns.cloudflare.com +
+  kayleigh.ns.cloudflare.com). (Rækkefølgen er kritisk — DNSSEC før nameservers,
+  ellers bliver domænet utilgængeligt.)
+- Cloudflare Tunnel "pixa" oprettet (Cloudflare → Networking → Tunnels),
+  type Cloudflared. Tunnel ID noteret i Cloudflare-dashboardet.
+- cloudflared kører som Docker-container PÅ Pixa, startet via Coolify-terminal
+  på "localhost" med:
+    docker run -d --restart unless-stopped --name cloudflared \
+      cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <TOKEN>
+  (-d + --restart unless-stopped = permanent, overlever genstart.)
+- Public hostname (route): bugherrer.dk → Service URL http://192.168.1.18:3000
+  (HTTP internt; Cloudflare lægger HTTPS udenpå). Cloudflare oprettede DNS-CNAME
+  automatisk.
+- Port-mapping 3000:3000 i Coolify SKAL BLIVE — tunnelen når appen via den.
+
+**Lejesyn (næste, nemt):** Samme pixa-tunnel. Tilføj bare en ny "Published
+application" i tunnelen: lejesyn.dk → http://192.168.1.18:<lejesyns port>.
+Ingen ny tunnel/connector nødvendig. (Lejesyn.dk's DNS skal dog også flyttes
+til Cloudflare først, samme DNSSEC-først-procedure.)
+
+**Stadig på to-do (ikke gjort):**
+- Spam-værn (Cloudflare Turnstile + rate-limiting på opret/kommentar) FØR linket
+  deles bredt i FB-gruppen.
+- Parkerede features: status-filter på forsiden, evt. emne-kategorier (admin-sat),
+  "Mine bugherrer" (localStorage) + delbar kvittering.
+- Supabase-backup (scheduled) — rigtige data findes kun på Pixa.
+
+---
+
 ## 2026-10-23 (opdatering 5) — Brandnavn: ental → flertal (Bugherrer)
 
 **Beslutning:** Brandnavnet skiftet fra "Bugherre" (ental) til "Bugherrer" (flertal).
