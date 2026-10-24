@@ -4,6 +4,75 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Relativ dato på fejlkortene
+
+**Ønske (Torben):** Hold det simpelt — kategorisering/manual er parkeret. Der skal
+automatisk sættes en dato på de meldinger der kommer ind, vist **på fejlkortene** på
+forsiden og **relativt** ("for 2 dage siden").
+
+**Lavet:**
+- Ny `lib/tid.ts` med `relativTid(sqliteDato)` — dansk relativ tid. SQLite gemmer
+  tidsstempler som UTC uden zone-marker, så vi tilføjer `'Z'` ved parsing, ellers
+  bliver forskellen forkert. Intervaller: `lige nu` → `for X min. siden` →
+  `for X timer siden` → `i går` → `for X dage siden` → `for X uger siden` →
+  `for X måneder siden` → `for X år siden` (med korrekt ental/flertal).
+- `components/FejlListe.tsx`: viser `🕑 {relativTid(f.oprettet)}` i meta-rækken på
+  hvert kort (efter status-tag).
+
+**Vigtigt:** Datoen var allerede gemt i databasen hele tiden
+(`fejl.oprettet DEFAULT (datetime('now'))`) — så dette er **kun visning**, ingen
+database-ændring. Gamle meldinger får også deres rigtige dato vist med det samme.
+
+**Detaljesiden** (`/fejl/[id]`) viser stadig den fulde dato ("Meldt 23. oktober 2026")
+— det er bevidst som "zoom-ind"-kontekst og passer fint med det relative på kortene.
+
+**Verificeret:** unit-test af alle intervaller gav korrekt dansk; `npm run build`
+kompilerer rent og genererer `/`-ruten.
+
+---
+
+## 2026-10-23 — Idé-backlog (Torbens noter)
+
+1. **Zeekr-modtager af rapporterne (research).** Find den rigtige kontakt hos
+   Zeekr DK/EU (kundeservice? kvalitet? importør?) så PDF-rapporterne lander et
+   sted der tages alvorligt. Research-opgave — ikke gjort endnu.
+
+2. **Kategorier via Zeekrs brugermanual.** I stedet for at opfinde kategorier:
+   lån strukturen fra Zeekrs officielle 7GT-manual som skelet. Fordele: autoritativ
+   færdig taksonomi, genkendelig for ejere, og rapporten til Zeekr taler deres eget
+   sprog (sorteret efter deres manual-sektioner → nemmere for dem at placere).
+   Manual-link (dansk 7GT 2026): zeekr.eu/manual-result (vk=AAF9&yk=MZ18&lk=da_DK&vn=7GT).
+   NB: dette afløser den tidligere "vent med kategorier"-holdning — manual-vinklen
+   løser spørgsmålet om HVEM der vælger kategorien (den er fast/neutral).
+   Implementering: admin sætter kategori fra en dropdown bygget på manualens sektioner.
+
+3. **"Nyttige links"-side.** Kurateret side med anbefalinger/links (måtter, fælge,
+   covers osv.) — samme logik som selve boardet: Facebook er dårlig til at samle
+   tilbagevendende viden. Giver folk endnu en grund til at bruge bugherrer.dk.
+
+---
+
+## 2026-10-23 (status) — Spam-værn LIVE + næste: i18n
+
+**Spam-værnet er nu aktivt i produktion:**
+- Turnstile-captcha tændt (nøgler sat i Coolify, widget vises + verificerer "Succes!").
+- Bot Fight Mode slået til i Cloudflare (Security → Settings → Detection tools).
+- Honeypot + rate-limiting kører. Alle fire lag live.
+- Test-oprettelse gik glat igennem. Bugherrer er klar til offentligheden.
+- (Cloudflare "Continuous script monitoring" / Page Shield: bevidst slukket —
+  mest relevant for betalingssider, ville bare støje ved hvert deploy. Advarslen
+  dér er harmløs.)
+
+**NÆSTE STORE OPGAVE — i18n (flersproget):**
+Torbens vision: oversæt til svensk (og norsk), få de nordiske Zeekr 7GT-grupper
+med → mere pondus over for Zeekr med flere lande bag de bekræftede fejl.
+Teknisk: byg i18n-klar så alle UI-tekster ligger i sprogfiler (da/sv/no) i stedet
+for hardkodet. Så bliver et nyt sprog "bare" en oversættelsesfil + en sprog-vælger,
+ikke en ombygning. Bugherrer er lille nok til at det er overkommeligt at i18n'e nu.
+Overvej: skal brugerens sprog følge valg, browser-sprog, eller domæne (fx .se)?
+
+---
+
 ## 2026-10-23 (opdatering) — Spam-værn bygget (Turnstile + honeypot + rate-limit)
 
 Fire lag, designet til minimal brugerfriktion + nul server-belastning (meste på

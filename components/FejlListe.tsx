@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Fejl } from '@/lib/db';
 import { soeg } from '@/lib/search';
+import { relativTid } from '@/lib/tid';
 import StatusTag from '@/components/StatusTag';
 
 type Sortering = 'stemmer' | 'nyeste';
@@ -159,6 +160,7 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
                     {f.softwareversion}
                   </span>
                   <StatusTag status={f.status} />
+                  <span className="text-asfalt-400">· 🕑 {relativTid(f.oprettet)}</span>
                 </div>
               </div>
 
