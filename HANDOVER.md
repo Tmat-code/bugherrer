@@ -4,6 +4,28 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Pixa IP låst fast (DHCP-reservation)
+
+`192.168.1.18` er nu reserveret på routeren (TDC/Sagemcom), så Pixa altid får
+samme IP — også efter strømsvigt eller router-genstart. Vigtigt, fordi n8n,
+Cloudflare-tunnelen og Coolify alle peger på `.18`.
+
+- **Router:** TDC Sagemcom → LAN/DHCP → **Reserved Address**.
+- **Reserveret nu (WiFi):** MAC `44:90:BA:D5:E6:2B` → `192.168.1.18`, Enable ON.
+
+**NÅR PIXA FLYTTES TIL ETHERNET (kabel) — huskeseddel:**
+Ethernet er et nyt netkort med en NY MAC, så reservationen skal opdateres —
+lav IKKE en ny række (routeren afviser to reservationer til samme IP).
+1. Sæt kablet i Pixa.
+2. Find Ethernet-MAC'en: routerens enhedsliste (ubuntu dukker op med ny MAC),
+   eller på Pixa: `ip link` (kablet hedder typisk `enp...`/`eth0`).
+3. På routerens Reserved Address: i den eksisterende række, skift MAC fra
+   `44:90:BA:D5:E6:2B` til den nye Ethernet-MAC. Behold IPv4 `192.168.1.18`. Apply.
+4. Slå WiFi fra på Pixa (kun ét aktivt netkort — undgå to IP'er samtidig).
+5. Genstart Pixa / forny lease, og bekræft den kommer op på `.18` via kabel.
+
+---
+
 ## 2026-10-24 — Fuld auto-deploy via n8n-poller 🤖
 
 Nu kører hele kæden selv: **Claude pusher → n8n opdager det → Coolify deployer.**
