@@ -4,6 +4,35 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Fuld auto-deploy via n8n-poller 🤖
+
+Nu kører hele kæden selv: **Claude pusher → n8n opdager det → Coolify deployer.**
+Ingen manuelle klik længere.
+
+**Hvorfor n8n og ikke en GitHub-webhook:** GitHub kan ikke nå Coolify udefra
+(Pixa har ingen åbne porte — alt går gennem Cloudflare-tunnelen). Så i stedet
+"ringer n8n ud" indefra: den sidder på Pixa og spørger GitHub hvert 3. minut, om
+der er en ny commit, og kalder så Coolifys deploy-API lokalt. Ingen ny eksponering.
+
+**n8n-workflow "Bugherrer auto-deploy" (4 noder):**
+1. Schedule Trigger — hvert 3. minut.
+2. HTTP Request (GET) → `https://api.github.com/repos/Tmat-code/bugherrer/commits/main`,
+   header `User-Agent: n8n`. Henter seneste commits `sha`.
+3. Code — husker sidste `sha` i workflow static data; lukker kun videre hvis ny.
+4. HTTP Request (**POST**) → `http://192.168.1.18:8000/api/v1/deploy?uuid=pxyx2cwchfcukslle76fzv4n&force=false`,
+   Header Auth-credential `Authorization: Bearer <Coolify API-token>`.
+
+**Coolify-opsætning:** API access slået til (Settings → API and MCP). API-token
+`n8n-deploy` med Deploy-rettighed. App-uuid: `pxyx2cwchfcukslle76fzv4n`.
+
+**Udestående / mulig stramning:** Allowed IPs i Coolify står tom (åben for alle
+kilder på LAN). Kan strammes til n8n's kilde-IP senere. Coolify API-token udløb:
+tjek om den er sat til "Never" — ellers sæt en påmindelse før udløb.
+
+Denne HANDOVER-opdatering er selve test-pushet der skal trigge auto-deploy.
+
+---
+
 ## 2026-10-24 — Direkte push fra Claude sat op
 
 Claude-GitHub-app'en har nu skrive-adgang til repoen, og Claude arbejder i en
