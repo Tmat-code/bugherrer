@@ -12,10 +12,15 @@ kort i et 2-kolonne gitter i samme byggeplads-tema. Menupunkt "Links" tilføjet 
 `components/Header.tsx`. Alle links åbner i ny fane med `rel="noopener noreferrer"` +
 kort disclaimer om eksterne sider.
 
-**OBS – links skal kvalitetssikres:** flere URL'er i den første version peger kun på
-domænets forside (Facebook-gruppen → facebook.com, zeekr.eu/bilbasen.dk brugt flere
-gange). Skal erstattes med rigtige dyb-links (især FB-gruppen og de konkrete
-test-/model-sider).
+**Links opdateret til rigtige dyb-links** (researchet): officiel 7GT-side
+(zeekr.eu/models/7gt), EVKX DA-specs, Bilbasen-test, Via Biler 7GT (pris) + fleet,
+Evstitan/NiceEVS 7GT-collections, Höegh my-cargo, Bilbasen 7GT-liste, FB-gruppen.
+To skøn værd at kende:
+- **Bjarne Nielsen** droppet som kilde — bjarnenielsen.dk er en "under
+  construction"-placeholder. "Pris & info" peger nu på Via Bilers 7GT-modelside i
+  stedet.
+- **Connected Services** har ingen selvstændig side hos Zeekr; peger pt. på samme
+  7GT-modelside som "Officiel modelside" (overvej at droppe eller finde bedre mål).
 
 ---
 
