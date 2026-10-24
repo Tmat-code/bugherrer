@@ -9,6 +9,7 @@ import StatusTag from '@/components/StatusTag';
 export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
   const router = useRouter();
   const [top, setTop] = useState(20);
+  const [sprog, setSprog] = useState('da');
   const [travl, setTravl] = useState<number | null>(null);
 
   async function skiftStatus(id: number, status: string) {
@@ -77,13 +78,32 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
               <option value={50}>Top 50</option>
             </select>
           </div>
-          <a href={`/api/admin/export?top=${top}`} className="btn-primary">
+          <div>
+            <label htmlFor="sprog" className="label">Sprog</label>
+            <select
+              id="sprog"
+              value={sprog}
+              onChange={(e) => setSprog(e.target.value)}
+              className="input !w-36"
+            >
+              <option value="da">🇩🇰 Dansk</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="sv">🇸🇪 Svenska</option>
+            </select>
+          </div>
+          <a href={`/api/admin/export?top=${top}&sprog=${sprog}`} className="btn-primary">
             📄 Download PDF-rapport
           </a>
-          <a href={`/api/admin/export/csv?top=${top}`} className="btn-secondary">
+          <a href={`/api/admin/export/csv?top=${top}&sprog=${sprog}`} className="btn-secondary">
             📊 Download CSV
           </a>
         </div>
+        {sprog !== 'da' && (
+          <p className="mt-3 text-xs text-asfalt-500">
+            💡 Fejl-teksten oversættes via DeepL (kræver <code>DEEPL_API_KEY</code>). Uden
+            nøgle er rammen på det valgte sprog, men fejl-teksten forbliver dansk.
+          </p>
+        )}
       </div>
 
       {/* Fejl-tabel */}

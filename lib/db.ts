@@ -63,6 +63,20 @@ function migrate(db: Database.Database) {
       FOREIGN KEY (fejl_id) REFERENCES fejl(id) ON DELETE CASCADE
     );
 
+    -- Cache af oversatte fejl-tekster (titel + beskrivelse) pr. sprog.
+    -- kilde_hash gemmer et aftryk af den danske kildetekst, saa cachen
+    -- automatisk bliver "ugyldig" hvis fejlen redigeres (anden hash = ny oversaettelse).
+    CREATE TABLE IF NOT EXISTS oversaettelser (
+      fejl_id     INTEGER NOT NULL,
+      sprog       TEXT NOT NULL,
+      kilde_hash  TEXT NOT NULL,
+      titel       TEXT NOT NULL,
+      beskrivelse TEXT NOT NULL,
+      oprettet    TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (fejl_id, sprog),
+      FOREIGN KEY (fejl_id) REFERENCES fejl(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
@@ -87,6 +101,15 @@ export interface Kommentar {
   fejl_id: number;
   navn: string;
   tekst: string;
+  oprettet: string;
+}
+
+export interface Oversaettelse {
+  fejl_id: number;
+  sprog: string;
+  kilde_hash: string;
+  titel: string;
+  beskrivelse: string;
   oprettet: string;
 }
 
@@ -130,6 +153,21 @@ export const queries = {
   topFejl: db.prepare<[number], Fejl>(
     `SELECT * FROM fejl ORDER BY stemmer DESC, oprettet DESC LIMIT ?`
   ),
+
+  // --- Oversaettelses-cache ---
+  hentOversaettelse: db.prepare<[number, string], Oversaettelse>(
+    `SELECT * FROM oversaettelser WHERE fejl_id = ? AND sprog = ?`
+  ),
+
+  gemOversaettelse: db.prepare(`
+    INSERT INTO oversaettelser (fejl_id, sprog, kilde_hash, titel, beskrivelse)
+    VALUES (@fejl_id, @sprog, @kilde_hash, @titel, @beskrivelse)
+    ON CONFLICT(fejl_id, sprog) DO UPDATE SET
+      kilde_hash  = excluded.kilde_hash,
+      titel       = excluded.titel,
+      beskrivelse = excluded.beskrivelse,
+      oprettet    = datetime('now')
+  `),
 };
 
 // Stemme-transaktion: tjekker dublet, logger og taeller op i én atomar handling.

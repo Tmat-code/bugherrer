@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { DISCLAIMER, SITE } from '@/lib/config';
+import { I18N, erGyldigtSprog, oversaetStatus, DATO_LOCALE } from '@/lib/rapport-i18n';
+import { oversaetFejl } from '@/lib/oversaet';
 
 export const dynamic = 'force-dynamic';
 // Node-runtime kraeves (pdfkit + filsystem til font-data).
@@ -19,7 +20,10 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const antal = Math.min(Math.max(Number(searchParams.get('top')) || 20, 1), 100);
-  const fejl = queries.topFejl.all(antal);
+  const sprog = erGyldigtSprog(searchParams.get('sprog'));
+  const t = I18N[sprog];
+  const raaFejl = queries.topFejl.all(antal);
+  const fejl = await oversaetFejl(raaFejl, sprog);
 
   const pdfBytes: Buffer = await new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
@@ -29,7 +33,7 @@ export async function GET(req: Request) {
     doc.on('error', reject);
 
     const sideBredde = doc.page.width - 100; // margin 50 hver side
-    const dato = new Date().toLocaleDateString('da-DK', {
+    const dato = new Date().toLocaleDateString(DATO_LOCALE[sprog], {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -45,16 +49,16 @@ export async function GET(req: Request) {
       .fillColor(GUL)
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text('BUGHERRER-RAPPORT', 50, 35);
+      .text(t.rapportTitel, 50, 35);
     doc
       .fillColor('#ffffff')
       .fontSize(11)
       .font('Helvetica')
-      .text(`Uafhængigt fejl-board for Zeekr 7GT-ejere — ${SITE.domain}`, 50, 66);
+      .text(t.undertitel, 50, 66);
     doc
       .fillColor('#a3a3ac')
       .fontSize(9)
-      .text(`Genereret ${dato} · Top ${fejl.length} mest bekræftede fejl`, 50, 84);
+      .text(t.genereret(dato, fejl.length), 50, 84);
 
     doc.y = 140;
     doc.x = 50;
@@ -64,12 +68,7 @@ export async function GET(req: Request) {
       .fillColor(ASFALT)
       .fontSize(10)
       .font('Helvetica')
-      .text(
-        'Denne rapport samler de softwarefejl ("bugherrer"), som flest ejere i fællesskabet ' +
-          'har bekræftet at opleve. Hver post viser antal bekræftelser (stemmer), berørt model, ' +
-          'softwareversion samt beskrivelse af, hvordan fejlen genskabes.',
-        { width: sideBredde, align: 'left' }
-      );
+      .text(t.intro, { width: sideBredde, align: 'left' });
     doc.moveDown(1);
 
     // ===== Fejl-liste =====
@@ -93,7 +92,7 @@ export async function GET(req: Request) {
         .fillColor(GRAA)
         .fontSize(9)
         .font('Helvetica-Bold')
-        .text(`${f.stemmer} ${f.stemmer === 1 ? 'stemme' : 'stemmer'}`, doc.page.width - 150, startY + 8, {
+        .text(`${f.stemmer} ${f.stemmer === 1 ? t.stemme : t.stemmer}`, doc.page.width - 150, startY + 8, {
           width: 92,
           align: 'right',
         });
@@ -113,7 +112,7 @@ export async function GET(req: Request) {
         .font('Helvetica-Bold')
         .fillColor(GRAA)
         .text(
-          `Model: ${f.bilmodel}    |    Software: ${f.softwareversion}    |    Status: ${f.status}`,
+          `${t.metaLabels.model}: ${f.bilmodel}    |    ${t.metaLabels.software}: ${f.softwareversion}    |    ${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`,
           58,
           doc.y + 2,
           { width: sideBredde }
@@ -164,7 +163,7 @@ export async function GET(req: Request) {
         .fontSize(8)
         .fillColor(ASFALT)
         .font('Helvetica-Bold')
-        .text(`Side ${i + 1} af ${antalSider}`, doc.page.width - 150, bundY + 6, {
+        .text(t.sideAf(i + 1, antalSider), doc.page.width - 150, bundY + 6, {
           width: 100,
           align: 'right',
           lineBreak: false,
@@ -175,7 +174,7 @@ export async function GET(req: Request) {
         .fillColor(GRAA)
         .fontSize(7)
         .font('Helvetica')
-        .text(DISCLAIMER, 50, bundY + 6, {
+        .text(t.disclaimer, 50, bundY + 6, {
           width: sideBredde - 110,
           align: 'left',
           height: 44,
@@ -191,7 +190,7 @@ export async function GET(req: Request) {
   return new NextResponse(new Uint8Array(pdfBytes), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="bygherrer-rapport-${datoFil}.pdf"`,
+      'Content-Disposition': `attachment; filename="bugherrer-${t.filnavn}-${datoFil}.pdf"`,
     },
   });
 }

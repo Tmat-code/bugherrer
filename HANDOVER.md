@@ -4,6 +4,32 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Rapporter på flere sprog (DA/EN/SV) via DeepL
+
+Admin-eksporten (PDF + CSV) kan nu laves på **dansk, engelsk og svensk**. Vælg
+sprog i admin → eksport-panelet, så følger `&sprog=da|en|sv` med i download-linket.
+
+**Arkitektur (graceful, samme filosofi som Turnstile):**
+- `lib/rapport-i18n.ts` — rapportens egen tekst (overskrifter, intro, labels,
+  status, disclaimer, datoformat, CSV-kolonner) på da/en/sv. Skrevet i hånden,
+  ingen tjeneste nødvendig.
+- `lib/oversaet.ts` — oversætter selve fejl-teksten (titel + beskrivelse) via
+  **DeepL**, med cache i DB-tabellen `oversaettelser` (PK fejl_id+sprog,
+  `kilde_hash` invalideres automatisk hvis fejlen redigeres). Ét samlet DeepL-kald
+  pr. eksport for alt der mangler i cachen. 15s timeout.
+- **Graceful:** uden `DEEPL_API_KEY` (eller ved DeepL-fejl) står rammen på det
+  valgte sprog, men fejl-teksten forbliver dansk — intet brækker.
+- `DEEPL_API_KEY` sættes som env i Coolify (valgfri). DeepL Free som standard;
+  Pro kan overstyres med `DEEPL_API_URL`.
+
+**Norsk** er bevidst udeladt af rapporterne (kun DA/EN/SV). Hele *sitet* på alle
+sprog er en senere, større i18n-etape — samme oversætter-motor kan genbruges.
+
+**TODO når nøglen er sat:** verificér en EN- og SV-PDF med rigtig oversat
+fejl-tekst; overvej at stramme DeepL-forbrug hvis mange sprog/eksporter.
+
+---
+
 ## 2026-10-24 — Ny side: Nyttige links (/links)
 
 Ny statisk side `app/links/page.tsx` med en kurateret liste af nyttige Zeekr 7GT-links
