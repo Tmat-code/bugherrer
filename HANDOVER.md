@@ -4,6 +4,16 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Direkte push fra Claude sat op
+
+Claude-GitHub-app'en har nu skrive-adgang til repoen, og Claude arbejder i en
+klon (`/home/claude/bugherrer`, branch `main`). Fremover: Claude retter, committer
+og pusher direkte herfra — ingen tar-fil, ingen manuel udpakning. Denne note er
+selve test-pushet der bekræfter at det virker. Næste trin: slå **Auto Deploy** til
+i Coolify, så deploy også sker automatisk ved push.
+
+---
+
 ## 2026-10-24 — Relativ dato på fejlkortene
 
 **Ønske (Torben):** Hold det simpelt — kategorisering/manual er parkeret. Der skal
