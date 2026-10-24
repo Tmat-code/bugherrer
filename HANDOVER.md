@@ -25,9 +25,10 @@ der er en ny commit, og kalder så Coolifys deploy-API lokalt. Ingen ny eksponer
 **Coolify-opsætning:** API access slået til (Settings → API and MCP). API-token
 `n8n-deploy` med Deploy-rettighed. App-uuid: `pxyx2cwchfcukslle76fzv4n`.
 
-**Udestående / mulig stramning:** Allowed IPs i Coolify står tom (åben for alle
-kilder på LAN). Kan strammes til n8n's kilde-IP senere. Coolify API-token udløb:
-tjek om den er sat til "Never" — ellers sæt en påmindelse før udløb.
+**Sikkerhed:** Allowed IPs i Coolify strammet til private ranges
+(`192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8`) — offentligt internet afvises,
+n8n (intern) slipper igennem. Coolify API-token udløb sat til "Never".
+Evt. senere: snævre Allowed IPs helt ind til n8n's præcise kilde-IP.
 
 Denne HANDOVER-opdatering er selve test-pushet der skal trigge auto-deploy.
 
