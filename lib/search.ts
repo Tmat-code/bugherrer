@@ -17,10 +17,10 @@ const OPTIONS: import('fuse.js').IFuseOptions<Fejl> = {
   includeScore: true,
 };
 
-export function soeg(alle: Fejl[], query: string): Fejl[] {
+export function soeg<T extends Fejl>(alle: T[], query: string): T[] {
   const q = query.trim();
   if (!q) return alle;
-  const fuse = new Fuse(alle, OPTIONS);
+  const fuse = new Fuse(alle, OPTIONS as import('fuse.js').IFuseOptions<T>);
   return fuse.search(q).map((r) => r.item);
 }
 

@@ -4,6 +4,26 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — "Nyt svar"-markering + svar-tal + aktivitets-sortering
+
+Gør det synligt på forsiden hvor der er diskussion — vigtigt for fejl-40-casene,
+hvor det er *svarene* (en anden bruger hjælper) der er guldet, ikke stemmerne.
+
+- **Fejl-kortene** viser nu **💬 antal svar**, og en fremhævet **🆕 N nye svar**
+  når der er kommet svar siden brugeren sidst åbnede fejlen.
+- **Ny sortering "Aktivitet"** — tråde med friske svar flyder op.
+- **"Set"-styring uden login:** `lib/svar-set.ts` gemmer pr. browser i localStorage
+  hvor mange svar brugeren har set pr. fejl (`bugherrer_sete_svar_v1`).
+  `Kommentarspor` markerer svar som set når fejlen åbnes. Begrænsning: pr.
+  browser/enhed, ikke på tværs (ingen konti). Første besøg sætter baseline, så
+  intet fejlagtigt lyser som "nyt".
+- **Server:** ny query `alleFejlMedSvar` (fejl + `antal_kommentarer` +
+  `sidste_aktivitet` = seneste af oprettet/nyeste kommentar). Forsiden bruger den.
+  `soeg()` er gjort generisk, så søgning bevarer de ekstra felter.
+- Ingen database-ændring (kommentarer fandtes i forvejen) — kun visning + query.
+
+---
+
 ## 2026-10-24 — Rapporter på flere sprog (DA/EN/SV) via DeepL
 
 Admin-eksporten (PDF + CSV) kan nu laves på **dansk, engelsk og svensk**. Vælg

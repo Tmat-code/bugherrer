@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Kommentar } from '@/lib/db';
+import { markerSet } from '@/lib/svar-set';
 import Turnstile from '@/components/Turnstile';
 
 export default function Kommentarspor({
@@ -20,6 +21,12 @@ export default function Kommentarspor({
   // Spam-værn: Turnstile-token + honeypot.
   const [turnstileToken, setTurnstileToken] = useState('');
   const [honeypot, setHoneypot] = useState('');
+
+  // Når fejlen vises (og efter nye svar), markér svarene som set i denne browser,
+  // saa "nyt svar"-markeringen paa forsiden nulstilles.
+  useEffect(() => {
+    markerSet(fejlId, kommentarer.length);
+  }, [fejlId, kommentarer.length]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

@@ -1,20 +1,38 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { Fejl } from '@/lib/db';
+import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
+import { hentSete, gemSete, type SeteSvar } from '@/lib/svar-set';
 import StatusTag from '@/components/StatusTag';
 
-type Sortering = 'stemmer' | 'nyeste';
+type Sortering = 'stemmer' | 'nyeste' | 'aktivitet';
 
-export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
+export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sortering>('stemmer');
   // Lokalt overlay af stemmetal, saa knappen opdaterer med det samme.
   const [stemmeOverlay, setStemmeOverlay] = useState<Record<number, number>>({});
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});
+  // Hvor mange svar brugeren har set pr. fejl (fra localStorage). null = ikke indlaest endnu.
+  const [sete, setSete] = useState<SeteSvar | null>(null);
+
+  useEffect(() => {
+    const gemt = hentSete();
+    if (gemt === null) {
+      // Foerste besoeg: saet baseline, saa intet fejlagtigt lyser som "nyt".
+      const baseline: SeteSvar = {};
+      for (const f of fejl) baseline[f.id] = f.antal_kommentarer;
+      gemSete(baseline);
+      setSete(baseline);
+    } else {
+      setSete(gemt);
+    }
+    // Kun ved mount; forsiden re-mountes ved navigation, saa den er altid frisk.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const visteFejl = useMemo(() => {
     const filtreret = soeg(fejl, query);
@@ -24,6 +42,9 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
     }));
     if (sort === 'nyeste') {
       return [...medOverlay].sort((a, b) => b.oprettet.localeCompare(a.oprettet));
+    }
+    if (sort === 'aktivitet') {
+      return [...medOverlay].sort((a, b) => b.sidste_aktivitet.localeCompare(a.sidste_aktivitet));
     }
     return [...medOverlay].sort((a, b) => b.stemmer - a.stemmer);
   }, [fejl, query, sort, stemmeOverlay]);
@@ -106,6 +127,14 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
           >
             Nyeste
           </button>
+          <button
+            onClick={() => setSort('aktivitet')}
+            className={`rounded px-3 py-1 text-sm font-bold transition-colors ${
+              sort === 'aktivitet' ? 'bg-hjelm-500 text-asfalt-900' : 'text-asfalt-600'
+            }`}
+          >
+            Aktivitet
+          </button>
         </div>
       </div>
 
@@ -161,6 +190,19 @@ export default function FejlListe({ fejl }: { fejl: Fejl[] }) {
                   </span>
                   <StatusTag status={f.status} />
                   <span className="text-asfalt-400">· 🕑 {relativTid(f.oprettet)}</span>
+                  {(() => {
+                    const antal = f.antal_kommentarer;
+                    const nye = sete ? antal - (sete[f.id] ?? 0) : 0;
+                    if (nye > 0)
+                      return (
+                        <span className="rounded bg-hjelm-500 px-2 py-0.5 font-bold text-asfalt-900">
+                          🆕 {nye} {nye === 1 ? 'nyt svar' : 'nye svar'}
+                        </span>
+                      );
+                    if (antal > 0)
+                      return <span className="font-bold text-asfalt-500">💬 {antal}</span>;
+                    return null;
+                  })()}
                 </div>
               </div>
 

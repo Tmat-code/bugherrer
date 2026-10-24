@@ -104,6 +104,12 @@ export interface Kommentar {
   oprettet: string;
 }
 
+// Fejl beriget med svar-info til forsiden (antal kommentarer + seneste aktivitet).
+export interface FejlMedSvar extends Fejl {
+  antal_kommentarer: number;
+  sidste_aktivitet: string; // seneste af (oprettet, nyeste kommentar)
+}
+
 export interface Oversaettelse {
   fejl_id: number;
   sprog: string;
@@ -116,6 +122,18 @@ export interface Oversaettelse {
 // --- Forespoergsler ---
 export const queries = {
   alleFejl: db.prepare<[], Fejl>(`SELECT * FROM fejl ORDER BY stemmer DESC, oprettet DESC`),
+
+  // Forsiden: fejl + antal svar + seneste aktivitet (til "nyt svar" og aktivitets-sortering).
+  alleFejlMedSvar: db.prepare<[], FejlMedSvar>(`
+    SELECT
+      f.*,
+      COUNT(k.id) AS antal_kommentarer,
+      CASE WHEN MAX(k.oprettet) > f.oprettet THEN MAX(k.oprettet) ELSE f.oprettet END AS sidste_aktivitet
+    FROM fejl f
+    LEFT JOIN kommentarer k ON k.fejl_id = f.id
+    GROUP BY f.id
+    ORDER BY f.stemmer DESC, f.oprettet DESC
+  `),
 
   fejlEfterNyeste: db.prepare<[], Fejl>(`SELECT * FROM fejl ORDER BY oprettet DESC`),
 

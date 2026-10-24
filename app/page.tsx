@@ -6,7 +6,7 @@ import FejlListe from '@/components/FejlListe';
 export const dynamic = 'force-dynamic';
 
 export default function Forside() {
-  const fejl = queries.alleFejl.all();
+  const fejl = queries.alleFejlMedSvar.all();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
