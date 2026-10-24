@@ -4,6 +4,28 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Admin-overblik (server-side, uafhængigt af browser)
+
+Ejeren får nu et rigtigt overblik over hvad der kommer ind — pålideligt på tværs
+af enheder (modsat localStorage-sporet, der kun er pr. browser for besøgende).
+
+Øverst på `/admin`:
+- **Nøgletal:** bugherrer i alt, svar i alt, nye bugherrer + nye svar *siden du
+  sidst var inde* (fremhævet hvis > 0).
+- **Aktivitetsfeed:** seneste ~20 hændelser (nye fejl + nye svar) i tidsrækkefølge,
+  med link til fejlen og relativ tid. Nye hændelser siden sidst markeres med "NY".
+
+**Teknik:**
+- Ny `meta`-tabel (key/value). `admin_sidst_set` gemmer admins sidste besøgstid
+  server-side; opdateres hver gang admin åbner siden (efter data er hentet, så
+  "nyt" regnes mod *forrige* besøg). Første besøg = baseline = nu (intet står
+  falsk-nyt; `oprettet > NULL` giver 0).
+- Nye queries i `lib/db.ts`: meta get/set, antal/nye-tællere, `senesteFejl`,
+  `senesteKommentarer`. Indeks på `kommentarer(oprettet)`.
+- Typer `Overblik` + `AktivitetItem` eksporteres fra `AdminDashboard`.
+
+---
+
 ## 2026-10-24 — "Mine meldinger" (følg dine egne meldte fejl)
 
 Gør det nemt for en melder at følge sine egne fejl og se når nogen har svaret.

@@ -4,9 +4,36 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Fejl } from '@/lib/db';
 import { STATUSSER } from '@/lib/config';
+import { relativTid } from '@/lib/tid';
 import StatusTag from '@/components/StatusTag';
 
-export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
+export interface AktivitetItem {
+  slags: 'fejl' | 'kommentar';
+  id: number;
+  fejlId: number;
+  titel: string;
+  navn?: string;
+  uddrag?: string;
+  oprettet: string;
+  ny: boolean;
+}
+
+export interface Overblik {
+  totalFejl: number;
+  totalKommentarer: number;
+  nyeFejl: number;
+  nyeKommentarer: number;
+  sidstSet: string | null;
+  aktivitet: AktivitetItem[];
+}
+
+export default function AdminDashboard({
+  fejl,
+  overblik,
+}: {
+  fejl: Fejl[];
+  overblik: Overblik;
+}) {
   const router = useRouter();
   const [top, setTop] = useState(20);
   const [sprog, setSprog] = useState('da');
@@ -57,6 +84,82 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
         </div>
         <button onClick={logUd} className="btn-ghost text-sm">Log ud</button>
       </div>
+
+      {/* Overblik */}
+      <section className="kort mt-6 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-asfalt-900">📊 Overblik</h2>
+          <p className="text-sm text-asfalt-500">
+            {overblik.sidstSet
+              ? overblik.nyeFejl + overblik.nyeKommentarer > 0
+                ? `Siden du sidst var her: ${overblik.nyeFejl} nye bugherrer og ${overblik.nyeKommentarer} nye svar`
+                : 'Intet nyt siden du sidst var her ✅'
+              : 'Velkommen — her er dit overblik'}
+          </p>
+        </div>
+
+        {/* Nøgletal */}
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile tal={overblik.totalFejl} tekst="Bugherrer i alt" ikon="🛠️" />
+          <StatTile tal={overblik.totalKommentarer} tekst="Svar i alt" ikon="💬" />
+          <StatTile tal={overblik.nyeFejl} tekst="Nye siden sidst" ikon="🆕" fremhaev={overblik.nyeFejl > 0} />
+          <StatTile
+            tal={overblik.nyeKommentarer}
+            tekst="Nye svar siden sidst"
+            ikon="🔔"
+            fremhaev={overblik.nyeKommentarer > 0}
+          />
+        </div>
+
+        {/* Aktivitetsfeed */}
+        <h3 className="mt-6 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+          Seneste aktivitet
+        </h3>
+        <ul className="mt-3 space-y-2">
+          {overblik.aktivitet.length === 0 && (
+            <li className="rounded-md bg-asfalt-50 p-4 text-sm text-asfalt-500">
+              Der er ikke kommet noget ind endnu.
+            </li>
+          )}
+          {overblik.aktivitet.map((a) => (
+            <li key={`${a.slags}-${a.id}`}>
+              <a
+                href={`/fejl/${a.fejlId}`}
+                className={`flex items-start gap-3 rounded-md border-2 p-3 transition-colors hover:border-hjelm-400 ${
+                  a.ny ? 'border-hjelm-500 bg-hjelm-50' : 'border-transparent bg-white'
+                }`}
+              >
+                <span className="text-lg" aria-hidden>
+                  {a.slags === 'fejl' ? '🛠️' : '💬'}
+                </span>
+                <span className="min-w-0 flex-1">
+                  {a.slags === 'fejl' ? (
+                    <span className="text-asfalt-800">
+                      Ny bugherre meldt: <span className="font-bold">{a.titel}</span>
+                    </span>
+                  ) : (
+                    <span className="text-asfalt-800">
+                      <span className="font-bold">{a.navn}</span> svarede på{' '}
+                      <span className="font-bold">{a.titel}</span>
+                      {a.uddrag && (
+                        <span className="text-asfalt-500"> — &ldquo;{a.uddrag}&rdquo;</span>
+                      )}
+                    </span>
+                  )}
+                  <span className="mt-0.5 block text-xs text-asfalt-400">
+                    🕑 {relativTid(a.oprettet)}
+                  </span>
+                </span>
+                {a.ny && (
+                  <span className="shrink-0 rounded bg-hjelm-500 px-2 py-0.5 text-xs font-black text-asfalt-900">
+                    NY
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Eksport-panel */}
       <div className="kort mt-6 p-6">
@@ -159,6 +262,31 @@ export default function AdminDashboard({ fejl }: { fejl: Fejl[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function StatTile({
+  tal,
+  tekst,
+  ikon,
+  fremhaev = false,
+}: {
+  tal: number;
+  tekst: string;
+  ikon: string;
+  fremhaev?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg border-2 p-3 text-center ${
+        fremhaev ? 'border-hjelm-500 bg-hjelm-50' : 'border-asfalt-200 bg-white'
+      }`}
+    >
+      <div className="text-2xl font-black text-asfalt-900">
+        <span aria-hidden>{ikon}</span> {tal}
+      </div>
+      <div className="mt-0.5 text-xs font-bold text-asfalt-500">{tekst}</div>
     </div>
   );
 }

@@ -77,9 +77,16 @@ function migrate(db: Database.Database) {
       FOREIGN KEY (fejl_id) REFERENCES fejl(id) ON DELETE CASCADE
     );
 
+    -- Simpel key/value til smaa server-side vaerdier (fx admins "sidst set"-tidspunkt).
+    CREATE TABLE IF NOT EXISTS meta (
+      noegle TEXT PRIMARY KEY,
+      vaerdi TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
+    CREATE INDEX IF NOT EXISTS idx_kommentar_oprettet ON kommentarer(oprettet DESC);
   `);
 }
 
@@ -171,6 +178,34 @@ export const queries = {
   topFejl: db.prepare<[number], Fejl>(
     `SELECT * FROM fejl ORDER BY stemmer DESC, oprettet DESC LIMIT ?`
   ),
+
+  // --- Admin-overblik ---
+  hentMeta: db.prepare<[string], { vaerdi: string }>(
+    `SELECT vaerdi FROM meta WHERE noegle = ?`
+  ),
+  saetMetaNu: db.prepare(
+    `INSERT INTO meta (noegle, vaerdi) VALUES (?, datetime('now'))
+     ON CONFLICT(noegle) DO UPDATE SET vaerdi = datetime('now')`
+  ),
+  antalFejl: db.prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM fejl`),
+  antalKommentarer: db.prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM kommentarer`),
+  antalFejlSiden: db.prepare<[string | null], { n: number }>(
+    `SELECT COUNT(*) AS n FROM fejl WHERE oprettet > ?`
+  ),
+  antalKommentarerSiden: db.prepare<[string | null], { n: number }>(
+    `SELECT COUNT(*) AS n FROM kommentarer WHERE oprettet > ?`
+  ),
+  senesteFejl: db.prepare<[number], { id: number; titel: string; oprettet: string }>(
+    `SELECT id, titel, oprettet FROM fejl ORDER BY oprettet DESC LIMIT ?`
+  ),
+  senesteKommentarer: db.prepare<
+    [number],
+    { id: number; fejl_id: number; navn: string; tekst: string; oprettet: string; fejl_titel: string }
+  >(`
+    SELECT k.id, k.fejl_id, k.navn, k.tekst, k.oprettet, f.titel AS fejl_titel
+    FROM kommentarer k JOIN fejl f ON f.id = k.fejl_id
+    ORDER BY k.oprettet DESC LIMIT ?
+  `),
 
   // --- Oversaettelses-cache ---
   hentOversaettelse: db.prepare<[number, string], Oversaettelse>(
