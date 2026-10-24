@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL } from '@/lib/config';
 import type { Fejl } from '@/lib/db';
+import { tilfoejMin } from '@/lib/svar-set';
 import StatusTag from '@/components/StatusTag';
 import Turnstile from '@/components/Turnstile';
 
@@ -250,6 +251,9 @@ function Formular({
       });
       const data = await res.json();
       if (res.ok) {
+        // Husk at DENNE browser har meldt fejlen ind, saa den kan vises under
+        // "Mine meldinger" paa forsiden (og "nyt svar" kan trackes).
+        if (data.id) tilfoejMin(Number(data.id));
         router.push(`/fejl/${data.id}`);
       } else {
         setFejlbesked(data.error || 'Noget gik galt.');

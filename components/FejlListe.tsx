@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
-import { hentSete, gemSete, type SeteSvar } from '@/lib/svar-set';
+import { hentSete, gemSete, hentMine, type SeteSvar } from '@/lib/svar-set';
 import StatusTag from '@/components/StatusTag';
 
 type Sortering = 'stemmer' | 'nyeste' | 'aktivitet';
@@ -18,6 +18,9 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});
   // Hvor mange svar brugeren har set pr. fejl (fra localStorage). null = ikke indlaest endnu.
   const [sete, setSete] = useState<SeteSvar | null>(null);
+  // Fejl-ID'er denne browser selv har meldt ind + om vi kun viser dem.
+  const [mine, setMine] = useState<number[]>([]);
+  const [visKunMine, setVisKunMine] = useState(false);
 
   useEffect(() => {
     const gemt = hentSete();
@@ -30,12 +33,14 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
     } else {
       setSete(gemt);
     }
+    setMine(hentMine());
     // Kun ved mount; forsiden re-mountes ved navigation, saa den er altid frisk.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const visteFejl = useMemo(() => {
-    const filtreret = soeg(fejl, query);
+    const fundet = soeg(fejl, query);
+    const filtreret = visKunMine ? fundet.filter((f) => mine.includes(f.id)) : fundet;
     const medOverlay = filtreret.map((f) => ({
       ...f,
       stemmer: stemmeOverlay[f.id] ?? f.stemmer,
@@ -47,7 +52,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
       return [...medOverlay].sort((a, b) => b.sidste_aktivitet.localeCompare(a.sidste_aktivitet));
     }
     return [...medOverlay].sort((a, b) => b.stemmer - a.stemmer);
-  }, [fejl, query, sort, stemmeOverlay]);
+  }, [fejl, query, sort, stemmeOverlay, visKunMine, mine]);
 
   async function upvote(id: number) {
     if (harStemt[id]) return;
@@ -104,6 +109,22 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
         </p>
       </div>
 
+      {/* Mine meldinger (vises kun hvis denne browser har oprettet noget) */}
+      {mine.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setVisKunMine((v) => !v)}
+            className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-bold transition-colors ${
+              visKunMine
+                ? 'border-hjelm-500 bg-hjelm-100 text-asfalt-900'
+                : 'border-asfalt-200 bg-white text-asfalt-700 hover:border-hjelm-400'
+            }`}
+          >
+            🙋 Mine meldinger ({mine.length}){visKunMine && <span aria-hidden>✓</span>}
+          </button>
+        </div>
+      )}
+
       {/* Sortering + antal */}
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-bold text-asfalt-600">
@@ -141,16 +162,33 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
       {/* Liste */}
       {visteFejl.length === 0 ? (
         <div className="kort p-10 text-center">
-          <p className="text-4xl" aria-hidden>🚧</p>
-          <p className="mt-3 font-bold text-asfalt-700">
-            Ingen bugherrer matcher &quot;{query}&quot;
-          </p>
-          <p className="mt-1 text-sm text-asfalt-500">
-            Fandt du ikke din fejl? Så er det måske en helt ny en.
-          </p>
-          <Link href={`/opret?q=${encodeURIComponent(query)}`} className="btn-primary mt-4">
-            Meld en ny bugherre
-          </Link>
+          {visKunMine ? (
+            <>
+              <p className="text-4xl" aria-hidden>🙋</p>
+              <p className="mt-3 font-bold text-asfalt-700">
+                Du har ikke meldt noget ind endnu
+              </p>
+              <p className="mt-1 text-sm text-asfalt-500">
+                Når du melder en bugherre, dukker den op her — og du kan følge med i svarene.
+              </p>
+              <Link href="/opret" className="btn-primary mt-4">
+                Meld en bugherre
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-4xl" aria-hidden>🚧</p>
+              <p className="mt-3 font-bold text-asfalt-700">
+                Ingen bugherrer matcher &quot;{query}&quot;
+              </p>
+              <p className="mt-1 text-sm text-asfalt-500">
+                Fandt du ikke din fejl? Så er det måske en helt ny en.
+              </p>
+              <Link href={`/opret?q=${encodeURIComponent(query)}`} className="btn-primary mt-4">
+                Meld en ny bugherre
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <ul className="grid gap-4">

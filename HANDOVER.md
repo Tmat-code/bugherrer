@@ -4,6 +4,21 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — "Mine meldinger" (følg dine egne meldte fejl)
+
+Gør det nemt for en melder at følge sine egne fejl og se når nogen har svaret.
+
+- Når man opretter en fejl, husker **browseren** fejlens ID
+  (`bugherrer_mine_meldinger_v1` i localStorage, sat i `OpretFlow` på succes).
+- På forsiden dukker en **"🙋 Mine meldinger (N)"**-knap op (kun hvis denne browser
+  har oprettet noget) — slå til for kun at se egne meldinger, med 🆕-mærket på dem
+  der har fået svar.
+- Egen tom-tilstand hvis man endnu ikke har meldt noget.
+- Pr. browser/enhed, ingen konti (samme præmis som "nyt svar"). Hjælpere i
+  `lib/svar-set.ts`: `hentMine()` / `tilfoejMin()`.
+
+---
+
 ## 2026-10-24 — "Nyt svar"-markering + svar-tal + aktivitets-sortering
 
 Gør det synligt på forsiden hvor der er diskussion — vigtigt for fejl-40-casene,

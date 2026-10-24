@@ -33,3 +33,30 @@ export function markerSet(fejlId: number, antal: number): void {
   map[fejlId] = antal;
   gemSete(map);
 }
+
+// --- "Mine meldinger" ---
+// Fejl-ID'er som DENNE browser selv har oprettet, saa man nemt kan foelge sine
+// egne meldinger og se naar nogen har svaret. Pr. browser, ingen konti.
+const MINE_NOEGLE = 'bugherrer_mine_meldinger_v1';
+
+export function hentMine(): number[] {
+  try {
+    const raw = localStorage.getItem(MINE_NOEGLE);
+    const liste = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(liste) ? liste.filter((x): x is number => typeof x === 'number') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function tilfoejMin(fejlId: number): void {
+  try {
+    const liste = hentMine();
+    if (!liste.includes(fejlId)) {
+      liste.push(fejlId);
+      localStorage.setItem(MINE_NOEGLE, JSON.stringify(liste));
+    }
+  } catch {
+    /* ignore */
+  }
+}
