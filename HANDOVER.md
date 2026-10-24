@@ -4,6 +4,21 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-24 — Ny side: Nyttige links (/links)
+
+Ny statisk side `app/links/page.tsx` med en kurateret liste af nyttige Zeekr 7GT-links
+(officielle sider, specs, test, tilbehør, leasing, fællesskab, tracking). Vist som
+kort i et 2-kolonne gitter i samme byggeplads-tema. Menupunkt "Links" tilføjet i
+`components/Header.tsx`. Alle links åbner i ny fane med `rel="noopener noreferrer"` +
+kort disclaimer om eksterne sider.
+
+**OBS – links skal kvalitetssikres:** flere URL'er i den første version peger kun på
+domænets forside (Facebook-gruppen → facebook.com, zeekr.eu/bilbasen.dk brugt flere
+gange). Skal erstattes med rigtige dyb-links (især FB-gruppen og de konkrete
+test-/model-sider).
+
+---
+
 ## 2026-10-24 — Pixa IP låst fast (DHCP-reservation)
 
 `192.168.1.18` er nu reserveret på routeren (TDC/Sagemcom), så Pixa altid får
