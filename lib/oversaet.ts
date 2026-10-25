@@ -17,18 +17,15 @@ const LT_URL = process.env.LIBRETRANSLATE_URL || '';
 // Valgfri — kun hvis din LibreTranslate-instans kraever en API-noegle (LT_API_KEYS).
 const LT_KEY = process.env.LIBRETRANSLATE_API_KEY || '';
 
+// 'v2' = cache-version. Bumpes hvis oversaetter-logikken aendres, saa gamle
+// (evt. forkerte) cache-entries automatisk bliver ugyldige og hentes friskt.
 function hash(s: string): string {
-  return crypto.createHash('sha1').update(s).digest('hex');
+  return crypto.createHash('sha1').update('v2\n' + s).digest('hex');
 }
 
-// Oversaet et array af strenge via LibreTranslate i ét samlet kald. Kaster ved fejl.
-async function libreOversaet(tekster: string[], maal: string): Promise<string[]> {
-  const body: Record<string, unknown> = {
-    q: tekster,
-    source: 'da',
-    target: maal,
-    format: 'text',
-  };
+// Ét LibreTranslate-kald (array af strenge). Kaster ved fejl.
+async function ltKald(tekster: string[], kilde: string, maal: string): Promise<string[]> {
+  const body: Record<string, unknown> = { q: tekster, source: kilde, target: maal, format: 'text' };
   if (LT_KEY) body.api_key = LT_KEY;
 
   const res = await fetch(`${LT_URL.replace(/\/$/, '')}/translate`, {
@@ -38,10 +35,18 @@ async function libreOversaet(tekster: string[], maal: string): Promise<string[]>
     // Undgaa at en haengende server blokerer eksporten for evigt.
     signal: AbortSignal.timeout(20000),
   });
-  if (!res.ok) throw new Error(`LibreTranslate svarede ${res.status}`);
+  if (!res.ok) throw new Error(`LibreTranslate svarede ${res.status} (${kilde}->${maal})`);
   const data = (await res.json()) as { translatedText: string | string[] };
   // Ved array-input svarer LibreTranslate med et array; ellers en enkelt streng.
   return Array.isArray(data.translatedText) ? data.translatedText : [data.translatedText];
+}
+
+// Oversaet fra dansk til maalsproget. Der findes ingen direkte da->sv model i
+// Argos, saa for alt andet end engelsk pivoterer vi gennem engelsk (da->en->maal).
+async function libreOversaet(tekster: string[], maal: string): Promise<string[]> {
+  if (maal === 'en') return ltKald(tekster, 'da', 'en');
+  const engelsk = await ltKald(tekster, 'da', 'en');
+  return ltKald(engelsk, 'en', maal);
 }
 
 export interface OversatFejl extends Fejl {
