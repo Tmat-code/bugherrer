@@ -254,6 +254,7 @@ export const queries = {
   antalHenvendelserSiden: db.prepare<[string | null], { n: number }>(
     `SELECT COUNT(*) AS n FROM henvendelser WHERE oprettet > ?`
   ),
+  sletHenvendelse: db.prepare(`DELETE FROM henvendelser WHERE id = ?`),
 
   // --- Oversaettelses-cache ---
   hentOversaettelse: db.prepare<[number, string], Oversaettelse>(

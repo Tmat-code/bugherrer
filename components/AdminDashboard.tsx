@@ -50,6 +50,7 @@ export default function AdminDashboard({
   const [top, setTop] = useState(20);
   const [sprog, setSprog] = useState('da');
   const [travl, setTravl] = useState<number | null>(null);
+  const [henvTravl, setHenvTravl] = useState<number | null>(null);
 
   async function skiftStatus(id: number, status: string) {
     setTravl(id);
@@ -77,6 +78,21 @@ export default function AdminDashboard({
       router.refresh();
     } finally {
       setTravl(null);
+    }
+  }
+
+  async function sletHenvendelse(id: number) {
+    if (!confirm('Slet denne henvendelse permanent? Dette kan ikke fortrydes.')) return;
+    setHenvTravl(id);
+    try {
+      await fetch('/api/admin/slet-henvendelse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      router.refresh();
+    } finally {
+      setHenvTravl(null);
     }
   }
 
@@ -217,14 +233,23 @@ export default function AdminDashboard({
                 </span>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-asfalt-700">{h.besked}</p>
-              {h.email && (
-                <a
-                  href={`mailto:${h.email}?subject=Svar fra Bugherrer`}
-                  className="mt-2 inline-block text-xs font-bold text-green-700 hover:underline"
+              <div className="mt-2 flex items-center gap-4">
+                {h.email && (
+                  <a
+                    href={`mailto:${h.email}?subject=Svar fra Bugherrer`}
+                    className="text-xs font-bold text-green-700 hover:underline"
+                  >
+                    ↩︎ Svar på mail
+                  </a>
+                )}
+                <button
+                  onClick={() => sletHenvendelse(h.id)}
+                  disabled={henvTravl === h.id}
+                  className="text-xs font-bold text-murstensroed hover:underline"
                 >
-                  ↩︎ Svar på mail
-                </a>
-              )}
+                  🗑️ Slet
+                </button>
+              </div>
             </li>
           ))}
         </ul>
