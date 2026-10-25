@@ -4,6 +4,29 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — LibreTranslate LIVE ✅ (rapporter på EN/SV virker)
+
+LibreTranslate kører nu på Pixa via Coolify, og bugherrer oversætter fejl-teksten
+i rapporterne. Verificeret: engelsk PDF kom ud med oversat titel + beskrivelse +
+status. 🎉
+
+**Opsætning i Coolify:**
+- Ny ressource (Docker image): `libretranslate/libretranslate:latest`, port
+  **5000**, network alias **`libretranslate`**, env `LT_LOAD_ONLY=en,da,sv`.
+  (Hentede kun 4 modeller: da↔en, en↔sv, sv→en. Dansk→svensk sker via engelsk-pivot.)
+- bugherrer: env `LIBRETRANSLATE_URL=http://libretranslate:5000` (intern, ingen åbne
+  porte). Redeploy for at aktivere.
+- Forbindelsen er intern på "coolify"-Docker-netværket via alias'et — intet eksponeret.
+  (LibreTranslates sslip.io-domæne er alligevel ikke nået udefra, da 80/443 ikke er
+  port-forwardet; kan fjernes for ryddelighed.)
+
+**Kvalitet:** god, maskin-niveau; enkelte bogstavelige knaster (fx "lynladere" →
+"lightning chargers"). Fint til formålet.
+
+**Tilbage:** mail-notifikation om ulæste henvendelser (n8n + NOTIFIKATION_TOKEN).
+
+---
+
 ## 2026-10-25 — Kontaktformular → admin-indbakke + notifikations-endpoint
 
 Folk kan nu skrive til formanden; det lander i admin (ingen offentlig mailadresse).
