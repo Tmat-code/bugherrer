@@ -4,6 +4,23 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Fjernet fiktivt demo-indhold
+
+De 8 seedede eksempel-bugherrer var opdigtede (fiktive softwareversioner, pumpede
+stemmetal, fake kommentar-navne som "LadeLars"). For at boardet er troværdigt —
+dets værdi er at sende *ægte* fællesskabs-bekræftede fejl til Zeekr — er al demo-data
+fjernet fra `scripts/seed.mjs`. Scriptet opretter nu kun skemaet; ingen rækker.
+(Entrypoint seeder alligevel kun på en frisk volume — eksisterende data røres ikke.)
+
+**Plan for ægte dag-ét-indhold:** Torben kopierer en håndfuld af sine *egne* bygherrer
+fra Zeekr-appen (ægte fejl, rigtige versioner). Ingen web-kilde duer (7GT for ny +
+SEO-spam). Fiktive stemmer/kommentarer undgås bevidst.
+
+**Handling på prod:** de 8 nuværende demo-opslag slettes manuelt via admin (🗑️ Slet)
+— de kommer ikke tilbage ved genstart (DB-filen findes).
+
+---
+
 ## 2026-10-25 — Mail-notifikation LIVE ✅ (n8n → mail om ulæste henvendelser)
 
 Hele kæden kører: kontaktformular → ulæst henvendelse → n8n dagligt tjek → mail.
