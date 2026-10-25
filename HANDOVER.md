@@ -4,6 +4,21 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — FAQ & spilleregler-side (/faq)
+
+Ny statisk side `app/faq/page.tsx` med to dele: **"Sådan virker det"** (hvad er
+Bugherrer, søg-først, fejl 40, meld, byggemøde, løsnings-mærke, mine meldinger,
+statusser — som udklappelige `<details>`) og **"God tone på pladsen"** (spilleregler:
+vær venlig, hold dig til emnet, ingen spam/personangreb, del ikke persondata).
+Plus "Om siden" (disclaimer + links). Lagt i footeren sammen med "Nyttige links"
+og login. Teksten er et udkast Torben kan finpudse.
+
+**Udestående (kontakt):** afventer Torbens valg — kontaktformular der lander i admin
+(anbefalet, beskytter mailen) vs. synlig mailadresse; og om der skal mail-notifikation
+(evt. via n8n). Byg når besluttet.
+
+---
+
 ## 2026-10-25 — Oversætter skiftet til LibreTranslate (kode klar, afventer container)
 
 DeepL droppet (gratis-tier nulstilles ikke + kort-krav). Oversætter-koden peger nu

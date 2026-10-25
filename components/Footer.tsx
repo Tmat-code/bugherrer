@@ -15,12 +15,17 @@ export default function Footer() {
           <p className="text-xs text-asfalt-400">
             © {new Date().getFullYear()} {SITE.name} · Bygget af fællesskabet, for fællesskabet 🛠️
           </p>
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-1 text-xs font-bold text-asfalt-400 hover:text-hjelm-400"
-          >
-            🔐 Formandens login
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold text-asfalt-400">
+            <Link href="/faq" className="hover:text-hjelm-400">
+              FAQ &amp; spilleregler
+            </Link>
+            <Link href="/links" className="hover:text-hjelm-400">
+              Nyttige links
+            </Link>
+            <Link href="/admin" className="inline-flex items-center gap-1 hover:text-hjelm-400">
+              🔐 Formandens login
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
