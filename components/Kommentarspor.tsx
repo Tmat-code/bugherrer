@@ -11,11 +11,13 @@ export default function Kommentarspor({
   kommentarer,
   loesningId,
   erAdmin,
+  erLoest,
 }: {
   fejlId: number;
   kommentarer: Kommentar[];
   loesningId: number | null;
   erAdmin: boolean;
+  erLoest: boolean;
 }) {
   const router = useRouter();
   const [navn, setNavn] = useState('');
@@ -176,6 +178,15 @@ export default function Kommentarspor({
           </li>
         )}
       </ul>
+
+      {/* Løst-notits: tråden holdes bevidst åben, saa regressioner kan meldes. */}
+      {erLoest && (
+        <div className="mt-5 rounded-md border-2 border-graes bg-green-50 p-4 text-sm text-asfalt-700">
+          <span className="font-bold">✅ Denne bugherre er markeret som løst.</span>{' '}
+          Er fejlen vendt tilbage — fx efter en softwareopdatering? Så skriv endelig
+          herunder, så kigger vi på at genåbne den.
+        </div>
+      )}
 
       {/* Ny kommentar */}
       <form onSubmit={submit} className="kort mt-5 space-y-3 p-5">

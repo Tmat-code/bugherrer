@@ -4,6 +4,20 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Løst-tråde: notits i stedet for lås
+
+Tråde på "Løst!"-fejl holdes bevidst **åbne** (en løst fejl kan vende tilbage efter en
+OTA-opdatering — det signal vil vi fange, ikke blokere, så folk ikke opretter dubletter).
+I stedet vises en grøn notits over kommentarfeltet: *"Denne bugherre er markeret som løst.
+Er fejlen vendt tilbage …? Så skriv endelig herunder, så kigger vi på at genåbne den."*
+Gør kommentarer på løste til regressions-meldinger frem for støj.
+
+`Kommentarspor.tsx` fik ny prop `erLoest`; `app/fejl/[id]/page.tsx` sender
+`erLoest={fejl.status === 'Løst!'}`. (Valgt A; en egentlig admin-"lås tråd" (B) kan
+tilføjes senere hvis spam/rod bliver et problem.)
+
+---
+
 ## 2026-10-25 — "Under opbygning"-banner
 
 Tynd gul stribe (🚧) lige under headeren: "Sitet er stadig under opbygning —

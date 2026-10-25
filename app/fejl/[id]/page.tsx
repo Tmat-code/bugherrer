@@ -81,6 +81,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
           kommentarer={kommentarer}
           loesningId={fejl.loesning_kommentar_id}
           erAdmin={erLoggetInd()}
+          erLoest={fejl.status === 'Løst!'}
         />
       </article>
     </div>
