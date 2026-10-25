@@ -83,6 +83,14 @@ const LINKS: LinkPunkt[] = [
     url: 'https://niceevs.com/collections/zeekr-7gt-accessories',
   },
   {
+    ikon: '🛞',
+    kategori: 'Fælge & dæk',
+    beskrivelse:
+      'Alufælge, stålfælge og sommer-/vinterdæk til bl.a. Zeekr — med montering og afbalancering.',
+    linkTekst: 'Keratech Wheels',
+    url: 'https://keratech.dk/',
+  },
+  {
     ikon: '🚢',
     kategori: 'Fragt- & biltracking',
     beskrivelse:
