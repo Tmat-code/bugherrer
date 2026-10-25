@@ -4,6 +4,33 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — "Markér som løsning" (pin et svar som fixet)
+
+Løfter selve svaret frem, så man ikke skal læse 30 kommentarer for at finde fixet.
+
+- Et svar kan markeres som **✅ Løsning** — det pinnes øverst i tråden (grøn boks),
+  og **forsidekortet får et "✅ Løsning"-mærke**, så man straks ser hvilke fejl
+  der har et community-fix.
+- **Rettigheder (bevidst):** *alle* kan markere en løsning når der ikke er en i
+  forvejen (hjælper den eneste admin med at moderere). Er der allerede en løsning,
+  kan **kun admin** ændre eller fjerne den — melder/andre kan ikke. Server-håndhævet
+  i `/api/loesning` (admin = `erLoggetInd()`), ikke kun i UI.
+- Rate-limit 30/time pr. IP på endpointet.
+
+**Teknik:**
+- Ny kolonne `fejl.loesning_kommentar_id` (tilføjes via idempotent `ALTER TABLE`
+  i `migrate()` — try/catch, så eksisterende prod-DB opdateres uden fejl).
+- `/api/loesning` (POST: kommentarId=tal → sæt, null → fjern/admin).
+- `Kommentarspor` får `loesningId` + `erAdmin` fra detaljesiden; viser pinnet
+  løsning + "Markér/Fjern"-knapper. `FejlListe` viser mærket via
+  `loesning_kommentar_id`.
+
+**Næste på listen (aftalt):** ② fold lange tråde sammen ("Vis alle X svar"),
+③ "Vis flere" på forsiden, ④ LibreTranslate på Pixa (afløser DeepL — gratis,
+selvhostet; DeepL-fri-tier nulstilles ikke, så den droppes).
+
+---
+
 ## 2026-10-24 — Admin-overblik (server-side, uafhængigt af browser)
 
 Ejeren får nu et rigtigt overblik over hvad der kommer ind — pålideligt på tværs

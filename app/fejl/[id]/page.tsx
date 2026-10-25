@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { queries } from '@/lib/db';
+import { erLoggetInd } from '@/lib/auth';
 import StatusTag from '@/components/StatusTag';
 import UpvoteKnap from '@/components/UpvoteKnap';
 import Kommentarspor from '@/components/Kommentarspor';
@@ -62,7 +63,12 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
         </div>
 
         {/* Kommentarer */}
-        <Kommentarspor fejlId={fejl.id} kommentarer={kommentarer} />
+        <Kommentarspor
+          fejlId={fejl.id}
+          kommentarer={kommentarer}
+          loesningId={fejl.loesning_kommentar_id}
+          erAdmin={erLoggetInd()}
+        />
       </article>
     </div>
   );

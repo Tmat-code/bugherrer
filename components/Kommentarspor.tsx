@@ -9,9 +9,13 @@ import Turnstile from '@/components/Turnstile';
 export default function Kommentarspor({
   fejlId,
   kommentarer,
+  loesningId,
+  erAdmin,
 }: {
   fejlId: number;
   kommentarer: Kommentar[];
+  loesningId: number | null;
+  erAdmin: boolean;
 }) {
   const router = useRouter();
   const [navn, setNavn] = useState('');
@@ -21,6 +25,31 @@ export default function Kommentarspor({
   // Spam-værn: Turnstile-token + honeypot.
   const [turnstileToken, setTurnstileToken] = useState('');
   const [honeypot, setHoneypot] = useState('');
+  const [loesningTravl, setLoesningTravl] = useState(false);
+
+  const loesning = loesningId ? kommentarer.find((k) => k.id === loesningId) : undefined;
+  const ovrige = kommentarer.filter((k) => k.id !== loesningId);
+
+  async function saetLoesning(kommentarId: number | null) {
+    setLoesningTravl(true);
+    try {
+      const res = await fetch('/api/loesning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fejlId, kommentarId }),
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Kunne ikke opdatere løsningen.');
+      }
+    } catch {
+      alert('Kunne ikke få forbindelse.');
+    } finally {
+      setLoesningTravl(false);
+    }
+  }
 
   // Når fejlen vises (og efter nye svar), markér svarene som set i denne browser,
   // saa "nyt svar"-markeringen paa forsiden nulstilles.
@@ -72,6 +101,31 @@ export default function Kommentarspor({
         slipper admin for at blande sig.
       </p>
 
+      {/* Løsning — pinnet øverst */}
+      {loesning && (
+        <div className="mt-4 rounded-md border-2 border-graes bg-green-50 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1 rounded bg-graes px-2 py-0.5 text-xs font-black text-white">
+              ✅ LØSNING
+            </span>
+            {erAdmin && (
+              <button
+                onClick={() => saetLoesning(null)}
+                disabled={loesningTravl}
+                className="text-xs font-bold text-asfalt-500 hover:text-murstensroed"
+              >
+                Fjern løsning
+              </button>
+            )}
+          </div>
+          <div className="mt-2 flex items-baseline justify-between gap-2">
+            <span className="font-bold text-asfalt-800">{loesning.navn}</span>
+            <span className="text-xs text-asfalt-400">{datoTekst(loesning.oprettet)}</span>
+          </div>
+          <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{loesning.tekst}</p>
+        </div>
+      )}
+
       {/* Eksisterende kommentarer */}
       <ul className="mt-4 space-y-3">
         {kommentarer.length === 0 && (
@@ -79,13 +133,22 @@ export default function Kommentarspor({
             Ingen kommentarer endnu. Vær den første til at grave i den. 👷
           </li>
         )}
-        {kommentarer.map((k) => (
+        {ovrige.map((k) => (
           <li key={k.id} className="rounded-md border-l-4 border-hjelm-500 bg-white p-4 shadow-sm">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-bold text-asfalt-800">{k.navn}</span>
               <span className="text-xs text-asfalt-400">{datoTekst(k.oprettet)}</span>
             </div>
             <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{k.tekst}</p>
+            {(!loesning || erAdmin) && (
+              <button
+                onClick={() => saetLoesning(k.id)}
+                disabled={loesningTravl}
+                className="mt-2 text-xs font-bold text-green-700 hover:underline"
+              >
+                ✅ Markér som løsning
+              </button>
+            )}
           </li>
         ))}
       </ul>

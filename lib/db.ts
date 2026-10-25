@@ -88,6 +88,15 @@ function migrate(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
     CREATE INDEX IF NOT EXISTS idx_kommentar_oprettet ON kommentarer(oprettet DESC);
   `);
+
+  // Tilfoej "loesning"-kolonne til eksisterende databaser (peger paa den kommentar
+  // der er markeret som loesningen). SQLite har ikke ADD COLUMN IF NOT EXISTS, saa
+  // vi proever og ignorerer fejlen hvis kolonnen allerede findes.
+  try {
+    db.exec(`ALTER TABLE fejl ADD COLUMN loesning_kommentar_id INTEGER`);
+  } catch {
+    /* kolonnen findes allerede */
+  }
 }
 
 // --- Typer ---
@@ -101,6 +110,7 @@ export interface Fejl {
   stemmer: number;
   oprettet: string;
   opdateret: string;
+  loesning_kommentar_id: number | null; // kommentar markeret som loesning, eller null
 }
 
 export interface Kommentar {
@@ -169,6 +179,15 @@ export const queries = {
 
   kommentarerForFejl: db.prepare<[number], Kommentar>(
     `SELECT * FROM kommentarer WHERE fejl_id = ? ORDER BY oprettet ASC`
+  ),
+
+  kommentarById: db.prepare<[number], Kommentar>(
+    `SELECT * FROM kommentarer WHERE id = ?`
+  ),
+
+  // Saet (eller nulstil med null) hvilken kommentar der er loesningen paa en fejl.
+  saetLoesning: db.prepare(
+    `UPDATE fejl SET loesning_kommentar_id = @kid, opdateret = datetime('now') WHERE id = @fejlId`
   ),
 
   opretKommentar: db.prepare(`

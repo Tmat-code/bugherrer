@@ -241,6 +241,11 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
                       return <span className="font-bold text-asfalt-500">💬 {antal}</span>;
                     return null;
                   })()}
+                  {f.loesning_kommentar_id && (
+                    <span className="rounded bg-graes px-2 py-0.5 font-bold text-white">
+                      ✅ Løsning
+                    </span>
+                  )}
                 </div>
               </div>
 
