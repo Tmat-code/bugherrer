@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SprogHint from '@/components/SprogHint';
+import UnderOpbygning from '@/components/UnderOpbygning';
 import { SITE } from '@/lib/config';
 
 export const metadata: Metadata = {
@@ -18,11 +19,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // "Under opbygning"-bjaelken er taendt som standard; slaa fra med UNDER_OPBYGNING=0.
+  const visUnderOpbygning = process.env.UNDER_OPBYGNING !== '0';
+
   return (
     <html lang="da">
       <body className="flex min-h-screen flex-col">
         <SprogHint />
         <Header />
+        {visUnderOpbygning && <UnderOpbygning />}
         <main className="flex-1">{children}</main>
         <Footer />
         {/* Cloudflare Turnstile — loades kun hvis værnet er sat op (site-key findes). */}

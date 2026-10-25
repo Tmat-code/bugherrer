@@ -4,6 +4,18 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — "Under opbygning"-banner
+
+Tynd gul stribe (🚧) lige under headeren: "Sitet er stadig under opbygning —
+kortvarige nedetider kan forekomme. Tak for tålmodigheden!" Besøgende kan lukke den
+(huskes pr. browser, localStorage-nøgle `bugherrer_underopbygning_skjult_v1`).
+
+Env-styret: **tændt som standard**, slås fra med `UNDER_OPBYGNING=0` i Coolify (læses
+server-side i `layout.tsx` — ingen rebuild/kodeændring nødvendig for at toggle).
+Ny fil: `components/UnderOpbygning.tsx`. Dokumenteret i `.env.example`.
+
+---
+
 ## 2026-10-25 — Telefon-felter, admin-rediger & eskalerende eksport
 
 Tre nye ting (DB-migrationer er idempotente `ALTER TABLE` — kører automatisk ved opstart):
