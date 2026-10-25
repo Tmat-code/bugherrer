@@ -4,6 +4,26 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Mail-notifikation LIVE ✅ (n8n → mail om ulæste henvendelser)
+
+Hele kæden kører: kontaktformular → ulæst henvendelse → n8n dagligt tjek → mail.
+Testet end-to-end (mail modtaget i Outlook).
+
+- **Coolify:** `NOTIFIKATION_TOKEN` sat på bugherrer (gater endpointet).
+- **n8n-workflow "Bugherrer notifikation":** Schedule (dagligt kl. 8) → HTTP GET
+  `https://bugherrer.dk/api/admin/notifikation?token=...` → IF `uuseteHenvendelser > 0`
+  → Send Email (SMTP via Gmail: `smtp.gmail.com:587`, app-password, afsender
+  pestell.mathiasen@gmail.com → modtager t.mathiasen@outlook.com). Publiseret/aktivt.
+- Stopper af sig selv når Torben åbner /admin (nulstiller `admin_sidst_set`).
+- Note: første mail landede i Outlook-spam (ny Gmail-afsender) — markér "ikke
+  uønsket" + tilføj afsender som sikker, så fremtidige rammer indbakken.
+
+**🎉 Hele backlog-listen fra 25/10 er nu i hus:** løsnings-markering, foldede tråde,
+"vis flere", admin-overblik, kontaktformular + indbakke, FAQ, nye links,
+LibreTranslate (da/en/sv), og mail-notifikation.
+
+---
+
 ## 2026-10-25 — LibreTranslate LIVE ✅ (rapporter på EN/SV virker)
 
 LibreTranslate kører nu på Pixa via Coolify, og bugherrer oversætter fejl-teksten
