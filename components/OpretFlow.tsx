@@ -225,6 +225,8 @@ function Formular({
   // Naar der kun er én model, saettes den fast og dropdownen vises ikke.
   const [bilmodel, setBilmodel] = useState<string>(KUN_EN_MODEL ? STANDARD_BILMODEL : '');
   const [softwareversion, setSoftwareversion] = useState('');
+  const [telefon, setTelefon] = useState('');
+  const [telefonOs, setTelefonOs] = useState('');
   const [beskrivelse, setBeskrivelse] = useState('');
   const [fejlbesked, setFejlbesked] = useState('');
   const [sender, setSender] = useState(false);
@@ -244,6 +246,8 @@ function Formular({
           titel,
           bilmodel,
           softwareversion,
+          telefon,
+          telefonOs,
           beskrivelse,
           turnstileToken,
           honeypot,
@@ -318,6 +322,42 @@ function Formular({
             className="input"
             required
           />
+        </div>
+      </div>
+
+      {/* Valgfrit: telefon + telefon-OS. Kun relevant for software-/forbindelsesfejl
+          (fx CarPlay/Android Auto, app, Bluetooth) — ligesom Zeekrs egen app spoerger. */}
+      <div className="rounded-lg border-2 border-dashed border-asfalt-200 p-4">
+        <p className="text-sm font-bold text-asfalt-700">
+          📱 Telefon <span className="font-normal text-asfalt-400">— valgfrit</span>
+        </p>
+        <p className="mt-0.5 text-xs text-asfalt-500">
+          Udfyld kun hvis fejlen handler om telefonen (CarPlay / Android Auto, appen,
+          Bluetooth e.l.). Det hjælper med at finde mønstre på tværs af telefoner.
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="telefon" className="label">Telefonmodel</label>
+            <input
+              id="telefon"
+              value={telefon}
+              onChange={(e) => setTelefon(e.target.value)}
+              placeholder="fx iPhone 15 Pro / Samsung S24"
+              className="input"
+              maxLength={60}
+            />
+          </div>
+          <div>
+            <label htmlFor="telefonOs" className="label">Telefonens OS</label>
+            <input
+              id="telefonOs"
+              value={telefonOs}
+              onChange={(e) => setTelefonOs(e.target.value)}
+              placeholder="fx iOS 18.1 / Android 15"
+              className="input"
+              maxLength={60}
+            />
+          </div>
         </div>
       </div>
 

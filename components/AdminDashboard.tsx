@@ -49,8 +49,11 @@ export default function AdminDashboard({
   const router = useRouter();
   const [top, setTop] = useState(20);
   const [sprog, setSprog] = useState('da');
+  const [kunAendrede, setKunAendrede] = useState(false);
+  const [markerTravl, setMarkerTravl] = useState(false);
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
+  const [redigerer, setRedigerer] = useState<Fejl | null>(null);
 
   async function skiftStatus(id: number, status: string) {
     setTravl(id);
@@ -78,6 +81,29 @@ export default function AdminDashboard({
       router.refresh();
     } finally {
       setTravl(null);
+    }
+  }
+
+  async function markerSendt() {
+    if (
+      !confirm(
+        `Markér de ${top} øverste${kunAendrede ? ' (nye + eskalerende)' : ''} som sendt til Zeekr nu?\n\n` +
+          'Deres nuværende stemmetal gemmes som nulpunkt, så de først dukker op igen næste gang, hvis de får flere stemmer.'
+      )
+    )
+      return;
+    setMarkerTravl(true);
+    try {
+      const res = await fetch('/api/admin/marker-sendt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ top, kunAendrede }),
+      });
+      const data = await res.json();
+      alert(res.ok ? `✅ ${data.antal} bugherrer markeret som sendt.` : data.error || 'Noget gik galt.');
+      router.refresh();
+    } finally {
+      setMarkerTravl(false);
     }
   }
 
@@ -288,13 +314,48 @@ export default function AdminDashboard({
               <option value="sv">🇸🇪 Svenska</option>
             </select>
           </div>
-          <a href={`/api/admin/export?top=${top}&sprog=${sprog}`} className="btn-primary">
+          <a
+            href={`/api/admin/export?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}`}
+            className="btn-primary"
+          >
             📄 Download PDF-rapport
           </a>
-          <a href={`/api/admin/export/csv?top=${top}&sprog=${sprog}`} className="btn-secondary">
+          <a
+            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}`}
+            className="btn-secondary"
+          >
             📊 Download CSV
           </a>
         </div>
+
+        {/* Eskalerings-filter + markér-sendt */}
+        <div className="mt-4 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4">
+          <label className="flex items-start gap-2 text-sm font-bold text-asfalt-800">
+            <input
+              type="checkbox"
+              checked={kunAendrede}
+              onChange={(e) => setKunAendrede(e.target.checked)}
+              className="mt-0.5 h-4 w-4"
+            />
+            Kun nye + eskalerende
+          </label>
+          <p className="mt-1 text-xs text-asfalt-500">
+            Tager kun fejl med, der aldrig er sendt før, eller som har fået flere stemmer
+            siden sidst de blev sendt. Rapporten viser <strong>NY</strong> eller{' '}
+            <strong>+N siden sidst</strong>, så Zeekr kan se, hvad der eskalerer.
+          </p>
+          <button
+            onClick={markerSendt}
+            disabled={markerTravl}
+            className="btn-ghost mt-3 text-sm"
+          >
+            {markerTravl ? 'Markerer…' : `📮 Markér top ${top} som sendt til Zeekr`}
+          </button>
+          <p className="mt-1 text-xs text-asfalt-400">
+            Tryk her <em>når du har sendt rapporten</em> — så starter deres delta forfra.
+          </p>
+        </div>
+
         {sprog !== 'da' && (
           <p className="mt-3 text-xs text-asfalt-500">
             💡 Fejl-teksten oversættes via LibreTranslate (kræver{' '}
@@ -329,6 +390,11 @@ export default function AdminDashboard({
                 <td className="p-3 text-asfalt-500">
                   <div>{f.bilmodel}</div>
                   <div className="font-mono text-xs">{f.softwareversion}</div>
+                  {(f.telefon || f.telefon_os) && (
+                    <div className="text-xs text-asfalt-400">
+                      📱 {[f.telefon, f.telefon_os].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
                 </td>
                 <td className="p-3"><StatusTag status={f.status} /></td>
                 <td className="p-3">
@@ -344,19 +410,183 @@ export default function AdminDashboard({
                   </select>
                 </td>
                 <td className="p-3">
-                  <button
-                    onClick={() => slet(f.id, f.titel)}
-                    disabled={travl === f.id}
-                    className="text-xs font-bold text-murstensroed hover:underline"
-                  >
-                    Slet
-                  </button>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => setRedigerer(f)}
+                      className="text-xs font-bold text-asfalt-600 hover:underline"
+                    >
+                      ✏️ Rediger
+                    </button>
+                    <button
+                      onClick={() => slet(f.id, f.titel)}
+                      disabled={travl === f.id}
+                      className="text-xs font-bold text-murstensroed hover:underline"
+                    >
+                      🗑️ Slet
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {redigerer && (
+        <RedigerModal
+          fejl={redigerer}
+          onLuk={() => setRedigerer(null)}
+          onGemt={() => {
+            setRedigerer(null);
+            router.refresh();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function RedigerModal({
+  fejl,
+  onLuk,
+  onGemt,
+}: {
+  fejl: Fejl;
+  onLuk: () => void;
+  onGemt: () => void;
+}) {
+  const [titel, setTitel] = useState(fejl.titel);
+  const [softwareversion, setSoftwareversion] = useState(fejl.softwareversion);
+  const [beskrivelse, setBeskrivelse] = useState(fejl.beskrivelse);
+  const [telefon, setTelefon] = useState(fejl.telefon ?? '');
+  const [telefonOs, setTelefonOs] = useState(fejl.telefon_os ?? '');
+  const [gemmer, setGemmer] = useState(false);
+  const [fejlbesked, setFejlbesked] = useState('');
+
+  async function gem(e: React.FormEvent) {
+    e.preventDefault();
+    setFejlbesked('');
+    setGemmer(true);
+    try {
+      const res = await fetch('/api/admin/rediger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: fejl.id,
+          titel,
+          softwareversion,
+          beskrivelse,
+          telefon,
+          telefonOs,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onGemt();
+      } else {
+        setFejlbesked(data.error || 'Noget gik galt.');
+        setGemmer(false);
+      }
+    } catch {
+      setFejlbesked('Kunne ikke få forbindelse. Prøv igen.');
+      setGemmer(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-asfalt-900/50 p-4"
+      onClick={onLuk}
+    >
+      <form
+        onSubmit={gem}
+        onClick={(e) => e.stopPropagation()}
+        className="my-8 w-full max-w-lg space-y-4 rounded-lg border-2 border-asfalt-900 bg-white p-6 shadow-xl"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-asfalt-900">✏️ Rediger bugherre</h2>
+          <button
+            type="button"
+            onClick={onLuk}
+            className="text-asfalt-400 hover:text-asfalt-700"
+            aria-label="Luk"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="r-titel" className="label">Titel</label>
+          <input
+            id="r-titel"
+            value={titel}
+            onChange={(e) => setTitel(e.target.value)}
+            maxLength={140}
+            className="input"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="r-version" className="label">Softwareversion</label>
+          <input
+            id="r-version"
+            value={softwareversion}
+            onChange={(e) => setSoftwareversion(e.target.value)}
+            className="input"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="r-telefon" className="label">Telefon (valgfri)</label>
+            <input
+              id="r-telefon"
+              value={telefon}
+              onChange={(e) => setTelefon(e.target.value)}
+              maxLength={60}
+              placeholder="fx iPhone 15 Pro"
+              className="input"
+            />
+          </div>
+          <div>
+            <label htmlFor="r-telefonos" className="label">Telefon-OS (valgfri)</label>
+            <input
+              id="r-telefonos"
+              value={telefonOs}
+              onChange={(e) => setTelefonOs(e.target.value)}
+              maxLength={60}
+              placeholder="fx iOS 18.1"
+              className="input"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="r-besk" className="label">Beskrivelse</label>
+          <textarea
+            id="r-besk"
+            value={beskrivelse}
+            onChange={(e) => setBeskrivelse(e.target.value)}
+            rows={5}
+            className="input"
+          />
+        </div>
+
+        {fejlbesked && (
+          <p className="rounded-md border-2 border-murstensroed bg-red-50 p-3 text-sm font-bold text-murstensroed">
+            {fejlbesked}
+          </p>
+        )}
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onClick={onLuk} className="btn-ghost text-sm">
+            Annullér
+          </button>
+          <button type="submit" disabled={gemmer} className="btn-primary">
+            {gemmer ? 'Gemmer…' : 'Gem ændringer'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

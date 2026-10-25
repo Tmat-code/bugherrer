@@ -36,10 +36,12 @@ type Tekster = {
   undertitel: string; // {domain} indsaettes
   genereret: (dato: string, antal: number) => string;
   intro: string;
-  metaLabels: { model: string; software: string; status: string };
+  metaLabels: { model: string; software: string; status: string; telefon: string };
   stemme: string;
   stemmer: string;
   sideAf: (n: number, af: number) => string;
+  // Eskalerings-markoerer: "NY" for aldrig-sendte, "+N siden sidst" for voksede.
+  delta: { ny: string; mere: (n: number) => string };
   csvKolonner: string[];
   disclaimer: string; // {domain} indsaettes
   filnavn: string; // slug i filnavnet
@@ -56,16 +58,20 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Denne rapport samler de softwarefejl ("bugherrer"), som flest ejere i fællesskabet ' +
       'har bekræftet at opleve. Hver post viser antal bekræftelser (stemmer), berørt model, ' +
       'softwareversion samt beskrivelse af, hvordan fejlen genskabes.',
-    metaLabels: { model: 'Model', software: 'Software', status: 'Status' },
+    metaLabels: { model: 'Model', software: 'Software', status: 'Status', telefon: 'Telefon' },
     stemme: 'stemme',
     stemmer: 'stemmer',
     sideAf: (n, af) => `Side ${n} af ${af}`,
+    delta: { ny: 'NY', mere: (n) => `+${n} siden sidst` },
     csvKolonner: [
       'Placering',
       'Stemmer',
+      'Ændring siden sidst',
       'Titel',
       'Bilmodel',
       'Softwareversion',
+      'Telefon',
+      'Telefon-OS',
       'Status',
       'Beskrivelse',
       'Oprettet',
@@ -92,16 +98,20 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'This report compiles the software issues ("bugs") that the most owners in the ' +
       'community have confirmed experiencing. Each entry shows the number of confirmations ' +
       '(votes), affected model, software version and a description of how to reproduce the issue.',
-    metaLabels: { model: 'Model', software: 'Software', status: 'Status' },
+    metaLabels: { model: 'Model', software: 'Software', status: 'Status', telefon: 'Phone' },
     stemme: 'vote',
     stemmer: 'votes',
     sideAf: (n, af) => `Page ${n} of ${af}`,
+    delta: { ny: 'NEW', mere: (n) => `+${n} since last` },
     csvKolonner: [
       'Rank',
       'Votes',
+      'Change since last',
       'Title',
       'Car model',
       'Software version',
+      'Phone',
+      'Phone OS',
       'Status',
       'Description',
       'Created',
@@ -128,16 +138,20 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Den här rapporten samlar de programvarufel ("buggar") som flest ägare i gemenskapen ' +
       'har bekräftat att de upplever. Varje post visar antal bekräftelser (röster), berörd ' +
       'modell, programvaruversion samt en beskrivning av hur felet återskapas.',
-    metaLabels: { model: 'Modell', software: 'Programvara', status: 'Status' },
+    metaLabels: { model: 'Modell', software: 'Programvara', status: 'Status', telefon: 'Telefon' },
     stemme: 'röst',
     stemmer: 'röster',
     sideAf: (n, af) => `Sida ${n} av ${af}`,
+    delta: { ny: 'NY', mere: (n) => `+${n} sedan sist` },
     csvKolonner: [
       'Placering',
       'Röster',
+      'Förändring sedan sist',
       'Titel',
       'Bilmodell',
       'Programvaruversion',
+      'Telefon',
+      'Telefon-OS',
       'Status',
       'Beskrivning',
       'Skapad',
@@ -160,4 +174,21 @@ export const I18N: Record<RapportSprog, Tekster> = {
 export function oversaetStatus(status: string, sprog: RapportSprog): string {
   const map = I18N[sprog].status as Record<string, string>;
   return map[status] ?? status;
+}
+
+// Eskalerings-tekst for en fejl i rapporten:
+//  - aldrig sendt foer  -> "NY"
+//  - vokset siden sidst -> "+N siden sidst"
+//  - sendt, men uaendret -> tom streng
+export function deltaTekst(
+  f: {
+    stemmer: number;
+    sidst_sendt_stemmer: number | null;
+    sidst_sendt_dato: string | null;
+  },
+  sprog: RapportSprog
+): string {
+  if (!f.sidst_sendt_dato) return I18N[sprog].delta.ny;
+  const vaekst = f.stemmer - (f.sidst_sendt_stemmer ?? 0);
+  return vaekst > 0 ? I18N[sprog].delta.mere(vaekst) : '';
 }

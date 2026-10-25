@@ -106,6 +106,27 @@ function migrate(db: Database.Database) {
   } catch {
     /* kolonnen findes allerede */
   }
+
+  // Telefon-oplysninger (valgfrie) — relevante for software-/forbindelsesfejl,
+  // ligesom Zeekrs egen app spoerger til telefon + OS.
+  for (const kolonne of ['telefon TEXT', 'telefon_os TEXT']) {
+    try {
+      db.exec(`ALTER TABLE fejl ADD COLUMN ${kolonne}`);
+    } catch {
+      /* kolonnen findes allerede */
+    }
+  }
+
+  // Eksport-sporing: naar en fejl sidst blev taget med i en afsendt rapport,
+  // og hvor mange stemmer den havde dengang. Bruges til at vise "NY" / "+N siden
+  // sidst" og til at kunne udelade uaendrede, allerede sendte fejl.
+  for (const kolonne of ['sidst_sendt_stemmer INTEGER', 'sidst_sendt_dato TEXT']) {
+    try {
+      db.exec(`ALTER TABLE fejl ADD COLUMN ${kolonne}`);
+    } catch {
+      /* kolonnen findes allerede */
+    }
+  }
 }
 
 // --- Typer ---
@@ -120,6 +141,10 @@ export interface Fejl {
   oprettet: string;
   opdateret: string;
   loesning_kommentar_id: number | null; // kommentar markeret som loesning, eller null
+  telefon: string | null; // fx "iPhone 15 Pro" — valgfri
+  telefon_os: string | null; // fx "iOS 18.1" — valgfri
+  sidst_sendt_stemmer: number | null; // stemmetal da fejlen sidst blev sendt i en rapport
+  sidst_sendt_dato: string | null; // hvornaar fejlen sidst blev markeret som sendt
 }
 
 export interface Kommentar {
@@ -174,15 +199,41 @@ export const queries = {
   fejlById: db.prepare<[number], Fejl>(`SELECT * FROM fejl WHERE id = ?`),
 
   opretFejl: db.prepare(`
-    INSERT INTO fejl (titel, bilmodel, softwareversion, beskrivelse)
-    VALUES (@titel, @bilmodel, @softwareversion, @beskrivelse)
+    INSERT INTO fejl (titel, bilmodel, softwareversion, beskrivelse, telefon, telefon_os)
+    VALUES (@titel, @bilmodel, @softwareversion, @beskrivelse, @telefon, @telefon_os)
   `),
 
   opdaterStatus: db.prepare(`
     UPDATE fejl SET status = @status, opdateret = datetime('now') WHERE id = @id
   `),
 
+  // Admin-redigering af en fejl (retter slaafejl i meldinger). Aendrer titel,
+  // version, beskrivelse og telefon-felter; cache af oversaettelser ugyldiggoeres
+  // automatisk, da den er hashet paa titel+beskrivelse.
+  opdaterFejl: db.prepare(`
+    UPDATE fejl SET
+      titel = @titel,
+      softwareversion = @softwareversion,
+      beskrivelse = @beskrivelse,
+      telefon = @telefon,
+      telefon_os = @telefon_os,
+      opdateret = datetime('now')
+    WHERE id = @id
+  `),
+
   sletFejl: db.prepare(`DELETE FROM fejl WHERE id = ?`),
+
+  // Top-fejl der er vaerd at sende: aldrig sendt foer, ELLER vokset siden sidst.
+  topFejlKunAendrede: db.prepare<[number], Fejl>(`
+    SELECT * FROM fejl
+    WHERE sidst_sendt_dato IS NULL OR stemmer > COALESCE(sidst_sendt_stemmer, 0)
+    ORDER BY stemmer DESC, oprettet DESC LIMIT ?
+  `),
+
+  // Markér en fejl som "sendt nu": gem nuvaerende stemmetal som nulpunkt for naeste delta.
+  markerSendt: db.prepare(
+    `UPDATE fejl SET sidst_sendt_stemmer = stemmer, sidst_sendt_dato = datetime('now') WHERE id = ?`
+  ),
 
   harStemt: db.prepare<[number, string], { n: number }>(
     `SELECT COUNT(*) AS n FROM stemmer_log WHERE fejl_id = ? AND token = ?`

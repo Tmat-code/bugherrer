@@ -40,6 +40,19 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
           <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-xs text-asfalt-700">
             {fejl.softwareversion}
           </span>
+          {fejl.telefon && (
+            <span className="rounded bg-asfalt-100 px-2 py-0.5 text-xs font-bold text-asfalt-700">
+              📱 {fejl.telefon}
+              {fejl.telefon_os && (
+                <span className="font-normal text-asfalt-500"> · {fejl.telefon_os}</span>
+              )}
+            </span>
+          )}
+          {!fejl.telefon && fejl.telefon_os && (
+            <span className="rounded bg-asfalt-100 px-2 py-0.5 text-xs font-bold text-asfalt-700">
+              📱 {fejl.telefon_os}
+            </span>
+          )}
         </div>
 
         <h1 className="mt-3 text-2xl font-black text-asfalt-900 sm:text-3xl">

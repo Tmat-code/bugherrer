@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { I18N, erGyldigtSprog, oversaetStatus } from '@/lib/rapport-i18n';
+import { I18N, erGyldigtSprog, oversaetStatus, deltaTekst } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 
 export async function GET(req: Request) {
@@ -11,8 +11,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const antal = Math.min(Math.max(Number(searchParams.get('top')) || 20, 1), 200);
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
+  const kunAendrede = searchParams.get('kunAendrede') === '1';
   const t = I18N[sprog];
-  const raaFejl = queries.topFejl.all(antal);
+  const raaFejl = kunAendrede
+    ? queries.topFejlKunAendrede.all(antal)
+    : queries.topFejl.all(antal);
   const fejl = await oversaetFejl(raaFejl, sprog);
 
   const kolonner = t.csvKolonner;
@@ -26,9 +29,12 @@ export async function GET(req: Request) {
     [
       i + 1,
       f.stemmer,
+      deltaTekst(f, sprog),
       f.titel,
       f.bilmodel,
       f.softwareversion,
+      f.telefon ?? '',
+      f.telefon_os ?? '',
       oversaetStatus(f.status, sprog),
       f.beskrivelse,
       f.oprettet,

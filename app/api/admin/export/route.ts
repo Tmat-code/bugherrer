@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { I18N, erGyldigtSprog, oversaetStatus, DATO_LOCALE } from '@/lib/rapport-i18n';
+import { I18N, erGyldigtSprog, oversaetStatus, deltaTekst, DATO_LOCALE } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +21,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const antal = Math.min(Math.max(Number(searchParams.get('top')) || 20, 1), 100);
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
+  const kunAendrede = searchParams.get('kunAendrede') === '1';
   const t = I18N[sprog];
-  const raaFejl = queries.topFejl.all(antal);
+  const raaFejl = kunAendrede
+    ? queries.topFejlKunAendrede.all(antal)
+    : queries.topFejl.all(antal);
   const fejl = await oversaetFejl(raaFejl, sprog);
 
   const pdfBytes: Buffer = await new Promise((resolve, reject) => {
@@ -106,17 +109,33 @@ export async function GET(req: Request) {
 
       doc.y = Math.max(doc.y, startY + 30);
 
-      // Meta-linje
+      // Eskalerings-markoer ("NY" / "+N siden sidst") — fremhaevet i gult.
+      const delta = deltaTekst(f, sprog);
+      if (delta) {
+        doc
+          .fontSize(9)
+          .font('Helvetica-Bold')
+          .fillColor('#b5790f')
+          .text(`▲ ${delta}`, 58, doc.y + 2, { width: sideBredde });
+        doc.moveDown(0.2);
+      }
+
+      // Meta-linje (model, software, evt. telefon, status)
+      const metaDele = [
+        `${t.metaLabels.model}: ${f.bilmodel}`,
+        `${t.metaLabels.software}: ${f.softwareversion}`,
+      ];
+      if (f.telefon || f.telefon_os) {
+        metaDele.push(
+          `${t.metaLabels.telefon}: ${[f.telefon, f.telefon_os].filter(Boolean).join(' / ')}`
+        );
+      }
+      metaDele.push(`${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`);
       doc
         .fontSize(9)
         .font('Helvetica-Bold')
         .fillColor(GRAA)
-        .text(
-          `${t.metaLabels.model}: ${f.bilmodel}    |    ${t.metaLabels.software}: ${f.softwareversion}    |    ${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`,
-          58,
-          doc.y + 2,
-          { width: sideBredde }
-        );
+        .text(metaDele.join('    |    '), 58, doc.y + 2, { width: sideBredde });
       doc.moveDown(0.5);
 
       // Beskrivelse

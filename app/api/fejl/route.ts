@@ -52,6 +52,9 @@ export async function POST(req: Request) {
   const bilmodel = KUN_EN_MODEL ? STANDARD_BILMODEL : String(body.bilmodel || '').trim();
   const softwareversion = String(body.softwareversion || '').trim();
   const beskrivelse = String(body.beskrivelse || '').trim();
+  // Valgfrie telefon-oplysninger (relevante for software-/forbindelsesfejl).
+  const telefon = String(body.telefon || '').trim().slice(0, 60) || null;
+  const telefonOs = String(body.telefonOs || '').trim().slice(0, 60) || null;
 
   // Server-side validering (stol aldrig paa klienten).
   const fejl: string[] = [];
@@ -78,7 +81,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const info = queries.opretFejl.run({ titel, bilmodel, softwareversion, beskrivelse });
+  const info = queries.opretFejl.run({
+    titel,
+    bilmodel,
+    softwareversion,
+    beskrivelse,
+    telefon,
+    telefon_os: telefonOs,
+  });
 
   // Opretteren faar automatisk den foerste stemme (default stemmer=1 i skemaet).
   return NextResponse.json({ ok: true, id: info.lastInsertRowid }, { status: 201 });

@@ -4,6 +4,41 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Telefon-felter, admin-rediger & eskalerende eksport
+
+Tre nye ting (DB-migrationer er idempotente `ALTER TABLE` — kører automatisk ved opstart):
+
+**1) Telefon + telefon-OS (valgfrit).** Som Zeekrs egen app spørger vi nu (frivilligt)
+om telefonmodel + OS — relevant for software-/forbindelsesfejl (CarPlay/Android Auto,
+app, Bluetooth). Nye kolonner `telefon`, `telefon_os` på `fejl`. Felter i opret-flow
+(`OpretFlow.tsx`, i en "valgfrit"-boks), gemmes via `/api/fejl`, vises på detaljesiden
+og i admin-tabellen + rapporterne.
+
+**2) Rediger fejl i admin.** Ny ✏️ Rediger-knap → modal, der retter titel, version,
+beskrivelse og telefon-felter. Nyt endpoint `/api/admin/rediger` (login-gated).
+Bruges til at rette åbenlyse slåfejl i meldinger (fx `3.0.03` → `3.0.3`). Oversættelses-
+cachen ugyldiggøres automatisk (hashet på titel+beskrivelse).
+
+**3) Eksport der ikke gentager sig selv.** To nye kolonner `sidst_sendt_stemmer` +
+`sidst_sendt_dato`. Flueben **"Kun nye + eskalerende"** i eksport-panelet: tager kun
+fejl med, der aldrig er sendt, eller som har fået flere stemmer siden sidst. Rapport
+(PDF + CSV) viser **NY** eller **+N siden sidst**, så Zeekr ser hvad der eskalerer —
+en fejl der er vokset fra 8→58 stemmer kommer med igen, en uændret droppes.
+Knap **"Markér top X som sendt"** (`/api/admin/marker-sendt`) gemmer nuværende
+stemmetal som nulpunkt, så delta regnes derfra næste gang.
+
+**Bevidst fravalgt:** flueben om "allerede meldt i Zeekr-appen" (lav værdi, ekstra
+friktion — boardet kører netop udenom Zeekrs egen løsning). Kan tilføjes senere.
+
+**Nye/ændrede filer:** `lib/db.ts` (kolonner + queries `opdaterFejl`, `markerSendt`,
+`topFejlKunAendrede`), `lib/rapport-i18n.ts` (telefon-label + delta + CSV-kolonner +
+`deltaTekst()`), `app/api/fejl/route.ts`, `app/api/admin/rediger/route.ts` (ny),
+`app/api/admin/marker-sendt/route.ts` (ny), `app/api/admin/export/route.ts` +
+`export/csv/route.ts`, `components/OpretFlow.tsx`, `components/AdminDashboard.tsx`
+(rediger-modal + eksport-panel), `app/fejl/[id]/page.tsx`. Build grøn.
+
+---
+
 ## 2026-10-25 — Fjernet fiktivt demo-indhold
 
 De 8 seedede eksempel-bugherrer var opdigtede (fiktive softwareversioner, pumpede
