@@ -34,13 +34,17 @@ export async function GET(req: Request) {
     }
   }
 
+  // Samlet tæller for al ny aktivitet siden admin sidst var inde.
+  const nyAktivitet = uuseteHenvendelser + nyeFejl + nyeKommentarer;
+
   return NextResponse.json({
     uuseteHenvendelser,
     nyeFejl,
     nyeKommentarer,
+    nyAktivitet,
     dageSidenAdmin,
     sidstSet,
-    // Praktisk flag til n8n: send mail hvis der er ulæste henvendelser.
-    boerNotificere: uuseteHenvendelser > 0,
+    // Praktisk flag til n8n: send mail hvis der overhovedet er sket noget nyt.
+    boerNotificere: nyAktivitet > 0,
   });
 }
