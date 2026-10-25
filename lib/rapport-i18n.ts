@@ -15,11 +15,12 @@ export function erGyldigtSprog(s: string | null): RapportSprog {
     : 'da';
 }
 
-// DeepL-koder. 'da' bruger ingen oversaettelse (kildesproget).
-export const DEEPL_MAALSPROG: Record<RapportSprog, string | null> = {
+// Målsprog-koder til oversætter-API'et (LibreTranslate bruger ISO-koder).
+// 'da' bruger ingen oversaettelse (kildesproget).
+export const MAALSPROG: Record<RapportSprog, string | null> = {
   da: null,
-  en: 'EN-GB',
-  sv: 'SV',
+  en: 'en',
+  sv: 'sv',
 };
 
 // Locale til datoformatering.

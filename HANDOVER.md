@@ -4,6 +4,29 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Oversætter skiftet til LibreTranslate (kode klar, afventer container)
+
+DeepL droppet (gratis-tier nulstilles ikke + kort-krav). Oversætter-koden peger nu
+på en **selvhostet LibreTranslate** — gratis, ingen konto, teksten forlader ikke
+serveren. Cache + i18n + graceful uændret.
+
+- `lib/oversaet.ts`: kalder `POST {LIBRETRANSLATE_URL}/translate` (JSON, q som array,
+  source=da). Env: `LIBRETRANSLATE_URL` (aktiverer), `LIBRETRANSLATE_API_KEY` (valgfri).
+  Graceful: ingen URL → dansk fallback (= nuværende opførsel). 20s timeout.
+- `rapport-i18n.ts`: `DEEPL_MAALSPROG` → `MAALSPROG` (ISO-koder da/en/sv).
+- `.env.example` + admin-hint opdateret til LibreTranslate.
+
+**MANGLER (Coolify-session, kan gøres fra telefon på hjemme-WiFi — ikke kun Mac):**
+1. Deploy LibreTranslate i Coolify: Docker image `libretranslate/libretranslate`,
+   port **5000**. Env `LT_LOAD_ONLY=en,da,sv` (holder den let). Evt. persistent
+   volume til sprog-modeller, så de ikke hentes igen ved genstart. Evt. `LT_API_KEYS`
+   hvis man vil kræve nøgle.
+2. På bugherrer-appen: sæt `LIBRETRANSLATE_URL` (fx `http://192.168.1.18:5000` eller
+   den interne Docker-adresse) → redeploy.
+3. Test en EN- og SV-PDF med rigtig oversat fejl-tekst.
+
+---
+
 ## 2026-10-25 — Fold lange tråde + "Vis flere" på forsiden
 
 - **Lange kommentar-tråde foldes sammen:** er der mere end 4 svar (ud over en evt.

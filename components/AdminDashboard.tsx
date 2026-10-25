@@ -203,8 +203,9 @@ export default function AdminDashboard({
         </div>
         {sprog !== 'da' && (
           <p className="mt-3 text-xs text-asfalt-500">
-            💡 Fejl-teksten oversættes via DeepL (kræver <code>DEEPL_API_KEY</code>). Uden
-            nøgle er rammen på det valgte sprog, men fejl-teksten forbliver dansk.
+            💡 Fejl-teksten oversættes via LibreTranslate (kræver{' '}
+            <code>LIBRETRANSLATE_URL</code>). Uden den er rammen på det valgte sprog, men
+            fejl-teksten forbliver dansk.
           </p>
         )}
       </div>

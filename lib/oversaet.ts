@@ -1,42 +1,47 @@
-// Oversaetter fejl-tekster (titel + beskrivelse) via DeepL, med cache i databasen.
+// Oversaetter fejl-tekster (titel + beskrivelse) via LibreTranslate, med cache i databasen.
 //
-// Graceful: er der ingen DEEPL_API_KEY, eller er maalsproget dansk, returneres
-// den originale danske tekst — alt virker, intet braekker. Fejler DeepL-kaldet,
-// falder vi ogsaa tilbage til dansk frem for at vaelte eksporten.
+// LibreTranslate er selvhostet (fx paa Pixa via Coolify) — gratis, ingen konto,
+// og teksten forlader aldrig serveren.
+//
+// Graceful: er LIBRETRANSLATE_URL ikke sat, eller er maalsproget dansk, returneres
+// den originale danske tekst — alt virker, intet braekker. Fejler kaldet, falder
+// vi ogsaa tilbage til dansk frem for at vaelte eksporten.
 
 import crypto from 'node:crypto';
 import { queries } from '@/lib/db';
 import type { Fejl } from '@/lib/db';
-import { DEEPL_MAALSPROG, type RapportSprog } from '@/lib/rapport-i18n';
+import { MAALSPROG, type RapportSprog } from '@/lib/rapport-i18n';
 
-// DeepL Free som standard. Pro-brugere kan overstyre via DEEPL_API_URL
-// (https://api.deepl.com/v2/translate).
-const DEEPL_URL = process.env.DEEPL_API_URL || 'https://api-free.deepl.com/v2/translate';
+// Fx http://192.168.1.18:5000 (LAN) eller den interne Docker-adresse i Coolify.
+const LT_URL = process.env.LIBRETRANSLATE_URL || '';
+// Valgfri — kun hvis din LibreTranslate-instans kraever en API-noegle (LT_API_KEYS).
+const LT_KEY = process.env.LIBRETRANSLATE_API_KEY || '';
 
 function hash(s: string): string {
   return crypto.createHash('sha1').update(s).digest('hex');
 }
 
-// Oversaet et array af strenge via DeepL i ét samlet kald. Kaster ved fejl.
-async function deeplOversaet(tekster: string[], maal: string, noegle: string): Promise<string[]> {
-  const body = new URLSearchParams();
-  body.set('target_lang', maal);
-  body.set('source_lang', 'DA');
-  for (const t of tekster) body.append('text', t);
+// Oversaet et array af strenge via LibreTranslate i ét samlet kald. Kaster ved fejl.
+async function libreOversaet(tekster: string[], maal: string): Promise<string[]> {
+  const body: Record<string, unknown> = {
+    q: tekster,
+    source: 'da',
+    target: maal,
+    format: 'text',
+  };
+  if (LT_KEY) body.api_key = LT_KEY;
 
-  const res = await fetch(DEEPL_URL, {
+  const res = await fetch(`${LT_URL.replace(/\/$/, '')}/translate`, {
     method: 'POST',
-    headers: {
-      Authorization: `DeepL-Auth-Key ${noegle}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body,
-    // Undgaa at en haengende DeepL blokerer eksporten for evigt.
-    signal: AbortSignal.timeout(15000),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    // Undgaa at en haengende server blokerer eksporten for evigt.
+    signal: AbortSignal.timeout(20000),
   });
-  if (!res.ok) throw new Error(`DeepL svarede ${res.status}`);
-  const data = (await res.json()) as { translations: { text: string }[] };
-  return data.translations.map((t) => t.text);
+  if (!res.ok) throw new Error(`LibreTranslate svarede ${res.status}`);
+  const data = (await res.json()) as { translatedText: string | string[] };
+  // Ved array-input svarer LibreTranslate med et array; ellers en enkelt streng.
+  return Array.isArray(data.translatedText) ? data.translatedText : [data.translatedText];
 }
 
 export interface OversatFejl extends Fejl {
@@ -45,11 +50,10 @@ export interface OversatFejl extends Fejl {
 
 // Returnerer fejl-listen med titel + beskrivelse paa oensket sprog.
 export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<OversatFejl[]> {
-  const maal = DEEPL_MAALSPROG[sprog];
-  const noegle = process.env.DEEPL_API_KEY;
+  const maal = MAALSPROG[sprog];
 
-  // Dansk, eller ingen noegle -> original tekst.
-  if (!maal || !noegle) {
+  // Dansk, eller ingen oversaetter konfigureret -> original tekst.
+  if (!maal || !LT_URL) {
     return fejl.map((f) => ({ ...f, oversat: false }));
   }
 
@@ -73,12 +77,12 @@ export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<O
 
   if (atOversaette.length === 0) return resultat;
 
-  // 2) Ét samlet DeepL-kald for alt der mangler.
+  // 2) Ét samlet kald for alt der mangler.
   let oversat: string[];
   try {
-    oversat = await deeplOversaet(atOversaette, maal, noegle);
+    oversat = await libreOversaet(atOversaette, maal);
   } catch (e) {
-    console.error('[oversaet] DeepL fejlede, falder tilbage til dansk:', e);
+    console.error('[oversaet] LibreTranslate fejlede, falder tilbage til dansk:', e);
     return fejl.map((f, i) => resultat[i] ?? { ...f, oversat: false });
   }
 
