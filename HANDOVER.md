@@ -4,6 +4,20 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Fold lange tråde + "Vis flere" på forsiden
+
+- **Lange kommentar-tråde foldes sammen:** er der mere end 4 svar (ud over en evt.
+  pinnet løsning), vises de **nyeste 3** + en **"Vis alle X svar"**-knap. "Vis
+  færre" folder sammen igen. Løsningen er altid synlig øverst. (`Kommentarspor`,
+  `visAlle`-state.)
+- **Forsiden viser 25 kort ad gangen** med en **"Vis flere"**-knap (+25). Ved
+  søgning eller "Mine meldinger" vises alt (så fuzzy-søgning stadig dækker alt).
+  (`FejlListe`, `antalVist`-state.) Ægte sidenummerering gemt til boardet er stort.
+
+**Tilbage:** ④ LibreTranslate på Pixa (afløser DeepL).
+
+---
+
 ## 2026-10-25 — "Markér som løsning" (pin et svar som fixet)
 
 Løfter selve svaret frem, så man ikke skal læse 30 kommentarer for at finde fixet.

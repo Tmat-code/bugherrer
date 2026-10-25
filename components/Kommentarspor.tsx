@@ -26,9 +26,13 @@ export default function Kommentarspor({
   const [turnstileToken, setTurnstileToken] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [loesningTravl, setLoesningTravl] = useState(false);
+  const [visAlle, setVisAlle] = useState(false);
 
   const loesning = loesningId ? kommentarer.find((k) => k.id === loesningId) : undefined;
   const ovrige = kommentarer.filter((k) => k.id !== loesningId);
+  // Fold lange tråde sammen: vis de nyeste 3, med en "Vis alle"-knap.
+  const skalFolde = ovrige.length > 4 && !visAlle;
+  const visteOvrige = skalFolde ? ovrige.slice(-3) : ovrige;
 
   async function saetLoesning(kommentarId: number | null) {
     setLoesningTravl(true);
@@ -133,7 +137,17 @@ export default function Kommentarspor({
             Ingen kommentarer endnu. Vær den første til at grave i den. 👷
           </li>
         )}
-        {ovrige.map((k) => (
+        {skalFolde && (
+          <li>
+            <button
+              onClick={() => setVisAlle(true)}
+              className="w-full rounded-md border-2 border-dashed border-asfalt-200 py-2 text-sm font-bold text-asfalt-600 hover:border-hjelm-400"
+            >
+              ↕ Vis alle {ovrige.length} svar
+            </button>
+          </li>
+        )}
+        {visteOvrige.map((k) => (
           <li key={k.id} className="rounded-md border-l-4 border-hjelm-500 bg-white p-4 shadow-sm">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-bold text-asfalt-800">{k.navn}</span>
@@ -151,6 +165,16 @@ export default function Kommentarspor({
             )}
           </li>
         ))}
+        {visAlle && ovrige.length > 4 && (
+          <li>
+            <button
+              onClick={() => setVisAlle(false)}
+              className="text-xs font-bold text-asfalt-400 hover:text-asfalt-600"
+            >
+              ↑ Vis færre
+            </button>
+          </li>
+        )}
       </ul>
 
       {/* Ny kommentar */}

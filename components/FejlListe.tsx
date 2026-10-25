@@ -21,6 +21,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
   // Fejl-ID'er denne browser selv har meldt ind + om vi kun viser dem.
   const [mine, setMine] = useState<number[]>([]);
   const [visKunMine, setVisKunMine] = useState(false);
+  const [antalVist, setAntalVist] = useState(25);
 
   useEffect(() => {
     const gemt = hentSete();
@@ -53,6 +54,10 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
     }
     return [...medOverlay].sort((a, b) => b.stemmer - a.stemmer);
   }, [fejl, query, sort, stemmeOverlay, visKunMine, mine]);
+
+  // Begræns forsiden til et antal kort ad gangen (men vis alt ved søgning/filter).
+  const begraens = !query && !visKunMine;
+  const slutliste = begraens ? visteFejl.slice(0, antalVist) : visteFejl;
 
   async function upvote(id: number) {
     if (harStemt[id]) return;
@@ -191,8 +196,9 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
           )}
         </div>
       ) : (
-        <ul className="grid gap-4">
-          {visteFejl.map((f) => (
+        <>
+          <ul className="grid gap-4">
+          {slutliste.map((f) => (
             <li key={f.id} className="kort relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
               {/* Upvote */}
               <button
@@ -257,7 +263,15 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
               </Link>
             </li>
           ))}
-        </ul>
+          </ul>
+          {begraens && visteFejl.length > antalVist && (
+            <div className="mt-6 text-center">
+              <button onClick={() => setAntalVist((n) => n + 25)} className="btn-ghost">
+                Vis flere ({visteFejl.length - antalVist} tilbage)
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
