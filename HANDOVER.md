@@ -4,6 +4,29 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-25 — Kontaktformular → admin-indbakke + notifikations-endpoint
+
+Folk kan nu skrive til formanden; det lander i admin (ingen offentlig mailadresse).
+
+- **`/kontakt`-side** med formular (navn + e-mail valgfri, besked påkrævet), samme
+  spam-værn som de andre (honeypot + rate-limit 5/time + Turnstile). Gemmes i ny
+  `henvendelser`-tabel. Link i footeren.
+- **Admin:** ny **"📨 Henvendelser"**-sektion (nyeste 20) med NY-markering + mailto
+  + "Svar på mail". Nøgletal viser **nye henvendelser** og **ny aktivitet siden sidst**.
+  "Ulæst" = henvendelser efter `admin_sidst_set` (nulstilles når admin åbner /admin).
+- **Notifikations-endpoint** `GET /api/admin/notifikation?token=XXX` (beskyttet af
+  `NOTIFIKATION_TOKEN`): returnerer `uuseteHenvendelser`, `nyeFejl`, `nyeKommentarer`,
+  `dageSidenAdmin`, `boerNotificere`. Opdaterer IKKE sidst-set. Afventer n8n-workflow.
+
+**MANGLER (n8n, ved skærm):** dagligt schedule → kald notifikations-endpointet →
+hvis `boerNotificere` → send Torben en mail. Kræver mail-credentials i n8n (SMTP/
+Outlook/tjeneste). Stopper af sig selv når han åbner /admin. Sæt `NOTIFIKATION_TOKEN`
+i Coolify først.
+
+**Fix:** FAQ-spørgsmål viste rå `&quot;` — rettet til rigtige anførselstegn.
+
+---
+
 ## 2026-10-25 — FAQ & spilleregler-side (/faq)
 
 Ny statisk side `app/faq/page.tsx` med to dele: **"Sådan virker det"** (hvad er

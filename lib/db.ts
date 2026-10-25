@@ -83,6 +83,15 @@ function migrate(db: Database.Database) {
       vaerdi TEXT NOT NULL
     );
 
+    -- Henvendelser fra kontaktformularen (vises i admin).
+    CREATE TABLE IF NOT EXISTS henvendelser (
+      id       INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn     TEXT NOT NULL DEFAULT '',
+      email    TEXT NOT NULL DEFAULT '',
+      besked   TEXT NOT NULL,
+      oprettet TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
@@ -133,6 +142,14 @@ export interface Oversaettelse {
   kilde_hash: string;
   titel: string;
   beskrivelse: string;
+  oprettet: string;
+}
+
+export interface Henvendelse {
+  id: number;
+  navn: string;
+  email: string;
+  besked: string;
   oprettet: string;
 }
 
@@ -225,6 +242,18 @@ export const queries = {
     FROM kommentarer k JOIN fejl f ON f.id = k.fejl_id
     ORDER BY k.oprettet DESC LIMIT ?
   `),
+
+  // --- Henvendelser (kontaktformular) ---
+  opretHenvendelse: db.prepare(
+    `INSERT INTO henvendelser (navn, email, besked) VALUES (@navn, @email, @besked)`
+  ),
+  senesteHenvendelser: db.prepare<[number], Henvendelse>(
+    `SELECT * FROM henvendelser ORDER BY oprettet DESC LIMIT ?`
+  ),
+  antalHenvendelser: db.prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM henvendelser`),
+  antalHenvendelserSiden: db.prepare<[string | null], { n: number }>(
+    `SELECT COUNT(*) AS n FROM henvendelser WHERE oprettet > ?`
+  ),
 
   // --- Oversaettelses-cache ---
   hentOversaettelse: db.prepare<[number, string], Oversaettelse>(

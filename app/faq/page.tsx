@@ -32,7 +32,7 @@ const SAADAN_VIRKER: Punkt[] = [
     ),
   },
   {
-    sp: 'Hvad er &quot;Fejl 40&quot;?',
+    sp: 'Hvad er "Fejl 40"?',
     sv: (
       <>
         En kærlig påmindelse om at prøve en <strong>genstart</strong> først — rygtet
@@ -52,7 +52,7 @@ const SAADAN_VIRKER: Punkt[] = [
     ),
   },
   {
-    sp: 'Hvad er &quot;byggemødet&quot; (kommentarerne)?',
+    sp: 'Hvad er "byggemødet" (kommentarerne)?',
     sv: (
       <>
         Stedet hvor vi hjælper hinanden. Er det en betjeningsfejl, eller har du et fix?
@@ -61,7 +61,7 @@ const SAADAN_VIRKER: Punkt[] = [
     ),
   },
   {
-    sp: 'Hvad betyder det grønne &quot;✅ Løsning&quot;-mærke?',
+    sp: 'Hvad betyder det grønne "✅ Løsning"-mærke?',
     sv: (
       <>
         At et svar i tråden er markeret som løsningen på fejlen. Det vises øverst, så du

@@ -18,11 +18,23 @@ export interface AktivitetItem {
   ny: boolean;
 }
 
+export interface HenvendelseItem {
+  id: number;
+  navn: string;
+  email: string;
+  besked: string;
+  oprettet: string;
+  ny: boolean;
+}
+
 export interface Overblik {
   totalFejl: number;
   totalKommentarer: number;
   nyeFejl: number;
   nyeKommentarer: number;
+  totalHenvendelser: number;
+  nyeHenvendelser: number;
+  henvendelser: HenvendelseItem[];
   sidstSet: string | null;
   aktivitet: AktivitetItem[];
 }
@@ -91,8 +103,8 @@ export default function AdminDashboard({
           <h2 className="text-lg font-bold text-asfalt-900">📊 Overblik</h2>
           <p className="text-sm text-asfalt-500">
             {overblik.sidstSet
-              ? overblik.nyeFejl + overblik.nyeKommentarer > 0
-                ? `Siden du sidst var her: ${overblik.nyeFejl} nye bugherrer og ${overblik.nyeKommentarer} nye svar`
+              ? overblik.nyeHenvendelser + overblik.nyeFejl + overblik.nyeKommentarer > 0
+                ? `Siden sidst: ${overblik.nyeHenvendelser} henvendelser · ${overblik.nyeFejl} nye bugherrer · ${overblik.nyeKommentarer} nye svar`
                 : 'Intet nyt siden du sidst var her ✅'
               : 'Velkommen — her er dit overblik'}
           </p>
@@ -102,12 +114,17 @@ export default function AdminDashboard({
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile tal={overblik.totalFejl} tekst="Bugherrer i alt" ikon="🛠️" />
           <StatTile tal={overblik.totalKommentarer} tekst="Svar i alt" ikon="💬" />
-          <StatTile tal={overblik.nyeFejl} tekst="Nye siden sidst" ikon="🆕" fremhaev={overblik.nyeFejl > 0} />
           <StatTile
-            tal={overblik.nyeKommentarer}
-            tekst="Nye svar siden sidst"
+            tal={overblik.nyeHenvendelser}
+            tekst="Nye henvendelser"
+            ikon="📨"
+            fremhaev={overblik.nyeHenvendelser > 0}
+          />
+          <StatTile
+            tal={overblik.nyeFejl + overblik.nyeKommentarer}
+            tekst="Ny aktivitet siden sidst"
             ikon="🔔"
-            fremhaev={overblik.nyeKommentarer > 0}
+            fremhaev={overblik.nyeFejl + overblik.nyeKommentarer > 0}
           />
         </div>
 
@@ -156,6 +173,58 @@ export default function AdminDashboard({
                   </span>
                 )}
               </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Henvendelser (kontaktformular) */}
+      <section className="kort mt-6 p-6">
+        <h2 className="text-lg font-bold text-asfalt-900">📨 Henvendelser</h2>
+        <p className="mt-1 text-sm text-asfalt-500">Beskeder fra kontaktformularen.</p>
+        <ul className="mt-4 space-y-3">
+          {overblik.henvendelser.length === 0 && (
+            <li className="rounded-md bg-asfalt-50 p-4 text-sm text-asfalt-500">
+              Ingen henvendelser endnu.
+            </li>
+          )}
+          {overblik.henvendelser.map((h) => (
+            <li
+              key={h.id}
+              className={`rounded-md border-2 p-4 ${
+                h.ny ? 'border-hjelm-500 bg-hjelm-50' : 'border-asfalt-200 bg-white'
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-asfalt-800">
+                  {h.navn || 'Anonym'}
+                  {h.email && (
+                    <a
+                      href={`mailto:${h.email}`}
+                      className="ml-2 text-sm font-normal text-hjelm-700 hover:underline"
+                    >
+                      {h.email}
+                    </a>
+                  )}
+                </span>
+                <span className="flex items-center gap-2 text-xs text-asfalt-400">
+                  🕑 {relativTid(h.oprettet)}
+                  {h.ny && (
+                    <span className="rounded bg-hjelm-500 px-2 py-0.5 font-black text-asfalt-900">
+                      NY
+                    </span>
+                  )}
+                </span>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-asfalt-700">{h.besked}</p>
+              {h.email && (
+                <a
+                  href={`mailto:${h.email}?subject=Svar fra Bugherrer`}
+                  className="mt-2 inline-block text-xs font-bold text-green-700 hover:underline"
+                >
+                  ↩︎ Svar på mail
+                </a>
+              )}
             </li>
           ))}
         </ul>

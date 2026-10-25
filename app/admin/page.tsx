@@ -1,7 +1,11 @@
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
 import AdminLogin from '@/components/AdminLogin';
-import AdminDashboard, { type Overblik, type AktivitetItem } from '@/components/AdminDashboard';
+import AdminDashboard, {
+  type Overblik,
+  type AktivitetItem,
+  type HenvendelseItem,
+} from '@/components/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +26,17 @@ export default function AdminSide() {
 
   const senesteFejl = queries.senesteFejl.all(15);
   const senesteKommentarer = queries.senesteKommentarer.all(15);
+
+  const totalHenvendelser = queries.antalHenvendelser.get()!.n;
+  const nyeHenvendelser = queries.antalHenvendelserSiden.get(sidstSet)!.n;
+  const henvendelser: HenvendelseItem[] = queries.senesteHenvendelser.all(20).map((h) => ({
+    id: h.id,
+    navn: h.navn,
+    email: h.email,
+    besked: h.besked,
+    oprettet: h.oprettet,
+    ny: sidstSet ? h.oprettet > sidstSet : false,
+  }));
 
   const aktivitet: AktivitetItem[] = [
     ...senesteFejl.map(
@@ -55,6 +70,9 @@ export default function AdminSide() {
     totalKommentarer,
     nyeFejl,
     nyeKommentarer,
+    totalHenvendelser,
+    nyeHenvendelser,
+    henvendelser,
     sidstSet,
     aktivitet,
   };

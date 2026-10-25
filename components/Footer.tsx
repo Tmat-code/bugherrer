@@ -22,6 +22,9 @@ export default function Footer() {
             <Link href="/links" className="hover:text-hjelm-400">
               Nyttige links
             </Link>
+            <Link href="/kontakt" className="hover:text-hjelm-400">
+              Kontakt
+            </Link>
             <Link href="/admin" className="inline-flex items-center gap-1 hover:text-hjelm-400">
               🔐 Formandens login
             </Link>
