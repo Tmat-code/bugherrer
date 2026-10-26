@@ -91,6 +91,14 @@ const LINKS: LinkPunkt[] = [
     url: 'https://keratech.dk/',
   },
   {
+    ikon: '🌧️',
+    kategori: 'Vinduesviskere',
+    beskrivelse:
+      'Ønsker du bedre vinduesviskere end dem, bilen leveres med fra start? Dette Bosch Aerotwin-fladbladssæt (A620S) er et godt bud.',
+    linkTekst: 'Viskerbladet – Bosch Aerotwin A620S',
+    url: 'https://www.viskerbladet.dk/a620s-bosch-aerotwin-viskerblade-fladblade-vinduesvisker-saet',
+  },
+  {
     ikon: '🚢',
     kategori: 'Fragt- & biltracking',
     beskrivelse:

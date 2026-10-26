@@ -4,6 +4,14 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-26 — Links: vinduesviskere tilføjet
+
+Tilføjet link på `/links` (app/links/page.tsx): Bosch Aerotwin A620S-viskerblade hos
+viskerbladet.dk, med beskrivelse om bedre viskere end de originale. URL renset for
+tracking-parametre (gclid/gad_* fjernet).
+
+---
+
 ## 2026-10-25 — Løst-tråde: notits i stedet for lås
 
 Tråde på "Løst!"-fejl holdes bevidst **åbne** (en løst fejl kan vende tilbage efter en
