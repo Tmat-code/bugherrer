@@ -4,6 +4,14 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-27 — Links: brugermanual tilføjet
+
+Tilføjet link på `/links` til Zeekrs officielle danske 7GT-brugermanual
+(2026, Long Range RWD). URL renset for fbclid-tracking; manual-vælgende parametre
+(vk/yk/lk/vn/yn/ven) bevaret.
+
+---
+
 ## 2026-10-26 — Links: vinduesviskere tilføjet
 
 Tilføjet link på `/links` (app/links/page.tsx): Bosch Aerotwin A620S-viskerblade hos

@@ -32,6 +32,14 @@ const LINKS: LinkPunkt[] = [
     url: 'https://www.zeekr.eu/models/7gt',
   },
   {
+    ikon: '📖',
+    kategori: 'Brugermanual',
+    beskrivelse:
+      'Zeekrs officielle, søgbare brugermanual til 7GT på dansk (2026, Long Range RWD).',
+    linkTekst: 'Zeekr 7GT – Brugermanual (dansk)',
+    url: 'https://www.zeekr.eu/manual-result?vk=AAF9&yk=MZ18&lk=da_DK&ln=Dansk&vn=7GT&yn=2026&ven=Long+Range+RWD',
+  },
+  {
     ikon: '🔧',
     kategori: 'Tekniske detaljer',
     beskrivelse:
