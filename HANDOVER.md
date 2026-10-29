@@ -4,6 +4,16 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — Fix: statistik-siden kastede 500 (dobbelt-Z i dato)
+
+`/admin/statistik` gav server-fejl (RangeError: Invalid time value). Årsag: "sidste 30
+dage"-løkken sendte en ISO-streng (allerede med T og Z) ind i `dkDele`, som tilføjede
+endnu et `Z` → ugyldig dato → `Intl.formatToParts` kastede. `dkDele` håndterer nu begge
+tidsformater og returnerer null ved ugyldig dato (én dårlig række vælter ikke siden).
+Genskabt lokalt på standalone-server (login-cookie forged) → nu HTTP 200.
+
+---
+
 ## 2026-10-29 — Admin-statistikside + bil-bekræft justeret
 
 **Statistik:** ny side `/admin/statistik` (📈 Aktivitet-link i admin-headeren). Viser

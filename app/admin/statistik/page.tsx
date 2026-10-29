@@ -16,9 +16,13 @@ const UGEDAGE = [
   { en: 'Sun', da: 'Søn' },
 ];
 
-// Konverterer et UTC-tidsstempel til dansk tid og trækker dato, time og ugedag ud.
-function dkDele(ts: string) {
-  const d = new Date(ts.replace(' ', 'T') + 'Z');
+// Konverterer et tidsstempel til dansk tid og trækker dato, time og ugedag ud.
+// Håndterer både SQLite-format ("2026-10-29 08:00:00") og ISO ("...T08:00:00.000Z").
+// Returnerer null ved en ugyldig dato, så én dårlig række aldrig vælter siden.
+function dkDele(ts: string): { dato: string; time: number; ugedag: string } | null {
+  const norm = ts.includes('T') ? ts : ts.replace(' ', 'T') + 'Z';
+  const d = new Date(norm);
+  if (Number.isNaN(d.getTime())) return null;
   const dele = new Intl.DateTimeFormat('en-GB', {
     timeZone: TZ,
     year: 'numeric',
@@ -53,19 +57,20 @@ export default function StatistikSide() {
   const antalType = { stemme: 0, kommentar: 0, fejl: 0 } as Record<string, number>;
 
   for (const r of raa) {
-    const { dato, time, ugedag } = dkDele(r.oprettet);
-    perTime[time]++;
-    const ui = UGEDAGE.findIndex((u) => u.en === ugedag);
+    const p = dkDele(r.oprettet);
+    if (!p) continue;
+    perTime[p.time]++;
+    const ui = UGEDAGE.findIndex((u) => u.en === p.ugedag);
     if (ui >= 0) perUgedag[ui]++;
-    perDagMap.set(dato, (perDagMap.get(dato) ?? 0) + 1);
+    perDagMap.set(p.dato, (perDagMap.get(p.dato) ?? 0) + 1);
     if (r.slags in antalType) antalType[r.slags]++;
   }
 
   // Sidste 30 dage (danske datoer), ældst → nyest.
   const sidste30: { dato: string; n: number }[] = [];
   for (let i = 29; i >= 0; i--) {
-    const d = dkDele(new Date(Date.now() - i * 86_400_000).toISOString()).dato;
-    sidste30.push({ dato: d, n: perDagMap.get(d) ?? 0 });
+    const dato = dkDele(new Date(Date.now() - i * 86_400_000).toISOString())?.dato ?? '';
+    sidste30.push({ dato, n: perDagMap.get(dato) ?? 0 });
   }
 
   const totalAktivitet = raa.length;
