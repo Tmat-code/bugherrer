@@ -4,6 +4,7 @@ import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
 import { I18N, erGyldigtSprog, oversaetStatus, deltaTekst, DATO_LOCALE } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
+import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
 
 export const dynamic = 'force-dynamic';
 // Node-runtime kraeves (pdfkit + filsystem til font-data).
@@ -22,11 +23,13 @@ export async function GET(req: Request) {
   const antal = Math.min(Math.max(Number(searchParams.get('top')) || 20, 1), 100);
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
   const kunAendrede = searchParams.get('kunAendrede') === '1';
+  const medKommentarer = searchParams.get('kommentarer') === '1';
   const t = I18N[sprog];
   const raaFejl = kunAendrede
     ? queries.topFejlKunAendrede.all(antal)
     : queries.topFejl.all(antal);
   const fejl = await oversaetFejl(raaFejl, sprog);
+  const kommMap = medKommentarer ? await hentKommentarerTilRapport(fejl, sprog) : {};
 
   const pdfBytes: Buffer = await new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50, bufferPages: true });
@@ -137,6 +140,8 @@ export async function GET(req: Request) {
         const br = vrows.map((r) => `${r.n}× ${r.variant}`).join(', ');
         metaDele.push(`${t.metaLabels.bilBekraeftet}: ${bilBekr} (${br})`);
       }
+      const antalSvar = queries.antalKommForFejl.get(f.id)!.n;
+      if (antalSvar > 0) metaDele.push(`${antalSvar} ${t.svar}`);
       metaDele.push(`${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`);
       doc
         .fontSize(9)
@@ -151,6 +156,29 @@ export async function GET(req: Request) {
         .font('Helvetica')
         .fillColor('#2a2a2e')
         .text(f.beskrivelse, 58, doc.y, { width: sideBredde, align: 'left' });
+
+      // Kommentarer fra ejere (valgfrit) — ryddeligt afsnit med punkter, uden løsningen.
+      const komm = kommMap[f.id] ?? [];
+      if (medKommentarer && komm.length > 0) {
+        doc.moveDown(0.5);
+        doc
+          .fontSize(9)
+          .font('Helvetica-Bold')
+          .fillColor(GRAA)
+          .text(`${t.kommentarerOverskrift}:`, 58, doc.y, { width: sideBredde });
+        doc.moveDown(0.2);
+        for (const k of komm) {
+          doc
+            .fontSize(9)
+            .font('Helvetica-Oblique')
+            .fillColor('#555')
+            .text(`•  ${k.navn}: `, 66, doc.y, { width: sideBredde - 8, continued: true })
+            .font('Helvetica')
+            .fillColor('#2a2a2e')
+            .text(k.tekst);
+          doc.moveDown(0.15);
+        }
+      }
 
       // Skillelinje
       doc.moveDown(0.6);

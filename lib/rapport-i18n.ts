@@ -45,6 +45,8 @@ type Tekster = {
   };
   stemme: string;
   stemmer: string;
+  svar: string; // "svar"/"replies" til antal-svar-linjen
+  kommentarerOverskrift: string; // overskrift over kommentar-listen i PDF
   sideAf: (n: number, af: number) => string;
   // Eskalerings-markoerer: "NY" for aldrig-sendte, "+N siden sidst" for voksede.
   delta: { ny: string; mere: (n: number) => string };
@@ -73,6 +75,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
     },
     stemme: 'stemme',
     stemmer: 'stemmer',
+    svar: 'svar',
+    kommentarerOverskrift: 'Kommentarer',
     sideAf: (n, af) => `Side ${n} af ${af}`,
     delta: { ny: 'NY', mere: (n) => `+${n} siden sidst` },
     csvKolonner: [
@@ -81,6 +85,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Ændring siden sidst',
       'Bil-bekræftede',
       'Varianter (bil-bekræftet)',
+      'Antal svar',
       'Titel',
       'Bilmodel',
       'Softwareversion',
@@ -89,6 +94,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Status',
       'Beskrivelse',
       'Oprettet',
+      'Kommentarer',
     ],
     disclaimer:
       `${SITE.domain} er et 100% uafhængigt, privat initiativ drevet af og for ` +
@@ -121,6 +127,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
     },
     stemme: 'vote',
     stemmer: 'votes',
+    svar: 'replies',
+    kommentarerOverskrift: 'Comments',
     sideAf: (n, af) => `Page ${n} of ${af}`,
     delta: { ny: 'NEW', mere: (n) => `+${n} since last` },
     csvKolonner: [
@@ -129,6 +137,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Change since last',
       'Car-confirmed',
       'Variants (car-confirmed)',
+      'Replies',
       'Title',
       'Car model',
       'Software version',
@@ -137,6 +146,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Status',
       'Description',
       'Created',
+      'Comments',
     ],
     disclaimer:
       `${SITE.domain} is a 100% independent, private initiative run by and for car ` +
@@ -169,6 +179,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
     },
     stemme: 'röst',
     stemmer: 'röster',
+    svar: 'svar',
+    kommentarerOverskrift: 'Kommentarer',
     sideAf: (n, af) => `Sida ${n} av ${af}`,
     delta: { ny: 'NY', mere: (n) => `+${n} sedan sist` },
     csvKolonner: [
@@ -177,6 +189,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Förändring sedan sist',
       'Bil-bekräftade',
       'Varianter (bil-bekräftade)',
+      'Antal svar',
       'Titel',
       'Bilmodell',
       'Programvaruversion',
@@ -185,6 +198,7 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Status',
       'Beskrivning',
       'Skapad',
+      'Kommentarer',
     ],
     disclaimer:
       `${SITE.domain} är ett 100% oberoende, privat initiativ som drivs av och för ` +

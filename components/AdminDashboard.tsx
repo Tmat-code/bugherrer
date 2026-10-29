@@ -50,6 +50,7 @@ export default function AdminDashboard({
   const [top, setTop] = useState(20);
   const [sprog, setSprog] = useState('da');
   const [kunAendrede, setKunAendrede] = useState(false);
+  const [medKommentarer, setMedKommentarer] = useState(false);
   const [markerTravl, setMarkerTravl] = useState(false);
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
@@ -318,18 +319,35 @@ export default function AdminDashboard({
             </select>
           </div>
           <a
-            href={`/api/admin/export?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}`}
+            href={`/api/admin/export?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
             className="btn-primary"
           >
             📄 Download PDF-rapport
           </a>
           <a
-            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}`}
+            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
             className="btn-secondary"
           >
             📊 Download CSV
           </a>
         </div>
+
+        {/* Inkludér kommentarer */}
+        <label className="mt-3 flex items-start gap-2 text-sm font-bold text-asfalt-800">
+          <input
+            type="checkbox"
+            checked={medKommentarer}
+            onChange={(e) => setMedKommentarer(e.target.checked)}
+            className="mt-0.5 h-4 w-4"
+          />
+          <span>
+            Inkludér kommentarer
+            <span className="block text-xs font-normal text-asfalt-500">
+              Tager ejernes kommentarer med under hver fejl (den markerede løsning udelades —
+              Zeekr skal have fejlen, ikke workaround&apos;en).
+            </span>
+          </span>
+        </label>
 
         {/* Eskalerings-filter + markér-sendt */}
         <div className="mt-4 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4">

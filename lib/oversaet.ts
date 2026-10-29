@@ -112,3 +112,20 @@ export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<O
 
   return resultat;
 }
+
+// Oversaetter en simpel liste af tekster (fx kommentarer) til rapportsproget.
+// Ingen DB-cache — bruges sjaeldent (kun ved eksport med kommentarer slaaet til).
+// Graceful: dansk/ingen oversaetter, eller fejl → original tekst tilbage.
+export async function oversaetTekster(
+  tekster: string[],
+  sprog: RapportSprog
+): Promise<string[]> {
+  const maal = MAALSPROG[sprog];
+  if (!maal || !LT_URL || tekster.length === 0) return tekster;
+  try {
+    return await libreOversaet(tekster, maal);
+  } catch (e) {
+    console.error('[oversaet] kunne ikke oversaette kommentarer:', e);
+    return tekster;
+  }
+}

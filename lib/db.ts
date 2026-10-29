@@ -329,6 +329,10 @@ export const queries = {
     `SELECT * FROM kommentarer WHERE fejl_id = ? ORDER BY oprettet ASC`
   ),
 
+  antalKommForFejl: db.prepare<[number], { n: number }>(
+    `SELECT COUNT(*) AS n FROM kommentarer WHERE fejl_id = ?`
+  ),
+
   kommentarById: db.prepare<[number], Kommentar>(
     `SELECT * FROM kommentarer WHERE id = ?`
   ),

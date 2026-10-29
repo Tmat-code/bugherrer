@@ -4,6 +4,25 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-30 — Kommentarer i eksport-rapporten
+
+Zeekr-rapporten kan nu tage ejernes kommentarer med.
+- **Antal svar** vises altid i rapporten (PDF-metalinje "N svar" + CSV-kolonne "Antal svar")
+  — signal om at flere bekræfter/diskuterer.
+- **Flueben "Inkludér kommentarer"** i eksport-panelet (default FRA). Når slået til:
+  kommentarerne står under hver fejl — PDF som et ryddeligt "Kommentarer:"-afsnit med
+  punkter (navn + tekst), CSV som en "Kommentarer"-kolonne.
+- **Den markerede løsning UDELADES** bevidst (Zeekr skal have fejlen, ikke workaround'en).
+- Kommentarer **oversættes** til en/sv ligesom fejlteksten (ét samlet LibreTranslate-kald,
+  graceful fallback til dansk). Param `kommentarer=1`.
+- Nye filer/queries: `lib/rapport-kommentarer.ts` (henter+oversætter, udelader løsning),
+  `oversaetTekster()` i oversaet.ts, `antalKommForFejl`.
+
+Verificeret bag login: CSV+PDF HTTP 200, normal kommentar med, løsning udeladt (0), PDF
+viser "N svar" + rent Kommentarer-afsnit. Build grøn.
+
+---
+
 ## 2026-10-29 — Snyd-detektion + oprydningsværktøj (admin/statistik)
 
 **Oprydning (fjern "med"-klik før en dato):** `/admin/statistik` → 🧹 Oprydning. Vælg
