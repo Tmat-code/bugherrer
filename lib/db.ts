@@ -138,6 +138,14 @@ function migrate(db: Database.Database) {
   } catch {
     /* kolonnen findes allerede */
   }
+
+  // Tidspunkt for bil-bekraeftelsen (naar varianten blev valgt). Bruges til at maale
+  // hvor hurtigt "med" -> variant sker (lynhurtige valg kan tyde paa scriptet misbrug).
+  try {
+    db.exec(`ALTER TABLE stemmer_log ADD COLUMN ejer_variant_tid TEXT`);
+  } catch {
+    /* kolonnen findes allerede */
+  }
 }
 
 // --- Typer ---
@@ -262,7 +270,8 @@ export const queries = {
   // Saetter variant paa den aktuelle browsers stemme for en fejl. .changes = 0 betyder
   // at browseren ikke har stemt paa fejlen endnu.
   bekraeftEjer: db.prepare(
-    `UPDATE stemmer_log SET ejer_variant = @variant WHERE fejl_id = @fejlId AND token = @token`
+    `UPDATE stemmer_log SET ejer_variant = @variant, ejer_variant_tid = datetime('now')
+     WHERE fejl_id = @fejlId AND token = @token`
   ),
   antalEjerBekraeftet: db.prepare<[number], { n: number }>(
     `SELECT COUNT(*) AS n FROM stemmer_log WHERE fejl_id = ? AND ejer_variant IS NOT NULL`
@@ -272,6 +281,48 @@ export const queries = {
     `SELECT ejer_variant AS variant, COUNT(*) AS n FROM stemmer_log
      WHERE fejl_id = ? AND ejer_variant IS NOT NULL
      GROUP BY ejer_variant ORDER BY n DESC`
+  ),
+
+  // --- Snyd-detektion (admin) ---
+  // Aktivitet pr. browser-token: hvor mange stemmer, hvor mange bekraeftelser, hvor
+  // mange FORSKELLIGE varianter (>1 = roedt flag: én person ejer kun én bil), og tidsspan.
+  tokenAktivitet: db.prepare<
+    [],
+    {
+      token: string;
+      stemmer: number;
+      bekraeftelser: number;
+      distinkte_varianter: number;
+      foerste: string;
+      sidste: string;
+    }
+  >(`
+    SELECT token,
+      COUNT(*)                        AS stemmer,
+      COUNT(ejer_variant)             AS bekraeftelser,
+      COUNT(DISTINCT ejer_variant)    AS distinkte_varianter,
+      MIN(oprettet)                   AS foerste,
+      MAX(oprettet)                   AS sidste
+    FROM stemmer_log
+    GROUP BY token
+    ORDER BY stemmer DESC, distinkte_varianter DESC
+  `),
+
+  // Tidspunkter til "hvor hurtigt sker med -> variant": stemme-tid + bekraeftelses-tid.
+  bekraeftelsesTider: db.prepare<[], { oprettet: string; tid: string }>(
+    `SELECT oprettet, ejer_variant_tid AS tid FROM stemmer_log WHERE ejer_variant_tid IS NOT NULL`
+  ),
+
+  // --- Oprydning: fjern stemmer (med-klik) foer en dato ---
+  antalStemmerFoer: db.prepare<[string], { n: number }>(
+    `SELECT COUNT(*) AS n FROM stemmer_log WHERE oprettet < ?`
+  ),
+  stemmerFoerPerFejl: db.prepare<[string], { fejl_id: number; n: number }>(
+    `SELECT fejl_id, COUNT(*) AS n FROM stemmer_log WHERE oprettet < ? GROUP BY fejl_id`
+  ),
+  sletStemmerFoer: db.prepare(`DELETE FROM stemmer_log WHERE oprettet < ?`),
+  nedskrivStemmer: db.prepare(
+    `UPDATE fejl SET stemmer = MAX(1, stemmer - @antal), opdateret = datetime('now') WHERE id = @id`
   ),
 
   kommentarerForFejl: db.prepare<[number], Kommentar>(
@@ -361,6 +412,15 @@ export const queries = {
       oprettet    = datetime('now')
   `),
 };
+
+// Oprydning: sletter alle stemmer foer et tidspunkt OG retter stemmetallet pr. fejl
+// i én atomar handling. Returnerer antal slettede stemmer.
+export const rydStemmerFoer = db.transaction((cutoff: string): number => {
+  const perFejl = queries.stemmerFoerPerFejl.all(cutoff);
+  const info = queries.sletStemmerFoer.run(cutoff);
+  for (const r of perFejl) queries.nedskrivStemmer.run({ id: r.fejl_id, antal: r.n });
+  return Number(info.changes);
+});
 
 // Stemme-transaktion: tjekker dublet, logger og taeller op i én atomar handling.
 export const afgivStemme = db.transaction((fejlId: number, token: string): boolean => {

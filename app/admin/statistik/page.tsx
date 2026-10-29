@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
 import AdminLogin from '@/components/AdminLogin';
+import RydStemmer from '@/components/RydStemmer';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,21 @@ function soejle(n: number, max: number): string {
   return `${Math.max((n / max) * 100, 4)}%`;
 }
 
+// Sekunder mellem to tidsstempler ("YYYY-MM-DD HH:MM:SS", UTC). Negativ/NaN → 0.
+function spanSek(a: string, b: string): number {
+  const ta = Date.parse(a.replace(' ', 'T') + 'Z');
+  const tb = Date.parse(b.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
+  return Math.max(0, (tb - ta) / 1000);
+}
+
+function kortSpan(sek: number): string {
+  if (sek < 60) return `${Math.round(sek)}s`;
+  if (sek < 3600) return `${Math.round(sek / 60)} min`;
+  if (sek < 86400) return `${Math.round(sek / 3600)} t`;
+  return `${Math.round(sek / 86400)} d`;
+}
+
 export default function StatistikSide() {
   if (!erLoggetInd()) return <AdminLogin />;
 
@@ -90,6 +106,29 @@ export default function StatistikSide() {
   const roligTime = perTime.indexOf(Math.min(...perTime));
 
   const toCifret = (n: number) => String(n).padStart(2, '0');
+
+  // --- Snyd-detektion ---
+  // Pr. token: flag hvis FLERE forskellige varianter bekræftet (én person = én bil),
+  // eller mange stemmer i et meget kort vindue (ikke menneskeligt læsetempo).
+  const tokenRows = queries.tokenAktivitet.all();
+  const tokenAnalyse = tokenRows.map((t) => {
+    const span = spanSek(t.foerste, t.sidste);
+    const flereVarianter = t.distinkte_varianter > 1;
+    const hurtigtBurst = t.stemmer >= 8 && span < 120;
+    return { ...t, span, flereVarianter, hurtigtBurst, flag: flereVarianter || hurtigtBurst };
+  });
+  const flaggede = tokenAnalyse.filter((t) => t.flag).slice(0, 25);
+  const travleste = [...tokenAnalyse].sort((a, b) => b.stemmer - a.stemmer).slice(0, 6);
+
+  // "med" -> variant: hvor hurtigt vælges varianten efter stemmen?
+  const tider = queries.bekraeftelsesTider.all();
+  const delays = tider.map((r) => spanSek(r.oprettet, r.tid));
+  const antalBekr = delays.length;
+  const lynhurtige = delays.filter((d) => d < 2).length; // under 2 sek
+  const medianDelay =
+    antalBekr > 0 ? [...delays].sort((a, b) => a - b)[Math.floor(antalBekr / 2)] : null;
+
+  const idagDato = dkDele(new Date().toISOString())?.dato ?? '';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -200,6 +239,113 @@ export default function StatistikSide() {
           </p>
         </>
       )}
+
+      {/* Mistænkelig aktivitet */}
+      <section className="kort mt-6 p-6">
+        <h2 className="text-lg font-bold text-asfalt-900">🕵️ Mistænkelig aktivitet</h2>
+        <p className="mt-0.5 text-xs text-asfalt-500">
+          Indbygget spærre: én browser = én stemme + én bekræftelse pr. bug. Så en enkelt
+          person kan ikke puste én bug op alene — det kræver mange browsere/inkognito. Her er
+          signalerne på det.
+        </p>
+
+        {/* med -> variant timing */}
+        <div className="mt-4 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4 text-sm">
+          <p className="font-bold text-asfalt-800">⏱️ Hvor hurtigt vælges variant efter “med”?</p>
+          {antalBekr === 0 ? (
+            <p className="mt-1 text-asfalt-500">Ingen bil-bekræftelser med tidsstempel endnu.</p>
+          ) : (
+            <p className="mt-1 text-asfalt-600">
+              {antalBekr} bekræftelser · median{' '}
+              <strong>{medianDelay !== null ? kortSpan(medianDelay) : '—'}</strong> · heraf{' '}
+              <strong className={lynhurtige > 0 ? 'text-murstensroed' : ''}>
+                {lynhurtige} lynhurtige (&lt;2s)
+              </strong>
+              . Mange lynhurtige kan tyde på scriptede klik.
+            </p>
+          )}
+        </div>
+
+        {/* Flaggede tokens */}
+        <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+          Flaggede browsere
+        </h3>
+        {flaggede.length === 0 ? (
+          <p className="mt-2 rounded-md bg-green-50 p-3 text-sm font-bold text-asfalt-700">
+            ✅ Intet mistænkeligt lige nu.
+          </p>
+        ) : (
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-asfalt-200 text-left text-asfalt-500">
+                  <th className="p-2">Browser</th>
+                  <th className="p-2">Stemmer</th>
+                  <th className="p-2">Bekr.</th>
+                  <th className="p-2">Varianter</th>
+                  <th className="p-2">Tidsspan</th>
+                  <th className="p-2">Flag</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flaggede.map((t) => (
+                  <tr key={t.token} className="border-b border-asfalt-100">
+                    <td className="p-2 font-mono text-xs text-asfalt-500">{t.token.slice(0, 8)}…</td>
+                    <td className="p-2 font-bold">{t.stemmer}</td>
+                    <td className="p-2">{t.bekraeftelser}</td>
+                    <td className="p-2">{t.distinkte_varianter}</td>
+                    <td className="p-2">{kortSpan(t.span)}</td>
+                    <td className="p-2 text-xs font-bold text-murstensroed">
+                      {[
+                        t.flereVarianter ? 'flere varianter' : '',
+                        t.hurtigtBurst ? 'hurtigt burst' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Travleste tokens (info) */}
+        {travleste.length > 0 && (
+          <>
+            <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+              Travleste browsere (info)
+            </h3>
+            <p className="mt-2 text-xs text-asfalt-500">
+              Mange stemmer fra samme browser er helt fint, hvis det er spredt over tid og én
+              variant (en ejer med mange fejl). Hold øje med korte tidsspan.
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {travleste.map((t) => (
+                <li key={t.token} className="flex flex-wrap gap-x-3 text-asfalt-600">
+                  <span className="font-mono text-xs text-asfalt-400">{t.token.slice(0, 8)}…</span>
+                  <span>
+                    <strong>{t.stemmer}</strong> stemmer
+                  </span>
+                  <span>{t.bekraeftelser} bekr.</span>
+                  <span>{t.distinkte_varianter} variant(er)</span>
+                  <span>over {kortSpan(t.span)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      {/* Oprydning */}
+      <section className="kort mt-6 p-6">
+        <h2 className="text-lg font-bold text-asfalt-900">🧹 Oprydning</h2>
+        <p className="mt-0.5 text-xs text-asfalt-500">
+          Fjern “med”-klik (stemmer) fra før en dato — fx test-klik fra før lanceringen. Viser
+          antal først; sletning retter stemmetallene og kan ikke fortrydes.
+        </p>
+        <RydStemmer standardDato={idagDato} />
+      </section>
     </div>
   );
 }

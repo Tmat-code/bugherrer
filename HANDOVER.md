@@ -4,6 +4,31 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — Snyd-detektion + oprydningsværktøj (admin/statistik)
+
+**Oprydning (fjern "med"-klik før en dato):** `/admin/statistik` → 🧹 Oprydning. Vælg
+dato → "Vis antal" (forhåndsvisning) → "Fjern dem". Sletter stemmer med oprettet < dato
+OG retter `fejl.stemmer` pr. fejl (MAX(1, stemmer-slettede)) atomart (`rydStemmerFoer`).
+Endpoint `/api/admin/ryd-stemmer` (POST; uden bekræft = kun antal). Verificeret: 4→1.
+NB: vi nulstillede ALDRIG stemmer ved lancering, så brug dette til at fjerne
+pre-launch-testklik (dato 2026-10-29).
+
+**Snyd-detektion (🕵️ Mistænkelig aktivitet):** på statistik-siden.
+- Indbygget spærre: én browser-token = én stemme + én bekræftelse pr. bug (dedup på
+  fejl_id+token), så én person kan ikke puste én bug op alene — misbrug kræver mange
+  tokens (cookie-rydning/inkognito).
+- **Flaggede browsere:** token flagges hvis >1 FORSKELLIG variant bekræftet (én person =
+  én bil → rødt flag) eller ≥8 stemmer på <120s (ikke-menneskeligt tempo). Mange stemmer
+  fra én token er i sig selv OK (ejer med mange fejl) — derfor også "travleste (info)".
+- **med→variant-timing:** nyt felt `stemmer_log.ejer_variant_tid` (sat ved bekræftelse).
+  Viser antal bekræftelser, median-forsinkelse og antal "lynhurtige (<2s)" (kan tyde på
+  script). Kun fremadrettet (gamle bekræftelser har ingen tid).
+- Queries: `tokenAktivitet`, `bekraeftelsesTider`.
+
+Build grøn (27 sider). Testet bag admin-login på standalone-server.
+
+---
+
 ## 2026-10-29 — Fix: statistik-søjler var usynlige (procent-højde)
 
 Søjlerne i statistik-charts rendrede ikke (højde 0 trods data). Årsag: `height: X%` på
