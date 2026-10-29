@@ -6,6 +6,7 @@ import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
 import { hentSete, gemSete, hentMine, type SeteSvar } from '@/lib/svar-set';
+import { ZEEKR_VARIANTER } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 
 type Sortering = 'stemmer' | 'nyeste' | 'aktivitet';
@@ -16,6 +17,10 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
   // Lokalt overlay af stemmetal, saa knappen opdaterer med det samme.
   const [stemmeOverlay, setStemmeOverlay] = useState<Record<number, number>>({});
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});
+  // Bil-bekraeftelse (vises lige efter man har stemt)
+  const [visBekraeft, setVisBekraeft] = useState<Record<number, boolean>>({});
+  const [minVariant, setMinVariant] = useState<Record<number, string>>({});
+  const [bekraeftOverlay, setBekraeftOverlay] = useState<Record<number, number>>({});
   // Hvor mange svar brugeren har set pr. fejl (fra localStorage). null = ikke indlaest endnu.
   const [sete, setSete] = useState<SeteSvar | null>(null);
   // Fejl-ID'er denne browser selv har meldt ind + om vi kun viser dem.
@@ -75,6 +80,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
       const data = await res.json();
       if (res.ok) {
         setStemmeOverlay((s) => ({ ...s, [id]: data.stemmer }));
+        setVisBekraeft((v) => ({ ...v, [id]: true })); // tilbyd bil-bekraeftelse
       } else {
         // rul tilbage
         setStemmeOverlay((s) => ({ ...s, [id]: nuvaerende }));
@@ -83,6 +89,25 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
     } catch {
       setStemmeOverlay((s) => ({ ...s, [id]: nuvaerende }));
       setHarStemt((s) => ({ ...s, [id]: false }));
+    }
+  }
+
+  async function bekraeftEjer(id: number, variant: string) {
+    try {
+      const res = await fetch('/api/bekraeft-ejer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fejlId: id, variant }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMinVariant((m) => ({ ...m, [id]: variant }));
+        setVisBekraeft((v) => ({ ...v, [id]: false }));
+        if (typeof data.antal === 'number')
+          setBekraeftOverlay((b) => ({ ...b, [id]: data.antal }));
+      }
+    } catch {
+      /* stille fejl — bekraeftelse er valgfri */
     }
   }
 
@@ -199,7 +224,8 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
         <>
           <ul className="grid gap-4">
           {slutliste.map((f) => (
-            <li key={f.id} className="kort relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
+            <li key={f.id} className="kort relative flex flex-col gap-3 p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Upvote */}
               <button
                 onClick={() => upvote(f.id)}
@@ -252,6 +278,14 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
                       ✅ Løsning
                     </span>
                   )}
+                  {(() => {
+                    const bekr = bekraeftOverlay[f.id] ?? f.antal_ejer_bekraeftet;
+                    return bekr > 0 ? (
+                      <span className="rounded bg-asfalt-100 px-2 py-0.5 font-bold text-asfalt-700">
+                        🚗 {bekr} bil-bekræftet
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
               </div>
 
@@ -261,6 +295,40 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
               >
                 Detaljer →
               </Link>
+              </div>
+
+              {/* Bil-bekraeftelse efter stemme (valgfri) */}
+              {visBekraeft[f.id] && !minVariant[f.id] && (
+                <div className="rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-3">
+                  <p className="text-xs font-bold text-asfalt-700">
+                    🚗 Ejer du selv en Zeekr 7GT? Vælg din variant, så tæller stemmen som
+                    bil-bekræftet:
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {ZEEKR_VARIANTER.map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => bekraeftEjer(f.id, v)}
+                        className="rounded-lg border-2 border-asfalt-300 bg-white px-2.5 py-1 text-xs font-bold text-asfalt-800 transition-colors hover:border-hjelm-500 hover:bg-hjelm-50"
+                      >
+                        {v === 'Anden' ? 'Anden / ved ikke' : v}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setVisBekraeft((s) => ({ ...s, [f.id]: false }))}
+                      className="px-2 py-1 text-xs text-asfalt-400 hover:text-asfalt-600"
+                    >
+                      Spring over
+                    </button>
+                  </div>
+                </div>
+              )}
+              {minVariant[f.id] && (
+                <p className="rounded-lg border-2 border-graes bg-green-50 p-2 text-xs font-bold text-asfalt-700">
+                  ✅ Tak — din stemme er nu bil-bekræftet
+                  {minVariant[f.id] !== 'Anden' ? ` (${minVariant[f.id]})` : ''}.
+                </p>
+              )}
             </li>
           ))}
           </ul>

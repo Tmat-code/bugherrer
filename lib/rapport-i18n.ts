@@ -36,7 +36,13 @@ type Tekster = {
   undertitel: string; // {domain} indsaettes
   genereret: (dato: string, antal: number) => string;
   intro: string;
-  metaLabels: { model: string; software: string; status: string; telefon: string };
+  metaLabels: {
+    model: string;
+    software: string;
+    status: string;
+    telefon: string;
+    bilBekraeftet: string;
+  };
   stemme: string;
   stemmer: string;
   sideAf: (n: number, af: number) => string;
@@ -58,7 +64,13 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Denne rapport samler de softwarefejl ("bugherrer"), som flest ejere i fællesskabet ' +
       'har bekræftet at opleve. Hver post viser antal bekræftelser (stemmer), berørt model, ' +
       'softwareversion samt beskrivelse af, hvordan fejlen genskabes.',
-    metaLabels: { model: 'Model', software: 'Software', status: 'Status', telefon: 'Telefon' },
+    metaLabels: {
+      model: 'Model',
+      software: 'Software',
+      status: 'Status',
+      telefon: 'Telefon',
+      bilBekraeftet: 'Bil-bekræftet',
+    },
     stemme: 'stemme',
     stemmer: 'stemmer',
     sideAf: (n, af) => `Side ${n} af ${af}`,
@@ -67,6 +79,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Placering',
       'Stemmer',
       'Ændring siden sidst',
+      'Bil-bekræftede',
+      'Varianter (bil-bekræftet)',
       'Titel',
       'Bilmodel',
       'Softwareversion',
@@ -98,7 +112,13 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'This report compiles the software issues ("bugs") that the most owners in the ' +
       'community have confirmed experiencing. Each entry shows the number of confirmations ' +
       '(votes), affected model, software version and a description of how to reproduce the issue.',
-    metaLabels: { model: 'Model', software: 'Software', status: 'Status', telefon: 'Phone' },
+    metaLabels: {
+      model: 'Model',
+      software: 'Software',
+      status: 'Status',
+      telefon: 'Phone',
+      bilBekraeftet: 'Car-confirmed',
+    },
     stemme: 'vote',
     stemmer: 'votes',
     sideAf: (n, af) => `Page ${n} of ${af}`,
@@ -107,6 +127,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Rank',
       'Votes',
       'Change since last',
+      'Car-confirmed',
+      'Variants (car-confirmed)',
       'Title',
       'Car model',
       'Software version',
@@ -138,7 +160,13 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Den här rapporten samlar de programvarufel ("buggar") som flest ägare i gemenskapen ' +
       'har bekräftat att de upplever. Varje post visar antal bekräftelser (röster), berörd ' +
       'modell, programvaruversion samt en beskrivning av hur felet återskapas.',
-    metaLabels: { model: 'Modell', software: 'Programvara', status: 'Status', telefon: 'Telefon' },
+    metaLabels: {
+      model: 'Modell',
+      software: 'Programvara',
+      status: 'Status',
+      telefon: 'Telefon',
+      bilBekraeftet: 'Bil-bekräftad',
+    },
     stemme: 'röst',
     stemmer: 'röster',
     sideAf: (n, af) => `Sida ${n} av ${af}`,
@@ -147,6 +175,8 @@ export const I18N: Record<RapportSprog, Tekster> = {
       'Placering',
       'Röster',
       'Förändring sedan sist',
+      'Bil-bekräftade',
+      'Varianter (bil-bekräftade)',
       'Titel',
       'Bilmodell',
       'Programvaruversion',

@@ -4,6 +4,33 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — Bil-bekræftelse (let ejerskabs-signal, intet VIN)
+
+Troværdighed til Zeekr: efter at have stemt kan brugeren med ét tryk vælge sin
+**7GT-variant** (Zeekrs egne navne) og dermed bekræfte ejerskab. Bevidst VIN-frit
+(Torben vil ikke ligge inde med VIN) og lav friktion.
+
+- **Varianter** (`lib/config.ts` `ZEEKR_VARIANTER`): Privilege AWD, Long Range RWD,
+  Core RWD, Anden (escape).
+- **DB:** `stemmer_log.ejer_variant TEXT` (idempotent ALTER — følger automatisk med på
+  prod-volumen ved opstart). "Bil-bekræftet" = ejer_variant er sat. Gemmer KUN varianten,
+  intet VIN/personhenførbart.
+- **Flow:** stem (uændret) → lille boks "Ejer du en 7GT? Vælg variant" (kan springes
+  over). `/api/bekraeft-ejer` sætter varianten på den aktuelle browsers stemme
+  (vote-token); kræver at man har stemt (ellers 409).
+- **Visning:** "🚗 N bil-bekræftet" på kort (FejlListe) + detaljeside.
+- **Eksport:** CSV får kolonnerne **Bil-bekræftede** + **Varianter (bil-bekræftet)**;
+  PDF-metalinjen viser fx "Bil-bekræftet: 8 (4× Long Range RWD, 3× Privilege AWD)".
+  Så kan Zeekr se "N bekræftede ejere" + fordeling pr. variant.
+- Queries: `bekraeftEjer`, `antalEjerBekraeftet`, `ejerVarianter`; `antal_ejer_bekraeftet`
+  tilføjet `alleFejlMedSvar` (FejlMedSvar).
+
+Verificeret end-to-end (stem → bekræft → tæl; ukendt variant afvist; 409 uden stemme).
+Build grøn (25 sider). Næste rung hvis gaming bliver et problem: e-mail-bekræftelse
+(stadig uden VIN) — ikke bygget.
+
+---
+
 ## 2026-10-29 — SEO-pakke (OG/social, per-side metadata, sitemap, robots)
 
 Delt på Facebook → nu gjort delevenligt og indekserbart:

@@ -48,6 +48,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
   if (!fejl) notFound();
 
   const kommentarer = queries.kommentarerForFejl.all(id);
+  const bilBekraeftet = queries.antalEjerBekraeftet.get(id)!.n;
 
   function datoTekst(s: string) {
     return new Date(s.replace(' ', 'T') + 'Z').toLocaleDateString('da-DK', {
@@ -92,6 +93,9 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
         </h1>
         <p className="mt-1 text-sm text-asfalt-400">
           Meldt {datoTekst(fejl.oprettet)} · {fejl.stemmer} stemmer
+          {bilBekraeftet > 0 && (
+            <span className="font-bold text-asfalt-500"> · 🚗 {bilBekraeftet} bil-bekræftet</span>
+          )}
         </p>
 
         {/* Beskrivelse */}
@@ -104,7 +108,11 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
 
         {/* Upvote */}
         <div className="mt-6">
-          <UpvoteKnap fejlId={fejl.id} startStemmer={fejl.stemmer} />
+          <UpvoteKnap
+            fejlId={fejl.id}
+            startStemmer={fejl.stemmer}
+            startBekraeftet={bilBekraeftet}
+          />
         </div>
 
         {/* Kommentarer */}

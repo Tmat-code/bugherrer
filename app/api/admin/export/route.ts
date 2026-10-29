@@ -130,6 +130,13 @@ export async function GET(req: Request) {
           `${t.metaLabels.telefon}: ${[f.telefon, f.telefon_os].filter(Boolean).join(' / ')}`
         );
       }
+      // Bil-bekraeftet: antal + variant-opdeling (fx "8 (4× Long Range RWD, 3× Privilege AWD)").
+      const vrows = queries.ejerVarianter.all(f.id);
+      const bilBekr = vrows.reduce((s, r) => s + r.n, 0);
+      if (bilBekr > 0) {
+        const br = vrows.map((r) => `${r.n}× ${r.variant}`).join(', ');
+        metaDele.push(`${t.metaLabels.bilBekraeftet}: ${bilBekr} (${br})`);
+      }
       metaDele.push(`${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`);
       doc
         .fontSize(9)

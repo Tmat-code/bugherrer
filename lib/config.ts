@@ -22,6 +22,17 @@ export type Bilmodel = (typeof BILMODELLER)[number];
 // Standardmodel for nye fejl (bruges naar der kun er én model).
 export const STANDARD_BILMODEL: Bilmodel = 'Zeekr 7GT';
 
+// Officielle 7GT-varianter (Zeekrs egne navne). Bruges til det lette ejerskabs-signal:
+// efter at have stemt kan en ejer vaelge sin variant ("bil-bekraeftet"). 'Anden' er en
+// escape for ejere, der ikke kan genkende deres praecise variant.
+export const ZEEKR_VARIANTER = [
+  'Privilege AWD',
+  'Long Range RWD',
+  'Core RWD',
+  'Anden',
+] as const;
+export type ZeekrVariant = (typeof ZEEKR_VARIANTER)[number];
+
 // Når true: ingen dropdown, alt antages at vaere STANDARD_BILMODEL.
 export const KUN_EN_MODEL = BILMODELLER.length === 1;
 

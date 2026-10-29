@@ -25,11 +25,16 @@ export async function GET(req: Request) {
     return `"${s}"`;
   }
 
-  const raekker = fejl.map((f, i) =>
-    [
+  const raekker = fejl.map((f, i) => {
+    const vrows = queries.ejerVarianter.all(f.id);
+    const bilBekr = vrows.reduce((s, r) => s + r.n, 0);
+    const varianter = vrows.map((r) => `${r.n}× ${r.variant}`).join(', ');
+    return [
       i + 1,
       f.stemmer,
       deltaTekst(f, sprog),
+      bilBekr,
+      varianter,
       f.titel,
       f.bilmodel,
       f.softwareversion,
@@ -40,8 +45,8 @@ export async function GET(req: Request) {
       f.oprettet,
     ]
       .map(esc)
-      .join(';')
-  );
+      .join(';');
+  });
 
   // BOM + semikolon-separeret, saa det aabner korrekt i dansk Excel/LibreOffice Calc.
   const csv = '﻿' + [kolonner.map(esc).join(';'), ...raekker].join('\r\n');

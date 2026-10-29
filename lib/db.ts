@@ -127,6 +127,17 @@ function migrate(db: Database.Database) {
       /* kolonnen findes allerede */
     }
   }
+
+  // "Bil-bekraeftet": et let ejerskabs-signal. Efter at have stemt kan en bruger
+  // med ét tryk vaelge sin 7GT-variant (Zeekrs egne navne) og dermed bekraefte, at
+  // vedkommende selv ejer bilen. Vi gemmer KUN variant-navnet paa stemmen — ingen
+  // VIN, intet personhenfoerbart. "Bil-bekraeftet" = ejer_variant er sat (ikke NULL).
+  // Giver baade et separat, mere troveardigt tal OG en variant-opdeling til Zeekr.
+  try {
+    db.exec(`ALTER TABLE stemmer_log ADD COLUMN ejer_variant TEXT`);
+  } catch {
+    /* kolonnen findes allerede */
+  }
 }
 
 // --- Typer ---
@@ -158,6 +169,7 @@ export interface Kommentar {
 // Fejl beriget med svar-info til forsiden (antal kommentarer + seneste aktivitet).
 export interface FejlMedSvar extends Fejl {
   antal_kommentarer: number;
+  antal_ejer_bekraeftet: number; // antal stemmer markeret som "bil-bekraeftet"
   sidste_aktivitet: string; // seneste af (oprettet, nyeste kommentar)
 }
 
@@ -187,6 +199,7 @@ export const queries = {
     SELECT
       f.*,
       COUNT(k.id) AS antal_kommentarer,
+      (SELECT COUNT(*) FROM stemmer_log sl WHERE sl.fejl_id = f.id AND sl.ejer_variant IS NOT NULL) AS antal_ejer_bekraeftet,
       CASE WHEN MAX(k.oprettet) > f.oprettet THEN MAX(k.oprettet) ELSE f.oprettet END AS sidste_aktivitet
     FROM fejl f
     LEFT JOIN kommentarer k ON k.fejl_id = f.id
@@ -243,6 +256,22 @@ export const queries = {
 
   taelStemmeOp: db.prepare(
     `UPDATE fejl SET stemmer = stemmer + 1, opdateret = datetime('now') WHERE id = ?`
+  ),
+
+  // --- Bil-bekraeftelse (let ejerskabs-signal: variant pr. stemme, intet VIN) ---
+  // Saetter variant paa den aktuelle browsers stemme for en fejl. .changes = 0 betyder
+  // at browseren ikke har stemt paa fejlen endnu.
+  bekraeftEjer: db.prepare(
+    `UPDATE stemmer_log SET ejer_variant = @variant WHERE fejl_id = @fejlId AND token = @token`
+  ),
+  antalEjerBekraeftet: db.prepare<[number], { n: number }>(
+    `SELECT COUNT(*) AS n FROM stemmer_log WHERE fejl_id = ? AND ejer_variant IS NOT NULL`
+  ),
+  // Variant-opdeling til eksporten, fx [{variant:'Long Range RWD', n:4}, ...].
+  ejerVarianter: db.prepare<[number], { variant: string; n: number }>(
+    `SELECT ejer_variant AS variant, COUNT(*) AS n FROM stemmer_log
+     WHERE fejl_id = ? AND ejer_variant IS NOT NULL
+     GROUP BY ejer_variant ORDER BY n DESC`
   ),
 
   kommentarerForFejl: db.prepare<[number], Kommentar>(
