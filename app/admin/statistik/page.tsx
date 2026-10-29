@@ -130,7 +130,7 @@ export default function StatistikSide() {
           <section className="kort mt-6 p-6">
             <h2 className="text-lg font-bold text-asfalt-900">Hen over døgnet</h2>
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. klokkeslæt (0–23).</p>
-            <div className="mt-4 flex h-44 items-end gap-1">
+            <div className="mt-4 flex h-44 items-end gap-1 border-b-2 border-asfalt-200">
               {perTime.map((n, t) => (
                 <div
                   key={t}
@@ -153,11 +153,11 @@ export default function StatistikSide() {
           <section className="kort mt-6 p-6">
             <h2 className="text-lg font-bold text-asfalt-900">Hen over ugen</h2>
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. ugedag.</p>
-            <div className="mt-4 flex h-40 items-end gap-2">
+            <div className="mt-4 flex h-40 items-end gap-2 border-b-2 border-asfalt-200">
               {perUgedag.map((n, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t bg-asfalt-700"
+                  className="flex-1 rounded-t bg-hjelm-500"
                   style={{ height: soejle(n, maxUgedag) }}
                   title={`${UGEDAGE[i].da}: ${n}`}
                 />
@@ -177,11 +177,11 @@ export default function StatistikSide() {
           <section className="kort mt-6 p-6">
             <h2 className="text-lg font-bold text-asfalt-900">Sidste 30 dage</h2>
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. dag.</p>
-            <div className="mt-4 flex h-40 items-end gap-0.5">
+            <div className="mt-4 flex h-40 items-end gap-0.5 border-b-2 border-asfalt-200">
               {sidste30.map((d) => (
                 <div
                   key={d.dato}
-                  className="flex-1 rounded-t bg-advarsel-500"
+                  className="flex-1 rounded-t bg-hjelm-500"
                   style={{ height: soejle(d.n, maxDag) }}
                   title={`${d.dato}: ${d.n}`}
                 />
