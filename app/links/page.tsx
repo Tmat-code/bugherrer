@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Nyttige links — Bugherrer',
+  title: 'Nyttige links',
   description:
     'Nyttige links til Zeekr 7GT: officielle sider, specifikationer, test, tilbehør, leasing og fællesskab.',
 };

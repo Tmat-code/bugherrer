@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'FAQ & spilleregler — Bugherrer',
+  title: 'FAQ & spilleregler',
   description:
     'Sådan virker Bugherrer, og hvordan vi opfører os over for hinanden. Spørgsmål, svar og spilleregler for fejl-boardet.',
 };

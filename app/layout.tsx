@@ -7,11 +7,35 @@ import SprogHint from '@/components/SprogHint';
 import UnderOpbygning from '@/components/UnderOpbygning';
 import { SITE } from '@/lib/config';
 
+const BESKRIVELSE =
+  'Fællesskabsdrevet, uafhængigt fejl-board hvor Zeekr 7GT-ejere kan samle og stemme på softwarefejl ("bugherrer") og sende dem videre til producenten.';
+const STD_TITEL = `${SITE.name} – Uafhængigt fejl-board for Zeekr 7GT-ejere`;
+
 export const metadata: Metadata = {
-  title: `${SITE.name} – Uafhængigt fejl-board for Zeekr 7GT-ejere`,
-  description:
-    'Fællesskabsdrevet, uafhængigt fejl-board hvor Zeekr 7GT-ejere kan samle og stemme på softwarefejl ("bugherrer") og sende dem videre til producenten.',
+  metadataBase: new URL(`https://${SITE.domain}`),
+  title: {
+    default: STD_TITEL,
+    // Undersider sætter kun deres eget navn; dette suffiks tilføjes automatisk.
+    template: `%s – ${SITE.name}`,
+  },
+  description: BESKRIVELSE,
   robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'da_DK',
+    siteName: SITE.name,
+    url: '/',
+    title: STD_TITEL,
+    description: BESKRIVELSE,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: STD_TITEL,
+    description: BESKRIVELSE,
+    images: ['/og.png'],
+  },
 };
 
 export default function RootLayout({

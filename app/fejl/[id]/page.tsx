@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { queries } from '@/lib/db';
@@ -7,6 +8,37 @@ import UpvoteKnap from '@/components/UpvoteKnap';
 import Kommentarspor from '@/components/Kommentarspor';
 
 export const dynamic = 'force-dynamic';
+
+// Per-side metadata: hver bug får sin egen titel, beskrivelse, canonical og OG —
+// godt for Google-indeksering og for deling af en konkret fejl.
+export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+  const id = Number(params.id);
+  const fejl = Number.isInteger(id) ? queries.fejlById.get(id) : null;
+  if (!fejl) return { title: 'Bugherre ikke fundet' };
+
+  const beskrivelse =
+    fejl.beskrivelse.replace(/\s+/g, ' ').trim().slice(0, 155) || fejl.titel;
+  const ogTitel = `${fejl.titel} — ${fejl.bilmodel} ${fejl.softwareversion}`;
+
+  return {
+    title: fejl.titel,
+    description: beskrivelse,
+    alternates: { canonical: `/fejl/${fejl.id}` },
+    openGraph: {
+      type: 'article',
+      url: `/fejl/${fejl.id}`,
+      title: ogTitel,
+      description: beskrivelse,
+      images: ['/og.png'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: ogTitel,
+      description: beskrivelse,
+      images: ['/og.png'],
+    },
+  };
+}
 
 export default function FejlDetalje({ params }: { params: { id: string } }) {
   const id = Number(params.id);

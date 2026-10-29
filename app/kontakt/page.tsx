@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import KontaktForm from '@/components/KontaktForm';
 
 export const metadata: Metadata = {
-  title: 'Kontakt — Bugherrer',
+  title: 'Kontakt',
   description: 'Skriv til formanden bag Bugherrer — ris, ros, idéer eller noget der driller på siden.',
 };
 

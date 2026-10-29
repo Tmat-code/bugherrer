@@ -4,6 +4,33 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — SEO-pakke (OG/social, per-side metadata, sitemap, robots)
+
+Delt på Facebook → nu gjort delevenligt og indekserbart:
+
+- **OpenGraph + Twitter cards** (layout.tsx): `metadataBase = https://{SITE_DOMAIN}`,
+  titel-template `%s – Bugherrer`, OG/Twitter-defaults + delebillede. Delinger på FB/X
+  viser nu titel, beskrivelse og billede i stedet for en nøgen URL.
+- **OG-delebillede** `public/og.png` (1200×630, byggeplads-tema, renderet med Chromium).
+- **Per-side metadata** på `/fejl/[id]` via `generateMetadata`: hver bug får egen titel,
+  beskrivelse (uddrag af beskrivelsen), canonical og OG — godt for både Google og deling
+  af en konkret fejl.
+- **Dynamisk sitemap** `app/sitemap.ts`: forside + statiske sider + alle fejl-sider.
+- **Dynamisk robots** `app/robots.ts` (erstatter `public/robots.txt`): Allow alt, Disallow
+  /admin, Sitemap- + Host-linje. Følger SITE_DOMAIN.
+- Undersiders titler (faq/kontakt/links) rettet til bare navn (template tilføjer suffiks).
+
+Verificeret end-to-end (standalone server): robots.txt, sitemap.xml og OG-tags renderer
+korrekt med absolut billede-URL. Build grøn (24 sider).
+
+**Torben bør gøre manuelt (engangs):**
+1. **Facebook:** kør URL'en gennem Sharing Debugger (developers.facebook.com/tools/debug)
+   og tryk "Scrape Again", så FB henter de nye OG-tags (den cacher den gamle nøgne version).
+2. **Google Search Console:** tilføj bugherrer.dk (hvis ikke gjort) og indsend
+   `https://bugherrer.dk/sitemap.xml`. (Du har allerede GSC på karvia.dk, så flowet er kendt.)
+
+---
+
 ## 2026-10-27 — Links: brugermanual tilføjet
 
 Tilføjet link på `/links` til Zeekrs officielle danske 7GT-brugermanual
