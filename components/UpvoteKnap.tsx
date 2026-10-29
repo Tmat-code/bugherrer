@@ -104,24 +104,17 @@ export default function UpvoteKnap({
                 disabled={bekraeftVenter}
                 className="rounded-lg border-2 border-asfalt-300 bg-white px-3 py-1.5 text-sm font-bold text-asfalt-800 transition-colors hover:border-hjelm-500 hover:bg-hjelm-50 disabled:opacity-50"
               >
-                {v === 'Anden' ? 'Anden / ved ikke' : v}
+                {v}
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setVisBekraeft(false)}
-            className="mt-3 text-xs text-asfalt-400 hover:text-asfalt-600"
-          >
-            Spring over
-          </button>
         </div>
       )}
 
       {/* Kvittering + samlet tal */}
       {minVariant && (
         <p className="mt-3 rounded-lg border-2 border-graes bg-green-50 p-3 text-sm font-bold text-asfalt-700">
-          ✅ Tak — din stemme tæller nu som bil-bekræftet
-          {minVariant !== 'Anden' ? ` (${minVariant})` : ''}.
+          ✅ Tak — din stemme tæller nu som bil-bekræftet ({minVariant}).
         </p>
       )}
       {!minVariant && bekraeftet > 0 && (

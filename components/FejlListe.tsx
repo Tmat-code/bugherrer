@@ -311,22 +311,15 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
                         onClick={() => bekraeftEjer(f.id, v)}
                         className="rounded-lg border-2 border-asfalt-300 bg-white px-2.5 py-1 text-xs font-bold text-asfalt-800 transition-colors hover:border-hjelm-500 hover:bg-hjelm-50"
                       >
-                        {v === 'Anden' ? 'Anden / ved ikke' : v}
+                        {v}
                       </button>
                     ))}
-                    <button
-                      onClick={() => setVisBekraeft((s) => ({ ...s, [f.id]: false }))}
-                      className="px-2 py-1 text-xs text-asfalt-400 hover:text-asfalt-600"
-                    >
-                      Spring over
-                    </button>
                   </div>
                 </div>
               )}
               {minVariant[f.id] && (
                 <p className="rounded-lg border-2 border-graes bg-green-50 p-2 text-xs font-bold text-asfalt-700">
-                  ✅ Tak — din stemme er nu bil-bekræftet
-                  {minVariant[f.id] !== 'Anden' ? ` (${minVariant[f.id]})` : ''}.
+                  ✅ Tak — din stemme er nu bil-bekræftet ({minVariant[f.id]}).
                 </p>
               )}
             </li>

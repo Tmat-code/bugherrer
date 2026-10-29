@@ -323,6 +323,16 @@ export const queries = {
     ORDER BY k.oprettet DESC LIMIT ?
   `),
 
+  // Al aktivitet (stemmer + kommentarer + nye fejl) siden et tidspunkt, til statistik.
+  // Tidsstempler er UTC; bucketing til dansk tid sker i statistik-siden.
+  aktivitetSiden: db.prepare<[string, string, string], { oprettet: string; slags: string }>(`
+    SELECT oprettet, 'stemme'    AS slags FROM stemmer_log WHERE oprettet >= ?
+    UNION ALL
+    SELECT oprettet, 'kommentar' AS slags FROM kommentarer  WHERE oprettet >= ?
+    UNION ALL
+    SELECT oprettet, 'fejl'      AS slags FROM fejl          WHERE oprettet >= ?
+  `),
+
   // --- Henvendelser (kontaktformular) ---
   opretHenvendelse: db.prepare(
     `INSERT INTO henvendelser (navn, email, besked) VALUES (@navn, @email, @besked)`

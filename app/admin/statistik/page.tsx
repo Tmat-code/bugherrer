@@ -1,0 +1,201 @@
+import Link from 'next/link';
+import { queries } from '@/lib/db';
+import { erLoggetInd } from '@/lib/auth';
+import AdminLogin from '@/components/AdminLogin';
+
+export const dynamic = 'force-dynamic';
+
+const TZ = 'Europe/Copenhagen';
+const UGEDAGE = [
+  { en: 'Mon', da: 'Man' },
+  { en: 'Tue', da: 'Tir' },
+  { en: 'Wed', da: 'Ons' },
+  { en: 'Thu', da: 'Tor' },
+  { en: 'Fri', da: 'Fre' },
+  { en: 'Sat', da: 'Lør' },
+  { en: 'Sun', da: 'Søn' },
+];
+
+// Konverterer et UTC-tidsstempel til dansk tid og trækker dato, time og ugedag ud.
+function dkDele(ts: string) {
+  const d = new Date(ts.replace(' ', 'T') + 'Z');
+  const dele = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23',
+    weekday: 'short',
+  }).formatToParts(d);
+  const g = (t: string) => dele.find((x) => x.type === t)?.value ?? '';
+  return {
+    dato: `${g('year')}-${g('month')}-${g('day')}`,
+    time: Number(g('hour')) % 24,
+    ugedag: g('weekday'),
+  };
+}
+
+export default function StatistikSide() {
+  if (!erLoggetInd()) return <AdminLogin />;
+
+  // Hent 90 dages aktivitet (UTC-grænse).
+  const graense = new Date(Date.now() - 90 * 86_400_000)
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+  const raa = queries.aktivitetSiden.all(graense, graense, graense);
+
+  // Buckets
+  const perTime = Array<number>(24).fill(0);
+  const perUgedag = Array<number>(7).fill(0);
+  const perDagMap = new Map<string, number>();
+  const antalType = { stemme: 0, kommentar: 0, fejl: 0 } as Record<string, number>;
+
+  for (const r of raa) {
+    const { dato, time, ugedag } = dkDele(r.oprettet);
+    perTime[time]++;
+    const ui = UGEDAGE.findIndex((u) => u.en === ugedag);
+    if (ui >= 0) perUgedag[ui]++;
+    perDagMap.set(dato, (perDagMap.get(dato) ?? 0) + 1);
+    if (r.slags in antalType) antalType[r.slags]++;
+  }
+
+  // Sidste 30 dage (danske datoer), ældst → nyest.
+  const sidste30: { dato: string; n: number }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = dkDele(new Date(Date.now() - i * 86_400_000).toISOString()).dato;
+    sidste30.push({ dato: d, n: perDagMap.get(d) ?? 0 });
+  }
+
+  const totalAktivitet = raa.length;
+  const maxTime = Math.max(1, ...perTime);
+  const maxUgedag = Math.max(1, ...perUgedag);
+  const maxDag = Math.max(1, ...sidste30.map((d) => d.n));
+
+  // Mest/roligst tidspunkt (kun meningsfuldt med lidt data).
+  const travlTime = perTime.indexOf(Math.max(...perTime));
+  const roligTime = perTime.indexOf(Math.min(...perTime));
+
+  const toCifret = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black text-asfalt-900">📈 Aktivitet</h1>
+          <p className="text-sm text-asfalt-500">
+            Stemmer, svar og nye bugherrer de sidste 90 dage — vist i dansk tid.
+          </p>
+        </div>
+        <Link href="/admin" className="btn-ghost text-sm">
+          ← Tilbage til admin
+        </Link>
+      </div>
+
+      {/* Nøgletal */}
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Tal tal={totalAktivitet} tekst="Hændelser i alt" ikon="⚡" />
+        <Tal tal={antalType.stemme} tekst="Stemmer" ikon="▲" />
+        <Tal tal={antalType.kommentar} tekst="Svar" ikon="💬" />
+        <Tal tal={antalType.fejl} tekst="Nye bugherrer" ikon="🛠️" />
+      </div>
+
+      {totalAktivitet === 0 ? (
+        <div className="kort mt-6 p-10 text-center text-asfalt-500">
+          Der er ikke registreret aktivitet endnu. Kom igen, når der er kommet lidt gang i den. 👷
+        </div>
+      ) : (
+        <>
+          {/* Deploy-vindue-tip */}
+          <div className="kort mt-6 border-l-4 border-hjelm-500 p-4 text-sm text-asfalt-700">
+            🏗️ <strong>Travlest:</strong> omkring kl. {toCifret(travlTime)} ·{' '}
+            <strong>Roligst:</strong> omkring kl. {toCifret(roligTime)}. De stille timer er
+            det tryggeste tidspunkt at deploye (kort nedetid rammer færrest).
+          </div>
+
+          {/* Pr. klokkeslæt */}
+          <section className="kort mt-6 p-6">
+            <h2 className="text-lg font-bold text-asfalt-900">Hen over døgnet</h2>
+            <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. klokkeslæt (0–23).</p>
+            <div className="mt-4 flex h-44 items-end gap-1">
+              {perTime.map((n, t) => (
+                <div key={t} className="flex flex-1 flex-col items-center gap-1">
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t bg-hjelm-500"
+                      style={{ height: `${(n / maxTime) * 100}%` }}
+                      title={`kl. ${toCifret(t)}: ${n}`}
+                    />
+                  </div>
+                  <span className="text-[9px] text-asfalt-400">{t % 3 === 0 ? toCifret(t) : ''}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Pr. ugedag */}
+          <section className="kort mt-6 p-6">
+            <h2 className="text-lg font-bold text-asfalt-900">Hen over ugen</h2>
+            <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. ugedag.</p>
+            <div className="mt-4 flex h-40 items-end gap-2">
+              {perUgedag.map((n, i) => (
+                <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t bg-asfalt-700"
+                      style={{ height: `${(n / maxUgedag) * 100}%` }}
+                      title={`${UGEDAGE[i].da}: ${n}`}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-asfalt-500">{UGEDAGE[i].da}</span>
+                  <span className="text-[10px] text-asfalt-400">{n}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Sidste 30 dage */}
+          <section className="kort mt-6 p-6">
+            <h2 className="text-lg font-bold text-asfalt-900">Sidste 30 dage</h2>
+            <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. dag.</p>
+            <div className="mt-4 flex h-40 items-end gap-0.5">
+              {sidste30.map((d) => (
+                <div key={d.dato} className="flex flex-1 flex-col items-center">
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full rounded-t bg-advarsel-500"
+                      style={{ height: `${(d.n / maxDag) * 100}%` }}
+                      title={`${d.dato}: ${d.n}`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-asfalt-400">
+              <span>{sidste30[0]?.dato.slice(5)}</span>
+              <span>i dag</span>
+            </div>
+          </section>
+
+          <p className="mt-6 text-xs leading-relaxed text-asfalt-500">
+            💡 Dette er <strong>fællesskabs-aktivitet</strong> (stemmer/svar/meldinger) — ikke
+            serverens CPU/hukommelse. Den egentlige server-belastning kan du se i Coolifys egen
+            overvågning på applikationen.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Tal({ tal, tekst, ikon }: { tal: number; tekst: string; ikon: string }) {
+  return (
+    <div className="rounded-lg border-2 border-asfalt-200 bg-white p-3 text-center">
+      <div className="text-2xl font-black text-asfalt-900">
+        <span aria-hidden>{ikon}</span> {tal}
+      </div>
+      <div className="mt-0.5 text-xs font-bold text-asfalt-500">{tekst}</div>
+    </div>
+  );
+}

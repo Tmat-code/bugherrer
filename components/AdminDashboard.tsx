@@ -136,7 +136,10 @@ export default function AdminDashboard({
           </h1>
           <p className="text-sm text-asfalt-500">{fejl.length} bugherrer i databasen.</p>
         </div>
-        <button onClick={logUd} className="btn-ghost text-sm">Log ud</button>
+        <div className="flex items-center gap-2">
+          <a href="/admin/statistik" className="btn-ghost text-sm">📈 Aktivitet</a>
+          <button onClick={logUd} className="btn-ghost text-sm">Log ud</button>
+        </div>
       </div>
 
       {/* Overblik */}

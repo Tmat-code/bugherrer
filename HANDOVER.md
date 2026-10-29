@@ -4,6 +4,23 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — Admin-statistikside + bil-bekræft justeret
+
+**Statistik:** ny side `/admin/statistik` (📈 Aktivitet-link i admin-headeren). Viser
+fællesskabs-aktivitet (stemmer + svar + nye bugherrer) de sidste 90 dage, i **dansk tid**:
+nøgletal, søjlediagram pr. klokkeslæt (0–23), pr. ugedag, og pr. dag (sidste 30). Et
+lille "travlest/roligst"-tip peger på det tryggeste deploy-vindue. Rene CSS-søjler
+(ingen chart-lib). Ny query `aktivitetSiden` (UNION af de tre tidsstempel-kilder);
+bucketing til Europe/Copenhagen sker i siden via Intl. NB: dette er *aktivitet*, ikke
+server-CPU — ægte server-belastning ses i Coolifys egen overvågning.
+
+**Bil-bekræft justeret:** fjernet "Spring over"-knappen OG "Anden / ved ikke"-valget —
+nu kun de tre rigtige varianter (Privilege AWD / Long Range RWD / Core RWD). En ægte
+ejer kender sin variant → renere data. Boksen er stadig ikke-blokerende (ikke-ejere
+ignorerer den bare).
+
+---
+
 ## 2026-10-29 — Bil-bekræftelse (let ejerskabs-signal, intet VIN)
 
 Troværdighed til Zeekr: efter at have stemt kan brugeren med ét tryk vælge sin
