@@ -40,6 +40,13 @@ function dkDele(ts: string): { dato: string; time: number; ugedag: string } | nu
   };
 }
 
+// Søjlehøjde i procent af chart-containeren. 0 → ingen søjle; ellers mindst 4% så en
+// enkelt hændelse stadig er synlig.
+function soejle(n: number, max: number): string {
+  if (n <= 0) return '0%';
+  return `${Math.max((n / max) * 100, 4)}%`;
+}
+
 export default function StatistikSide() {
   if (!erLoggetInd()) return <AdminLogin />;
 
@@ -125,15 +132,18 @@ export default function StatistikSide() {
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. klokkeslæt (0–23).</p>
             <div className="mt-4 flex h-44 items-end gap-1">
               {perTime.map((n, t) => (
-                <div key={t} className="flex flex-1 flex-col items-center gap-1">
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      className="w-full rounded-t bg-hjelm-500"
-                      style={{ height: `${(n / maxTime) * 100}%` }}
-                      title={`kl. ${toCifret(t)}: ${n}`}
-                    />
-                  </div>
-                  <span className="text-[9px] text-asfalt-400">{t % 3 === 0 ? toCifret(t) : ''}</span>
+                <div
+                  key={t}
+                  className="flex-1 rounded-t bg-hjelm-500"
+                  style={{ height: soejle(n, maxTime) }}
+                  title={`kl. ${toCifret(t)}: ${n}`}
+                />
+              ))}
+            </div>
+            <div className="mt-1 flex gap-1 text-[9px] text-asfalt-400">
+              {perTime.map((_, t) => (
+                <div key={t} className="flex-1 text-center">
+                  {t % 3 === 0 ? toCifret(t) : ''}
                 </div>
               ))}
             </div>
@@ -145,16 +155,19 @@ export default function StatistikSide() {
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. ugedag.</p>
             <div className="mt-4 flex h-40 items-end gap-2">
               {perUgedag.map((n, i) => (
-                <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      className="w-full rounded-t bg-asfalt-700"
-                      style={{ height: `${(n / maxUgedag) * 100}%` }}
-                      title={`${UGEDAGE[i].da}: ${n}`}
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-asfalt-500">{UGEDAGE[i].da}</span>
-                  <span className="text-[10px] text-asfalt-400">{n}</span>
+                <div
+                  key={i}
+                  className="flex-1 rounded-t bg-asfalt-700"
+                  style={{ height: soejle(n, maxUgedag) }}
+                  title={`${UGEDAGE[i].da}: ${n}`}
+                />
+              ))}
+            </div>
+            <div className="mt-1 flex gap-2">
+              {perUgedag.map((n, i) => (
+                <div key={i} className="flex-1 text-center">
+                  <div className="text-xs font-bold text-asfalt-500">{UGEDAGE[i].da}</div>
+                  <div className="text-[10px] text-asfalt-400">{n}</div>
                 </div>
               ))}
             </div>
@@ -166,15 +179,12 @@ export default function StatistikSide() {
             <p className="mt-0.5 text-xs text-asfalt-500">Hændelser pr. dag.</p>
             <div className="mt-4 flex h-40 items-end gap-0.5">
               {sidste30.map((d) => (
-                <div key={d.dato} className="flex flex-1 flex-col items-center">
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      className="w-full rounded-t bg-advarsel-500"
-                      style={{ height: `${(d.n / maxDag) * 100}%` }}
-                      title={`${d.dato}: ${d.n}`}
-                    />
-                  </div>
-                </div>
+                <div
+                  key={d.dato}
+                  className="flex-1 rounded-t bg-advarsel-500"
+                  style={{ height: soejle(d.n, maxDag) }}
+                  title={`${d.dato}: ${d.n}`}
+                />
               ))}
             </div>
             <div className="mt-1 flex justify-between text-[10px] text-asfalt-400">

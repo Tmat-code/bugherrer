@@ -4,6 +4,17 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-29 — Fix: statistik-søjler var usynlige (procent-højde)
+
+Søjlerne i statistik-charts rendrede ikke (højde 0 trods data). Årsag: `height: X%` på
+en søjle hvis flex-forælder havde ubestemt højde pga. ekstra indlejring (flex-col +
+flex-1-wrapper). Fix: søjlerne er nu **direkte børn** af den faste-højde flex-container
+(h-44/h-40, items-end), så procent-højden regner mod en bestemt højde; labels flyttet til
+en separat række under. `soejle()`-helper giver min. 4% så enkelt-hændelser er synlige.
+Verificeret i HTML-output (reelle height-%).
+
+---
+
 ## 2026-10-29 — Fix: statistik-siden kastede 500 (dobbelt-Z i dato)
 
 `/admin/statistik` gav server-fejl (RangeError: Invalid time value). Årsag: "sidste 30
