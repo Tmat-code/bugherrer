@@ -20,7 +20,8 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const antal = Math.min(Math.max(Number(searchParams.get('top')) || 20, 1), 100);
+  const topParam = searchParams.get('top');
+  const antal = topParam === 'alle' ? 1_000_000 : Math.min(Math.max(Number(topParam) || 20, 1), 100);
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
   const kunAendrede = searchParams.get('kunAendrede') === '1';
   const medKommentarer = searchParams.get('kommentarer') === '1';

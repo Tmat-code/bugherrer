@@ -47,7 +47,7 @@ export default function AdminDashboard({
   overblik: Overblik;
 }) {
   const router = useRouter();
-  const [top, setTop] = useState(20);
+  const [top, setTop] = useState<number | 'alle'>(20);
   const [sprog, setSprog] = useState('da');
   const [kunAendrede, setKunAendrede] = useState(false);
   const [medKommentarer, setMedKommentarer] = useState(false);
@@ -88,7 +88,7 @@ export default function AdminDashboard({
   async function markerSendt() {
     if (
       !confirm(
-        `Markér de ${top} øverste${kunAendrede ? ' (nye + eskalerende)' : ''} som sendt til Zeekr nu?\n\n` +
+        `Markér ${top === 'alle' ? 'alle' : 'de ' + top + ' øverste'}${kunAendrede ? ' (nye + eskalerende)' : ''} som sendt til Zeekr nu?\n\n` +
           'Deres nuværende stemmetal gemmes som nulpunkt, så de først dukker op igen næste gang, hvis de får flere stemmer.'
       )
     )
@@ -297,12 +297,13 @@ export default function AdminDashboard({
             <select
               id="top"
               value={top}
-              onChange={(e) => setTop(Number(e.target.value))}
+              onChange={(e) => setTop(e.target.value === 'alle' ? 'alle' : Number(e.target.value))}
               className="input !w-28"
             >
               <option value={10}>Top 10</option>
               <option value={20}>Top 20</option>
               <option value={50}>Top 50</option>
+              <option value="alle">Alle</option>
             </select>
           </div>
           <div>
@@ -370,7 +371,9 @@ export default function AdminDashboard({
             disabled={markerTravl}
             className="btn-ghost mt-3 text-sm"
           >
-            {markerTravl ? 'Markerer…' : `📮 Markér top ${top} som sendt til Zeekr`}
+            {markerTravl
+              ? 'Markerer…'
+              : `📮 Markér ${top === 'alle' ? 'alle' : 'top ' + top} som sendt til Zeekr`}
           </button>
           <p className="mt-1 text-xs text-asfalt-400">
             Tryk her <em>når du har sendt rapporten</em> — så starter deres delta forfra.

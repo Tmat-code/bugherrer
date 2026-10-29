@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const antal = Math.min(Math.max(Number(body.top) || 20, 1), 200);
+  const antal = body.top === 'alle' ? 1_000_000 : Math.min(Math.max(Number(body.top) || 20, 1), 200);
   const kunAendrede = Boolean(body.kunAendrede);
 
   const fejl = kunAendrede

@@ -4,6 +4,16 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-30 — Eksport: "Alle"-mulighed (send hele listen)
+
+Antal-vælgeren i eksport-panelet har nu **"Alle"** ud over Top 10/20/50 — så
+månedsrapporten kan tage HVER fejl med (passer til reglen "Zeekr får altid alt med").
+Hver fejl er stadig annoteret med NY/+N, så eskalering er synlig selv i den fulde liste.
+`top=alle` håndteres i PDF-, CSV- og marker-sendt-endpoints. Afklaring: "Kun nye +
+eskalerende"-fluebenet er valgfrit; uden det sorteres intet fra.
+
+---
+
 ## 2026-10-30 — Kommentarer i eksport-rapporten
 
 Zeekr-rapporten kan nu tage ejernes kommentarer med.
