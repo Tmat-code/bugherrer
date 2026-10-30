@@ -16,10 +16,16 @@ function mType(t: string | undefined) {
   return MELDINGSTYPER[t === 'oenske' ? 'oenske' : 'fejl'];
 }
 
-export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
+export default function FejlListe({
+  fejl,
+  startFilter = 'alle',
+}: {
+  fejl: FejlMedSvar[];
+  startFilter?: TypeFilter;
+}) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sortering>('stemmer');
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(startFilter);
   // Lokalt overlay af stemmetal, saa knappen opdaterer med det samme.
   const [stemmeOverlay, setStemmeOverlay] = useState<Record<number, number>>({});
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});

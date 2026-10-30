@@ -5,8 +5,14 @@ import FejlListe from '@/components/FejlListe';
 // Altid frisk fra databasen (ingen statisk caching af listen).
 export const dynamic = 'force-dynamic';
 
-export default function Forside() {
+export default function Forside({
+  searchParams,
+}: {
+  searchParams?: { type?: string };
+}) {
   const fejl = queries.alleFejlMedSvar.all();
+  const startFilter =
+    searchParams?.type === 'oenske' ? 'oenske' : searchParams?.type === 'fejl' ? 'fejl' : 'alle';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -59,7 +65,7 @@ export default function Forside() {
 
       {/* Listen */}
       <section id="listen" className="mt-10 scroll-mt-20">
-        <FejlListe fejl={fejl} />
+        <FejlListe fejl={fejl} startFilter={startFilter} />
       </section>
     </div>
   );
