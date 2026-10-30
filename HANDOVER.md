@@ -4,6 +4,16 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-31 — Fix: "Ønsker"-menugenvej slår nu filteret til
+
+Klik på "💡 Ønsker" i menuen (mens man allerede var på forsiden) ændrede URL til
+`/?type=oenske`, men FejlListe re-mountede ikke, så `useState(startFilter)` beholdt
+"Alle". Fix: FejlListe synker nu typeFilter med `?type` via `useSearchParams` + useEffect,
+så genvejen virker både ved frisk load og ved klik fra forsiden. (Header "Links"
+flyttet til kun footeren tidligere samme omgang.)
+
+---
+
 ## 2026-10-30 — Ønsker: ny gren (fejl + ønsker i samme board)
 
 Efter brugerønske: boardet samler nu både FEJL 🛠️ og ØNSKER 💡 (feature requests til

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
@@ -26,6 +27,14 @@ export default function FejlListe({
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sortering>('stemmer');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(startFilter);
+
+  // Hold filteret i sync med ?type i URL'en, så menu-genvejen "Ønsker" (/?type=oenske)
+  // slår filteret til — også når man allerede står på forsiden (komponenten re-mounter ikke).
+  const params = useSearchParams();
+  const urlType = params.get('type');
+  useEffect(() => {
+    setTypeFilter(urlType === 'oenske' ? 'oenske' : urlType === 'fejl' ? 'fejl' : 'alle');
+  }, [urlType]);
   // Lokalt overlay af stemmetal, saa knappen opdaterer med det samme.
   const [stemmeOverlay, setStemmeOverlay] = useState<Record<number, number>>({});
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});
