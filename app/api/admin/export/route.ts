@@ -2,7 +2,15 @@ import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { I18N, erGyldigtSprog, oversaetStatus, deltaTekst, DATO_LOCALE } from '@/lib/rapport-i18n';
+import {
+  I18N,
+  erGyldigtSprog,
+  oversaetStatus,
+  deltaTekst,
+  DATO_LOCALE,
+  RAPPORT_RAMME,
+  erGyldigRapportType,
+} from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
 
@@ -25,10 +33,17 @@ export async function GET(req: Request) {
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
   const kunAendrede = searchParams.get('kunAendrede') === '1';
   const medKommentarer = searchParams.get('kommentarer') === '1';
+  const rapportType = erGyldigRapportType(searchParams.get('type'));
   const t = I18N[sprog];
-  const raaFejl = kunAendrede
-    ? queries.topFejlKunAendrede.all(antal)
-    : queries.topFejl.all(antal);
+  const ramme = RAPPORT_RAMME[sprog][rapportType];
+  const raaFejl =
+    rapportType === 'begge'
+      ? kunAendrede
+        ? queries.topFejlKunAendrede.all(antal)
+        : queries.topFejl.all(antal)
+      : kunAendrede
+        ? queries.topFejlKunAendredeType.all(rapportType, antal)
+        : queries.topFejlType.all(rapportType, antal);
   const fejl = await oversaetFejl(raaFejl, sprog);
   const kommMap = medKommentarer ? await hentKommentarerTilRapport(fejl, sprog) : {};
 
@@ -56,7 +71,7 @@ export async function GET(req: Request) {
       .fillColor(GUL)
       .fontSize(22)
       .font('Helvetica-Bold')
-      .text(t.rapportTitel, 50, 35);
+      .text(ramme.titel, 50, 35);
     doc
       .fillColor('#ffffff')
       .fontSize(11)
@@ -75,7 +90,7 @@ export async function GET(req: Request) {
       .fillColor(ASFALT)
       .fontSize(10)
       .font('Helvetica')
-      .text(t.intro, { width: sideBredde, align: 'left' });
+      .text(ramme.intro, { width: sideBredde, align: 'left' });
     doc.moveDown(1);
 
     // ===== Fejl-liste =====
@@ -245,7 +260,7 @@ export async function GET(req: Request) {
   return new NextResponse(new Uint8Array(pdfBytes), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="bugherrer-${t.filnavn}-${datoFil}.pdf"`,
+      'Content-Disposition': `attachment; filename="bugherrer-${rapportType}-${t.filnavn}-${datoFil}.pdf"`,
     },
   });
 }

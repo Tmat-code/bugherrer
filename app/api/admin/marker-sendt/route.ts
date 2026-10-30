@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
+import { erGyldigRapportType } from '@/lib/rapport-i18n';
 
 // POST /api/admin/marker-sendt — markér de top-N fejl (samme udvalg som eksporten)
 // som "sendt til Zeekr nu". Gemmer deres nuvaerende stemmetal som nulpunkt, saa de
@@ -13,10 +14,16 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const antal = body.top === 'alle' ? 1_000_000 : Math.min(Math.max(Number(body.top) || 20, 1), 200);
   const kunAendrede = Boolean(body.kunAendrede);
+  const rapportType = erGyldigRapportType(body.type);
 
-  const fejl = kunAendrede
-    ? queries.topFejlKunAendrede.all(antal)
-    : queries.topFejl.all(antal);
+  const fejl =
+    rapportType === 'begge'
+      ? kunAendrede
+        ? queries.topFejlKunAendrede.all(antal)
+        : queries.topFejl.all(antal)
+      : kunAendrede
+        ? queries.topFejlKunAendredeType.all(rapportType, antal)
+        : queries.topFejlType.all(rapportType, antal);
 
   const markerAlle = db.transaction((ider: number[]) => {
     for (const id of ider) queries.markerSendt.run(id);

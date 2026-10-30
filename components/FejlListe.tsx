@@ -6,14 +6,20 @@ import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
 import { hentSete, gemSete, hentMine, type SeteSvar } from '@/lib/svar-set';
-import { ZEEKR_VARIANTER } from '@/lib/config';
+import { ZEEKR_VARIANTER, MELDINGSTYPER } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 
 type Sortering = 'stemmer' | 'nyeste' | 'aktivitet';
+type TypeFilter = 'alle' | 'fejl' | 'oenske';
+
+function mType(t: string | undefined) {
+  return MELDINGSTYPER[t === 'oenske' ? 'oenske' : 'fejl'];
+}
 
 export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sortering>('stemmer');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle');
   // Lokalt overlay af stemmetal, saa knappen opdaterer med det samme.
   const [stemmeOverlay, setStemmeOverlay] = useState<Record<number, number>>({});
   const [harStemt, setHarStemt] = useState<Record<number, boolean>>({});
@@ -46,7 +52,11 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
 
   const visteFejl = useMemo(() => {
     const fundet = soeg(fejl, query);
-    const filtreret = visKunMine ? fundet.filter((f) => mine.includes(f.id)) : fundet;
+    const efterType =
+      typeFilter === 'alle'
+        ? fundet
+        : fundet.filter((f) => (f.type === 'oenske' ? 'oenske' : 'fejl') === typeFilter);
+    const filtreret = visKunMine ? efterType.filter((f) => mine.includes(f.id)) : efterType;
     const medOverlay = filtreret.map((f) => ({
       ...f,
       stemmer: stemmeOverlay[f.id] ?? f.stemmer,
@@ -58,7 +68,11 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
       return [...medOverlay].sort((a, b) => b.sidste_aktivitet.localeCompare(a.sidste_aktivitet));
     }
     return [...medOverlay].sort((a, b) => b.stemmer - a.stemmer);
-  }, [fejl, query, sort, stemmeOverlay, visKunMine, mine]);
+  }, [fejl, query, sort, stemmeOverlay, visKunMine, mine, typeFilter]);
+
+  // Antal af hver type (til filter-labels), uafhængigt af valgt filter.
+  const antalFejl = fejl.filter((f) => f.type !== 'oenske').length;
+  const antalOensker = fejl.filter((f) => f.type === 'oenske').length;
 
   // Begræns forsiden til et antal kort ad gangen (men vis alt ved søgning/filter).
   const begraens = !query && !visKunMine;
@@ -116,7 +130,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
       {/* Soegebar */}
       <div className="mb-6">
         <label htmlFor="soeg" className="sr-only">
-          Søg efter en bugherre
+          Søg efter en melding
         </label>
         <div className="relative">
           <span
@@ -130,7 +144,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Søg efter en 'bugherre' (fejl)…"
+            placeholder="Søg efter en fejl eller et ønske…"
             className="input !pl-12 !py-4 text-lg shadow-sm"
           />
         </div>
@@ -155,10 +169,38 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
         </div>
       )}
 
+      {/* Type-filter: Alle / Fejl / Ønsker */}
+      <div className="mb-3 flex flex-wrap gap-1 rounded-lg bg-asfalt-100 p-1">
+        {([
+          { key: 'alle', navn: 'Alle', antal: antalFejl + antalOensker },
+          { key: 'fejl', navn: '🛠️ Fejl', antal: antalFejl },
+          { key: 'oenske', navn: '💡 Ønsker', antal: antalOensker },
+        ] as const).map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setTypeFilter(f.key)}
+            className={`rounded px-3 py-1 text-sm font-bold transition-colors ${
+              typeFilter === f.key ? 'bg-hjelm-500 text-asfalt-900' : 'text-asfalt-600'
+            }`}
+          >
+            {f.navn} <span className="font-normal opacity-70">({f.antal})</span>
+          </button>
+        ))}
+      </div>
+
       {/* Sortering + antal */}
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-bold text-asfalt-600">
-          {visteFejl.length} {visteFejl.length === 1 ? 'bugherre' : 'bugherrer'}
+          {visteFejl.length}{' '}
+          {typeFilter === 'oenske'
+            ? visteFejl.length === 1
+              ? 'ønske'
+              : 'ønsker'
+            : typeFilter === 'fejl'
+              ? 'fejl'
+              : visteFejl.length === 1
+                ? 'melding'
+                : 'meldinger'}
           {query && ' fundet'}
         </p>
         <div className="flex gap-1 rounded-lg bg-asfalt-100 p-1">
@@ -199,23 +241,23 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
                 Du har ikke meldt noget ind endnu
               </p>
               <p className="mt-1 text-sm text-asfalt-500">
-                Når du melder en bugherre, dukker den op her — og du kan følge med i svarene.
+                Når du melder en fejl eller et ønske, dukker den op her — og du kan følge med i svarene.
               </p>
               <Link href="/opret" className="btn-primary mt-4">
-                Meld en bugherre
+                Meld ind
               </Link>
             </>
           ) : (
             <>
               <p className="text-4xl" aria-hidden>🚧</p>
               <p className="mt-3 font-bold text-asfalt-700">
-                Ingen bugherrer matcher &quot;{query}&quot;
+                Ingen meldinger matcher &quot;{query}&quot;
               </p>
               <p className="mt-1 text-sm text-asfalt-500">
-                Fandt du ikke din fejl? Så er det måske en helt ny en.
+                Fandt du ikke din fejl eller dit ønske? Så er det måske en helt ny en.
               </p>
               <Link href={`/opret?q=${encodeURIComponent(query)}`} className="btn-primary mt-4">
-                Meld en ny bugherre
+                Meld ind
               </Link>
             </>
           )}
@@ -230,7 +272,7 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
               <button
                 onClick={() => upvote(f.id)}
                 disabled={harStemt[f.id]}
-                aria-label={`Oplever du også dette? Stem på: ${f.titel}`}
+                aria-label={`${f.type === 'oenske' ? 'Ønsker du også dette?' : 'Oplever du også dette?'} Stem på: ${f.titel}`}
                 className={`flex shrink-0 flex-col items-center justify-center rounded-lg border-2 px-4 py-2 font-black transition-colors ${
                   harStemt[f.id]
                     ? 'border-hjelm-500 bg-hjelm-100 text-asfalt-700'
@@ -252,12 +294,17 @@ export default function FejlListe({ fejl }: { fejl: FejlMedSvar[] }) {
                   </h3>
                 </Link>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-asfalt-500">
+                  <span className="rounded bg-asfalt-900 px-2 py-0.5 font-bold text-white">
+                    {mType(f.type).ikon} {mType(f.type).badge}
+                  </span>
                   <span className="rounded bg-asfalt-100 px-2 py-0.5 font-bold text-asfalt-700">
                     🚗 {f.bilmodel}
                   </span>
-                  <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-asfalt-700">
-                    {f.softwareversion}
-                  </span>
+                  {f.softwareversion && (
+                    <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-asfalt-700">
+                      {f.softwareversion}
+                    </span>
+                  )}
                   <StatusTag status={f.status} />
                   <span className="text-asfalt-400">· 🕑 {relativTid(f.oprettet)}</span>
                   {(() => {

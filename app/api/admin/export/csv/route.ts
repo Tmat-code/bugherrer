@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { I18N, erGyldigtSprog, oversaetStatus, deltaTekst } from '@/lib/rapport-i18n';
+import {
+  I18N,
+  erGyldigtSprog,
+  oversaetStatus,
+  deltaTekst,
+  erGyldigRapportType,
+} from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
 
@@ -15,10 +21,16 @@ export async function GET(req: Request) {
   const sprog = erGyldigtSprog(searchParams.get('sprog'));
   const kunAendrede = searchParams.get('kunAendrede') === '1';
   const medKommentarer = searchParams.get('kommentarer') === '1';
+  const rapportType = erGyldigRapportType(searchParams.get('type'));
   const t = I18N[sprog];
-  const raaFejl = kunAendrede
-    ? queries.topFejlKunAendrede.all(antal)
-    : queries.topFejl.all(antal);
+  const raaFejl =
+    rapportType === 'begge'
+      ? kunAendrede
+        ? queries.topFejlKunAendrede.all(antal)
+        : queries.topFejl.all(antal)
+      : kunAendrede
+        ? queries.topFejlKunAendredeType.all(rapportType, antal)
+        : queries.topFejlType.all(rapportType, antal);
   const fejl = await oversaetFejl(raaFejl, sprog);
   const kommMap = medKommentarer ? await hentKommentarerTilRapport(fejl, sprog) : {};
 

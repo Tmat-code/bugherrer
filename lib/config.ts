@@ -31,6 +31,18 @@ export type ZeekrVariant = (typeof ZEEKR_VARIANTER)[number];
 // Når true: ingen dropdown, alt antages at vaere STANDARD_BILMODEL.
 export const KUN_EN_MODEL = BILMODELLER.length === 1;
 
+// Meldingstype: boardet samler både FEJL (bugs) og ØNSKER (ønsker til ny funktionalitet).
+// Samme maskineri (stemmer, bekraeftelse, kommentarer, eksport) for begge — kun type adskiller.
+export const MELDINGSTYPER = {
+  fejl: { navn: 'Fejl', flertal: 'fejl', ikon: '🛠️', badge: 'Fejl' },
+  oenske: { navn: 'Ønske', flertal: 'ønsker', ikon: '💡', badge: 'Ønske' },
+} as const;
+export type MeldingsType = keyof typeof MELDINGSTYPER; // 'fejl' | 'oenske'
+
+export function erGyldigType(t: string | null | undefined): MeldingsType {
+  return t === 'oenske' ? 'oenske' : 'fejl';
+}
+
 // Status-flow for en bugherre (fejl).
 export const STATUSSER = [
   'Undersøges',

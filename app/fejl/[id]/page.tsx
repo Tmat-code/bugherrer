@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
+import { MELDINGSTYPER } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 import UpvoteKnap from '@/components/UpvoteKnap';
 import Kommentarspor from '@/components/Kommentarspor';
@@ -18,7 +19,7 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
 
   const beskrivelse =
     fejl.beskrivelse.replace(/\s+/g, ' ').trim().slice(0, 155) || fejl.titel;
-  const ogTitel = `${fejl.titel} — ${fejl.bilmodel} ${fejl.softwareversion}`;
+  const ogTitel = `${fejl.titel} — ${fejl.bilmodel}${fejl.softwareversion ? ' ' + fejl.softwareversion : ''}`;
 
   return {
     title: fejl.titel,
@@ -66,13 +67,19 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
 
       <article className="mt-4">
         <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded bg-asfalt-900 px-2 py-0.5 text-xs font-bold text-white">
+            {MELDINGSTYPER[fejl.type === 'oenske' ? 'oenske' : 'fejl'].ikon}{' '}
+            {MELDINGSTYPER[fejl.type === 'oenske' ? 'oenske' : 'fejl'].badge}
+          </span>
           <StatusTag status={fejl.status} />
           <span className="rounded bg-asfalt-100 px-2 py-0.5 text-xs font-bold text-asfalt-700">
             🚗 {fejl.bilmodel}
           </span>
-          <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-xs text-asfalt-700">
-            {fejl.softwareversion}
-          </span>
+          {fejl.softwareversion && (
+            <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-xs text-asfalt-700">
+              {fejl.softwareversion}
+            </span>
+          )}
           {fejl.telefon && (
             <span className="rounded bg-asfalt-100 px-2 py-0.5 text-xs font-bold text-asfalt-700">
               📱 {fejl.telefon}
@@ -101,7 +108,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
         {/* Beskrivelse */}
         <div className="kort mt-6 p-6">
           <h2 className="text-sm font-bold uppercase tracking-wide text-asfalt-400">
-            Sådan genskabes fejlen
+            {fejl.type === 'oenske' ? 'Ønsket' : 'Sådan genskabes fejlen'}
           </h2>
           <p className="mt-2 whitespace-pre-wrap text-asfalt-800">{fejl.beskrivelse}</p>
         </div>
@@ -112,6 +119,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
             fejlId={fejl.id}
             startStemmer={fejl.stemmer}
             startBekraeftet={bilBekraeftet}
+            type={fejl.type === 'oenske' ? 'oenske' : 'fejl'}
           />
         </div>
 

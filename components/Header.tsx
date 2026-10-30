@@ -19,7 +19,7 @@ export default function Header() {
             Links
           </Link>
           <Link href="/opret" className="btn-primary !py-1.5 !px-3 text-sm">
-            + Meld en bugherre
+            + Meld ind
           </Link>
         </nav>
       </div>

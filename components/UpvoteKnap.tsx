@@ -7,10 +7,12 @@ export default function UpvoteKnap({
   fejlId,
   startStemmer,
   startBekraeftet = 0,
+  type = 'fejl',
 }: {
   fejlId: number;
   startStemmer: number;
   startBekraeftet?: number;
+  type?: 'fejl' | 'oenske';
 }) {
   const [stemmer, setStemmer] = useState(startStemmer);
   const [stemt, setStemt] = useState(false);
@@ -81,7 +83,11 @@ export default function UpvoteKnap({
         }`}
       >
         <span aria-hidden>▲</span>
-        {stemt ? 'Tak — du har stemt!' : 'Oplever du også dette?'}
+        {stemt
+          ? 'Tak — du har stemt!'
+          : type === 'oenske'
+            ? 'Ønsker du også dette?'
+            : 'Oplever du også dette?'}
         <span className="rounded bg-asfalt-900/10 px-2 py-0.5">{stemmer}</span>
       </button>
 

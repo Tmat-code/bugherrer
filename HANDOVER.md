@@ -4,6 +4,36 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-30 — Ønsker: ny gren (fejl + ønsker i samme board)
+
+Efter brugerønske: boardet samler nu både FEJL 🛠️ og ØNSKER 💡 (feature requests til
+Zeekr). Bevidst ÉN integreret gren (type på hver melding), ikke et separat site —
+genbruger alt maskineri. Navn: "Ønsker" (holdt seriøst så Zeekr tager det alvorligt;
+"Tilbygninger" blev valgt fra).
+
+- **DB:** `fejl.type TEXT NOT NULL DEFAULT 'fejl'` (idempotent ALTER). `MELDINGSTYPER`
+  + `erGyldigType` i config. Eksisterende meldinger = 'fejl' automatisk.
+- **Opret-flow:** starter med type-valg (Fejl/Ønske). Ønske springer "Fejl 40"-tjekket
+  over, softwareversion er valgfri, telefon-felter skjules, og ordlyden handler om ønsket.
+  `/opret?type=oenske` hopper direkte til ønske-grenen.
+- **API /api/fejl:** accepterer+validerer `type`; version kun krævet for fejl;
+  dublettjek kun mod samme type.
+- **Forside:** type-badge på hvert kort + filter **Alle / 🛠️ Fejl / 💡 Ønsker** (med
+  antal). Version-chip skjules hvis tom. Generisk ordlyd ("meldinger").
+- **Detaljeside + UpvoteKnap:** badge, overskrift ("Ønsket" vs "Sådan genskabes fejlen"),
+  knap-tekst ("Ønsker du også dette?" vs "Oplever du også dette?").
+- **Eksport:** "Indhold"-vælger (Fejl / Ønsker / Begge) → type-opdelt rapport med
+  tilpasset titel/intro (BUGHERRER-RAPPORT / ØNSKE-RAPPORT / BUGHERRER & ØNSKER), på
+  da/en/sv. Nye queries `topFejlType`, `topFejlKunAendredeType`; marker-sendt type-aware.
+  `RAPPORT_RAMME` + `erGyldigRapportType` i rapport-i18n.
+- **Copy:** hero nævner ønsker + knap "💡 Foreslå et ønske"; nav-knap "+ Meld ind".
+
+Verificeret bag login: ønske uden version 201, fejl uden version 422, CSV/PDF opdeler
+korrekt på type, ØNSKE-RAPPORT-titel, forside-filter. Build grøn (27 sider).
+(NB: stemmer/bekræftelse/kommentarer/statistik virker uændret for begge typer.)
+
+---
+
 ## 2026-10-30 — Eksport: "Alle"-mulighed (send hele listen)
 
 Antal-vælgeren i eksport-panelet har nu **"Alle"** ud over Top 10/20/50 — så

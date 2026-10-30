@@ -20,16 +20,19 @@ export default function Forside() {
             <span className="ml-2" aria-hidden>🛠️</span>
           </h1>
           <p className="mt-3 max-w-2xl text-asfalt-200">
-            Det uafhængige fejl-board for <strong className="text-white">Zeekr 7GT</strong>-ejere.
+            Det uafhængige board for <strong className="text-white">Zeekr 7GT</strong>-ejere.
             Her samler vi de <em>&quot;bugherrer&quot;</em> (ja, det er sådan bil-appen oversætter{' '}
-            <span className="font-mono text-hjelm-300">bugs</span> 😅) som vi oplever —
-            stemmer dem op, bekræfter dem sammen, og sender de værste videre til producenten.
+            <span className="font-mono text-hjelm-300">bugs</span> 😅) vi oplever — <strong className="text-white">og dine ønsker til ny funktionalitet</strong>.
+            Vi stemmer dem op, bekræfter dem sammen, og sender de vigtigste videre til producenten.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/opret" className="btn-primary">
-              + Meld en bugherre
+              🛠️ Meld en fejl
             </Link>
-            <a href="#listen" className="btn-secondary">
+            <Link href="/opret?type=oenske" className="btn-secondary">
+              💡 Foreslå et ønske
+            </Link>
+            <a href="#listen" className="btn-ghost !text-white hover:!bg-asfalt-700">
               Se listen ↓
             </a>
           </div>

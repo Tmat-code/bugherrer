@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, queries } from '@/lib/db';
 import { findLignende } from '@/lib/search';
-import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL } from '@/lib/config';
+import { BILMODELLER, KUN_EN_MODEL, STANDARD_BILMODEL, erGyldigType } from '@/lib/config';
 import { verificerTurnstile, klientIp } from '@/lib/turnstile';
 import { tilladt } from '@/lib/ratelimit';
 
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   // 2) Rate-limiting: højst 5 oprettelser pr. IP i timen.
   if (!tilladt(`opret:${ip}`, 5)) {
     return NextResponse.json(
-      { error: 'Du har oprettet mange bugherrer på kort tid. Prøv igen om lidt.' },
+      { error: 'Du har oprettet mange meldinger på kort tid. Prøv igen om lidt.' },
       { status: 429 }
     );
   }
@@ -47,14 +47,16 @@ export async function POST(req: Request) {
     );
   }
 
+  const type = erGyldigType(body.type); // 'fejl' | 'oenske'
+  const erOenske = type === 'oenske';
   const titel = String(body.titel || '').trim();
   // Naar boardet kun daekker én model, tvinges den fast uanset hvad klienten sender.
   const bilmodel = KUN_EN_MODEL ? STANDARD_BILMODEL : String(body.bilmodel || '').trim();
   const softwareversion = String(body.softwareversion || '').trim();
   const beskrivelse = String(body.beskrivelse || '').trim();
-  // Valgfrie telefon-oplysninger (relevante for software-/forbindelsesfejl).
-  const telefon = String(body.telefon || '').trim().slice(0, 60) || null;
-  const telefonOs = String(body.telefonOs || '').trim().slice(0, 60) || null;
+  // Telefon-felter: kun relevante for fejl (software/forbindelse), ikke ønsker.
+  const telefon = erOenske ? null : String(body.telefon || '').trim().slice(0, 60) || null;
+  const telefonOs = erOenske ? null : String(body.telefonOs || '').trim().slice(0, 60) || null;
 
   // Server-side validering (stol aldrig paa klienten).
   const fejl: string[] = [];
@@ -62,26 +64,37 @@ export async function POST(req: Request) {
   if (titel.length > 140) fejl.push('Titel må højst være 140 tegn.');
   if (!BILMODELLER.includes(bilmodel as (typeof BILMODELLER)[number]))
     fejl.push('Vælg en gyldig bilmodel.');
-  if (softwareversion.length < 2) fejl.push('Angiv en softwareversion.');
+  // Softwareversion er kun paakraevet for fejl (for ønsker er den valgfri kontekst).
+  if (!erOenske && softwareversion.length < 2) fejl.push('Angiv en softwareversion.');
   if (beskrivelse.length < 15)
-    fejl.push('Beskriv venligst hvordan fejlen genskabes (mindst 15 tegn).');
+    fejl.push(
+      erOenske
+        ? 'Beskriv venligst dit ønske (mindst 15 tegn).'
+        : 'Beskriv venligst hvordan fejlen genskabes (mindst 15 tegn).'
+    );
 
   if (fejl.length) {
     return NextResponse.json({ error: fejl.join(' ') }, { status: 422 });
   }
 
-  // Backend-dublettjek: hvis der findes et meget taet match, afvis og peg paa det.
-  // (Frontend blokerer ogsaa, men dette er sikkerhedsnettet.)
-  const alle = queries.alleFejl.all();
+  // Backend-dublettjek: kun mod meldinger af SAMME type (en fejl og et ønske med
+  // samme titel er ikke en dublet).
+  const alle = queries.alleFejl.all().filter((f) => (f.type || 'fejl') === type);
   const lignende = findLignende(alle, titel);
   if (lignende.length > 0 && lignende[0].titel.toLowerCase() === titel.toLowerCase()) {
     return NextResponse.json(
-      { error: 'Der findes allerede en bugherre med næsten samme titel. Giv den en stemme i stedet.', lignende },
+      {
+        error: erOenske
+          ? 'Der findes allerede et ønske med næsten samme titel. Giv det en stemme i stedet.'
+          : 'Der findes allerede en bugherre med næsten samme titel. Giv den en stemme i stedet.',
+        lignende,
+      },
       { status: 409 }
     );
   }
 
   const info = queries.opretFejl.run({
+    type,
     titel,
     bilmodel,
     softwareversion,

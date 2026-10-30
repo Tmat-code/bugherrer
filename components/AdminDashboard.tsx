@@ -51,6 +51,7 @@ export default function AdminDashboard({
   const [sprog, setSprog] = useState('da');
   const [kunAendrede, setKunAendrede] = useState(false);
   const [medKommentarer, setMedKommentarer] = useState(false);
+  const [rapportType, setRapportType] = useState<'fejl' | 'oenske' | 'begge'>('fejl');
   const [markerTravl, setMarkerTravl] = useState(false);
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
@@ -98,7 +99,7 @@ export default function AdminDashboard({
       const res = await fetch('/api/admin/marker-sendt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ top, kunAendrede }),
+        body: JSON.stringify({ top, kunAendrede, type: rapportType }),
       });
       const data = await res.json();
       alert(res.ok ? `✅ ${data.antal} bugherrer markeret som sendt.` : data.error || 'Noget gik galt.');
@@ -307,6 +308,19 @@ export default function AdminDashboard({
             </select>
           </div>
           <div>
+            <label htmlFor="rapporttype" className="label">Indhold</label>
+            <select
+              id="rapporttype"
+              value={rapportType}
+              onChange={(e) => setRapportType(e.target.value as 'fejl' | 'oenske' | 'begge')}
+              className="input !w-36"
+            >
+              <option value="fejl">🛠️ Fejl</option>
+              <option value="oenske">💡 Ønsker</option>
+              <option value="begge">Begge</option>
+            </select>
+          </div>
+          <div>
             <label htmlFor="sprog" className="label">Sprog</label>
             <select
               id="sprog"
@@ -320,13 +334,13 @@ export default function AdminDashboard({
             </select>
           </div>
           <a
-            href={`/api/admin/export?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
+            href={`/api/admin/export?top=${top}&sprog=${sprog}&type=${rapportType}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
             className="btn-primary"
           >
             📄 Download PDF-rapport
           </a>
           <a
-            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
+            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}&type=${rapportType}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
             className="btn-secondary"
           >
             📊 Download CSV

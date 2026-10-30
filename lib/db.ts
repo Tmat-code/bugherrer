@@ -107,6 +107,13 @@ function migrate(db: Database.Database) {
     /* kolonnen findes allerede */
   }
 
+  // Meldingstype: 'fejl' (bug) eller 'oenske' (ønske til ny funktionalitet).
+  try {
+    db.exec(`ALTER TABLE fejl ADD COLUMN type TEXT NOT NULL DEFAULT 'fejl'`);
+  } catch {
+    /* kolonnen findes allerede */
+  }
+
   // Telefon-oplysninger (valgfrie) — relevante for software-/forbindelsesfejl,
   // ligesom Zeekrs egen app spoerger til telefon + OS.
   for (const kolonne of ['telefon TEXT', 'telefon_os TEXT']) {
@@ -151,6 +158,7 @@ function migrate(db: Database.Database) {
 // --- Typer ---
 export interface Fejl {
   id: number;
+  type: string; // 'fejl' | 'oenske'
   titel: string;
   bilmodel: string;
   softwareversion: string;
@@ -220,8 +228,8 @@ export const queries = {
   fejlById: db.prepare<[number], Fejl>(`SELECT * FROM fejl WHERE id = ?`),
 
   opretFejl: db.prepare(`
-    INSERT INTO fejl (titel, bilmodel, softwareversion, beskrivelse, telefon, telefon_os)
-    VALUES (@titel, @bilmodel, @softwareversion, @beskrivelse, @telefon, @telefon_os)
+    INSERT INTO fejl (type, titel, bilmodel, softwareversion, beskrivelse, telefon, telefon_os)
+    VALUES (@type, @titel, @bilmodel, @softwareversion, @beskrivelse, @telefon, @telefon_os)
   `),
 
   opdaterStatus: db.prepare(`
@@ -248,6 +256,17 @@ export const queries = {
   topFejlKunAendrede: db.prepare<[number], Fejl>(`
     SELECT * FROM fejl
     WHERE sidst_sendt_dato IS NULL OR stemmer > COALESCE(sidst_sendt_stemmer, 0)
+    ORDER BY stemmer DESC, oprettet DESC LIMIT ?
+  `),
+
+  // Samme to, men filtreret paa type (fejl/oenske) — til type-opdelt eksport.
+  topFejlType: db.prepare<[string, number], Fejl>(`
+    SELECT * FROM fejl WHERE type = ?
+    ORDER BY stemmer DESC, oprettet DESC LIMIT ?
+  `),
+  topFejlKunAendredeType: db.prepare<[string, number], Fejl>(`
+    SELECT * FROM fejl
+    WHERE type = ? AND (sidst_sendt_dato IS NULL OR stemmer > COALESCE(sidst_sendt_stemmer, 0))
     ORDER BY stemmer DESC, oprettet DESC LIMIT ?
   `),
 
