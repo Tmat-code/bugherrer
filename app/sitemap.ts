@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/`, lastModified: naa, changeFrequency: 'daily', priority: 1 },
     { url: `${base}/opret`, lastModified: naa, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/links`, lastModified: naa, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${base}/tjekliste`, lastModified: naa, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/faq`, lastModified: naa, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/kontakt`, lastModified: naa, changeFrequency: 'yearly', priority: 0.3 },
   ];

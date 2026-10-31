@@ -4,6 +4,25 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-10-31 — Tjekliste til afhentning (side + PDF)
+
+Ny tjekliste folk kan bruge ved afhentning af bilen — både klik-af-på-skærmen og
+download/print.
+- **Side `/tjekliste`:** interaktiv (afkrydsninger gemmes i localStorage
+  `bugherrer_tjekliste_v1`), med progress-tæller, Nulstil, **"⬇️ Hent som PDF"** og
+  **"🖨️ Udskriv"**. Indhold fra Torben (4 sektioner: bilens stand, software/kalibrering,
+  batteri/opladning, funktioner/dokumentation).
+- **PDF `/api/tjekliste`:** pdfkit, byggeplads-tema, tomme afkryds-felter til at sætte
+  flueben i hånden. Offentlig (ingen login). Filnavn tjekliste-afhentning-zeekr-7gt.pdf.
+- **Fælles indhold:** `lib/tjekliste.ts` (side + PDF bruger samme kilde).
+- **Links:** fremhævet kort på `/links` + link i footer ("Tjekliste"); i sitemap.
+- **Print-CSS:** `@media print` i globals skjuler header/footer/.no-print + hvid baggrund.
+
+Verificeret: side 200, PDF 200 (gyldig, alt indhold), links-kort til stede. Build grøn
+(28 sider).
+
+---
+
 ## 2026-10-31 — Fix: "Ønsker"-menugenvej slår nu filteret til
 
 Klik på "💡 Ønsker" i menuen (mens man allerede var på forsiden) ændrede URL til

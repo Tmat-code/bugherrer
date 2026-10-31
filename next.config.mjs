@@ -9,6 +9,7 @@ const nextConfig = {
     // pdfkit har AFM-font-filer der skal med i standalone-outputtet, ellers fejler PDF-genereringen i Docker.
     outputFileTracingIncludes: {
       '/api/admin/export': ['./node_modules/pdfkit/js/data/**/*'],
+      '/api/tjekliste': ['./node_modules/pdfkit/js/data/**/*'],
     },
   },
 };

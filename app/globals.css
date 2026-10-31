@@ -54,3 +54,20 @@ body {
     @apply block text-sm font-bold text-asfalt-700 mb-1.5;
   }
 }
+
+/* Print: skjul sidens "chrome" (header/footer/bannere/knapper) og gør baggrunden hvid,
+   så fx tjeklisten kan printes rent. */
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .kort {
+    border-color: #c7c7cd !important;
+    box-shadow: none !important;
+  }
+}
