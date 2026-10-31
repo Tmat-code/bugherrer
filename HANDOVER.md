@@ -4,6 +4,25 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-01 — Rapport-log + nulstil glemt kodeord
+
+**Rapport-log (revision):** hver download af en Zeekr-rapport logges med **navn, rolle,
+format (pdf/csv), indhold (type + antal + flags) og tidspunkt**. Vises i et nyt
+**📥 Rapport-log-panel i admin — kun synligt for admin**. Tabel `rapport_log`; log-kald i
+`/api/admin/export` + `/export/csv` via `sessionInfo()`.
+
+**Nulstil glemt kodeord:** "Nulstil kodeord"-knap ved hver person i Adgange-panelet laver
+et nyt invitations-link til SAMME person (kopieres automatisk). Når de vælger et nyt
+kodeord via linket, **erstattes** det gamle (ingen dublet). Teknisk: `admin_invitationer`
+fik `nulstil_adgang_id` (idempotent ALTER); `/api/tilmeld` opdaterer den eksisterende
+adgang i stedet for at oprette en ny, når feltet er sat. Formandens master-kodeord nulstilles
+i Coolify (`ADMIN_PASSWORD`).
+
+Verificeret: download logges (admin ser, moderator ikke); nulstil → nyt pw virker (200),
+gammelt pw afvist (401), én adgang-række. Build grøn.
+
+---
+
 ## 2026-11-01 — Roller + invitér andre som admin/moderator
 
 Formanden kan nu give andre adgang via **invitations-link** — personen vælger selv sit

@@ -29,7 +29,14 @@ export async function POST(req: Request) {
   }
 
   const rolle = inv.rolle === 'admin' ? 'admin' : 'moderator';
-  queries.opretAdgang.run({ navn: inv.navn, rolle, kode_hash: hashAdgangsKode(kode) });
+  const kodeHash = hashAdgangsKode(kode);
+
+  if (inv.nulstil_adgang_id) {
+    // Nulstilling: erstat kodeordet på den eksisterende adgang (ingen dubletter).
+    queries.opdaterAdgangKode.run({ id: inv.nulstil_adgang_id, kode_hash: kodeHash });
+  } else {
+    queries.opretAdgang.run({ navn: inv.navn, rolle, kode_hash: kodeHash });
+  }
   queries.brugInvitation.run(inv.id);
   startSession(rolle, inv.navn); // log personen direkte ind
 

@@ -108,12 +108,26 @@ function migrate(db: Database.Database) {
     -- Invitationer: formanden opretter én (navn+rolle), sender linket, og personen
     -- vaelger selv sit kodeord via linket (opretter saa en admin_adgange-raekke).
     CREATE TABLE IF NOT EXISTS admin_invitationer (
-      id       INTEGER PRIMARY KEY AUTOINCREMENT,
-      navn     TEXT NOT NULL,
-      rolle    TEXT NOT NULL DEFAULT 'moderator',
-      token    TEXT NOT NULL UNIQUE,
-      brugt    INTEGER NOT NULL DEFAULT 0,
-      oprettet TEXT NOT NULL DEFAULT (datetime('now'))
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn              TEXT NOT NULL,
+      rolle             TEXT NOT NULL DEFAULT 'moderator',
+      token             TEXT NOT NULL UNIQUE,
+      brugt             INTEGER NOT NULL DEFAULT 0,
+      nulstil_adgang_id INTEGER,
+      oprettet          TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    -- Revisionslog: hvem har downloadet hvilke rapporter, hvornaar (kun synlig i admin).
+    CREATE TABLE IF NOT EXISTS rapport_log (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn            TEXT NOT NULL,
+      rolle           TEXT NOT NULL,
+      format          TEXT NOT NULL,  -- 'pdf' | 'csv'
+      type            TEXT NOT NULL,  -- 'fejl' | 'oenske' | 'begge'
+      antal           TEXT NOT NULL,  -- '20' | 'alle'
+      kun_aendrede    INTEGER NOT NULL DEFAULT 0,
+      med_kommentarer INTEGER NOT NULL DEFAULT 0,
+      oprettet        TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
@@ -136,6 +150,13 @@ function migrate(db: Database.Database) {
     db.exec(`ALTER TABLE fejl ADD COLUMN type TEXT NOT NULL DEFAULT 'fejl'`);
   } catch {
     /* kolonnen findes allerede */
+  }
+
+  // Nulstil-reference på invitationer (til at erstatte en glemt adgangs kodeord).
+  try {
+    db.exec(`ALTER TABLE admin_invitationer ADD COLUMN nulstil_adgang_id INTEGER`);
+  } catch {
+    /* kolonnen findes allerede (eller tabellen er lige oprettet med den) */
   }
 
   // Telefon-oplysninger (valgfrie) — relevante for software-/forbindelsesfejl,
@@ -246,6 +267,19 @@ export interface AdminInvitation {
   rolle: string;
   token: string;
   brugt: number;
+  nulstil_adgang_id: number | null;
+  oprettet: string;
+}
+
+export interface RapportLog {
+  id: number;
+  navn: string;
+  rolle: string;
+  format: string;
+  type: string;
+  antal: string;
+  kun_aendrede: number;
+  med_kommentarer: number;
   oprettet: string;
 }
 
@@ -486,7 +520,12 @@ export const queries = {
 
   // --- Invitationer ---
   opretInvitation: db.prepare(
-    `INSERT INTO admin_invitationer (navn, rolle, token) VALUES (@navn, @rolle, @token)`
+    `INSERT INTO admin_invitationer (navn, rolle, token, nulstil_adgang_id)
+     VALUES (@navn, @rolle, @token, @nulstil_adgang_id)`
+  ),
+  adgangById: db.prepare<[number], AdminAdgang>(`SELECT * FROM admin_adgange WHERE id = ?`),
+  opdaterAdgangKode: db.prepare(
+    `UPDATE admin_adgange SET kode_hash = @kode_hash, aktiv = 1 WHERE id = @id`
   ),
   alleInvitationer: db.prepare<[], AdminInvitation>(
     `SELECT * FROM admin_invitationer ORDER BY oprettet DESC`
@@ -496,6 +535,15 @@ export const queries = {
   ),
   brugInvitation: db.prepare(`UPDATE admin_invitationer SET brugt = 1 WHERE id = ?`),
   sletInvitation: db.prepare(`DELETE FROM admin_invitationer WHERE id = ?`),
+
+  // --- Rapport-log (revision) ---
+  opretRapportLog: db.prepare(`
+    INSERT INTO rapport_log (navn, rolle, format, type, antal, kun_aendrede, med_kommentarer)
+    VALUES (@navn, @rolle, @format, @type, @antal, @kun_aendrede, @med_kommentarer)
+  `),
+  senesteRapportLog: db.prepare<[number], RapportLog>(
+    `SELECT * FROM rapport_log ORDER BY oprettet DESC LIMIT ?`
+  ),
 
   // --- Oversaettelses-cache ---
   hentOversaettelse: db.prepare<[number, string], Oversaettelse>(

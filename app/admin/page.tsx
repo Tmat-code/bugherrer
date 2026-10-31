@@ -7,6 +7,7 @@ import AdminDashboard, {
   type HenvendelseItem,
   type AdgangItem,
   type InvitationItem,
+  type RapportLogItem,
 } from '@/components/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,18 @@ export default function AdminSide() {
         .all()
         .filter((i) => i.brugt === 0)
         .map((i) => ({ id: i.id, navn: i.navn, rolle: i.rolle, token: i.token, oprettet: i.oprettet }))
+    : [];
+  const rapportLog: RapportLogItem[] = erAdmin
+    ? queries.senesteRapportLog.all(40).map((r) => ({
+        navn: r.navn,
+        rolle: r.rolle,
+        format: r.format,
+        type: r.type,
+        antal: r.antal,
+        kunAendrede: r.kun_aendrede === 1,
+        medKommentarer: r.med_kommentarer === 1,
+        oprettet: r.oprettet,
+      }))
     : [];
 
   // --- Overblik: server-side "sidst set" (paalideligt, uafhaengigt af browser) ---
@@ -110,6 +123,7 @@ export default function AdminSide() {
       session={session}
       adgange={adgange}
       invitationer={invitationer}
+      rapportLog={rapportLog}
     />
   );
 }

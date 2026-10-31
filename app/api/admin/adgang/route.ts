@@ -20,8 +20,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Angiv et navn' }, { status: 400 });
     }
     const token = crypto.randomBytes(24).toString('base64url');
-    queries.opretInvitation.run({ navn, rolle, token });
+    queries.opretInvitation.run({ navn, rolle, token, nulstil_adgang_id: null });
     return NextResponse.json({ ok: true, token, navn, rolle });
+  }
+
+  // Nulstil en eksisterende adgangs kodeord: lav et nyt link til SAMME person.
+  if (handling === 'nulstil') {
+    const id = Number(body.id);
+    const adgang = Number.isInteger(id) ? queries.adgangById.get(id) : null;
+    if (!adgang) return NextResponse.json({ error: 'Ukendt adgang' }, { status: 404 });
+    const token = crypto.randomBytes(24).toString('base64url');
+    queries.opretInvitation.run({
+      navn: adgang.navn,
+      rolle: adgang.rolle,
+      token,
+      nulstil_adgang_id: adgang.id,
+    });
+    return NextResponse.json({ ok: true, token, navn: adgang.navn, rolle: adgang.rolle });
   }
 
   // Spær/genåbn en adgang.

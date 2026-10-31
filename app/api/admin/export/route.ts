@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { queries } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { erLoggetInd, sessionInfo } from '@/lib/auth';
 import {
   I18N,
   erGyldigtSprog,
@@ -255,6 +255,20 @@ export async function GET(req: Request) {
 
     doc.end();
   });
+
+  // Revisionslog: hvem downloadede rapporten.
+  const s = sessionInfo();
+  if (s) {
+    queries.opretRapportLog.run({
+      navn: s.navn,
+      rolle: s.rolle,
+      format: 'pdf',
+      type: rapportType,
+      antal: topParam === 'alle' ? 'alle' : String(antal),
+      kun_aendrede: kunAendrede ? 1 : 0,
+      med_kommentarer: medKommentarer ? 1 : 0,
+    });
+  }
 
   const datoFil = new Date().toISOString().slice(0, 10);
   return new NextResponse(new Uint8Array(pdfBytes), {

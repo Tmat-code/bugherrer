@@ -56,6 +56,36 @@ export interface InvitationItem {
   oprettet: string;
 }
 
+export interface RapportLogItem {
+  navn: string;
+  rolle: string;
+  format: string;
+  type: string;
+  antal: string;
+  kunAendrede: boolean;
+  medKommentarer: boolean;
+  oprettet: string;
+}
+
+// Eksakt dato + klokkeslæt i dansk tid.
+function dkTidspunkt(utc: string): string {
+  const d = new Date(utc.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return utc;
+  return d.toLocaleString('da-DK', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  fejl: 'Fejl',
+  oenske: 'Ønsker',
+  begge: 'Begge',
+};
+
 export default function AdminDashboard({
   fejl,
   overblik,
@@ -63,6 +93,7 @@ export default function AdminDashboard({
   session,
   adgange,
   invitationer,
+  rapportLog,
 }: {
   fejl: Fejl[];
   overblik: Overblik;
@@ -70,6 +101,7 @@ export default function AdminDashboard({
   session: { navn: string; rolle: string };
   adgange: AdgangItem[];
   invitationer: InvitationItem[];
+  rapportLog: RapportLogItem[];
 }) {
   const router = useRouter();
   const [top, setTop] = useState<number | 'alle'>(20);
@@ -199,6 +231,28 @@ export default function AdminDashboard({
       body: JSON.stringify(body),
     });
     router.refresh();
+  }
+
+  async function nulstilAdgang(id: number, navn: string) {
+    if (
+      !confirm(
+        `Lav et nyt kodeord-link til ${navn}?\n\n` +
+          'Deres nuværende kodeord erstattes, når de vælger et nyt via linket.'
+      )
+    )
+      return;
+    const res = await fetch('/api/admin/adgang', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handling: 'nulstil', id }),
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      kopierLink(data.token);
+      router.refresh();
+    } else {
+      alert(data.error || 'Noget gik galt.');
+    }
   }
 
   return (
@@ -585,7 +639,13 @@ export default function AdminDashboard({
                       {a.sidstBrugt ? `sidst inde ${relativTid(a.sidstBrugt)}` : 'aldrig logget ind'}
                     </span>
                   </span>
-                  <span className="flex gap-3">
+                  <span className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => nulstilAdgang(a.id, a.navn)}
+                      className="font-bold text-hjelm-700 hover:underline"
+                    >
+                      Nulstil kodeord
+                    </button>
                     <button
                       onClick={() => adgangHandling({ handling: 'aktiv', id: a.id, aktiv: !a.aktiv })}
                       className="font-bold text-asfalt-600 hover:underline"
@@ -605,6 +665,51 @@ export default function AdminDashboard({
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+      )}
+
+      {/* Rapport-log (kun admin) */}
+      {erAdmin && (
+        <section className="kort mt-6 p-6">
+          <h2 className="text-lg font-bold text-asfalt-900">📥 Rapport-log</h2>
+          <p className="mt-1 text-sm text-asfalt-500">
+            Hvem har downloadet rapporter — med dato og tidspunkt. Kun synligt for admin.
+          </p>
+          {rapportLog.length === 0 ? (
+            <p className="mt-3 text-sm text-asfalt-500">Ingen downloads endnu.</p>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b-2 border-asfalt-200 text-left text-asfalt-500">
+                    <th className="p-2">Tidspunkt</th>
+                    <th className="p-2">Hvem</th>
+                    <th className="p-2">Format</th>
+                    <th className="p-2">Indhold</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rapportLog.map((r, i) => (
+                    <tr key={i} className="border-b border-asfalt-100">
+                      <td className="whitespace-nowrap p-2 text-asfalt-500">
+                        {dkTidspunkt(r.oprettet)}
+                      </td>
+                      <td className="p-2">
+                        <strong>{r.navn}</strong>{' '}
+                        <span className="text-xs text-asfalt-400">({r.rolle})</span>
+                      </td>
+                      <td className="p-2 font-mono text-xs uppercase">{r.format}</td>
+                      <td className="p-2 text-asfalt-600">
+                        {TYPE_LABEL[r.type] ?? r.type} · top {r.antal}
+                        {r.kunAendrede ? ' · kun nye/eskal.' : ''}
+                        {r.medKommentarer ? ' · m. kommentarer' : ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       )}

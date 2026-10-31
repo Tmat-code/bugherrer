@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { erLoggetInd, sessionInfo } from '@/lib/auth';
 import {
   I18N,
   erGyldigtSprog,
@@ -72,6 +72,20 @@ export async function GET(req: Request) {
 
   // BOM + semikolon-separeret, saa det aabner korrekt i dansk Excel/LibreOffice Calc.
   const csv = '﻿' + [kolonner.map(esc).join(';'), ...raekker].join('\r\n');
+
+  // Revisionslog: hvem downloadede rapporten.
+  const s = sessionInfo();
+  if (s) {
+    queries.opretRapportLog.run({
+      navn: s.navn,
+      rolle: s.rolle,
+      format: 'csv',
+      type: rapportType,
+      antal: topParam === 'alle' ? 'alle' : String(antal),
+      kun_aendrede: kunAendrede ? 1 : 0,
+      med_kommentarer: medKommentarer ? 1 : 0,
+    });
+  }
 
   const dato = new Date().toISOString().slice(0, 10);
   return new NextResponse(csv, {
