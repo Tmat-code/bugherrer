@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
 import { queries } from '@/lib/db';
-import { erAdmin } from '@/lib/auth';
+import { erLoggetInd } from '@/lib/auth';
 import {
   I18N,
   erGyldigtSprog,
@@ -23,8 +23,8 @@ const ASFALT = '#1c1c1f';
 const GRAA = '#61616b';
 
 export async function GET(req: Request) {
-  if (!erAdmin()) {
-    return NextResponse.json({ error: 'Kun for admin' }, { status: 401 });
+  if (!erLoggetInd()) {
+    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);

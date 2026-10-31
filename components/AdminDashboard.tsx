@@ -366,8 +366,7 @@ export default function AdminDashboard({
         </ul>
       </section>
 
-      {/* Eksport-panel (kun admin) */}
-      {erAdmin && (
+      {/* Eksport-panel (admin + moderator) */}
       <div className="kort mt-6 p-6">
         <h2 className="text-lg font-bold text-asfalt-900">📤 Eksport til Zeekr-importør</h2>
         <p className="mt-1 text-sm text-asfalt-500">
@@ -483,7 +482,6 @@ export default function AdminDashboard({
           </p>
         )}
       </div>
-      )}
 
       {/* Adgange & invitationer (kun admin) */}
       {erAdmin && (

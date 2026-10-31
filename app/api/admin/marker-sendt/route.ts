@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db, queries } from '@/lib/db';
-import { erAdmin } from '@/lib/auth';
+import { erLoggetInd } from '@/lib/auth';
 import { erGyldigRapportType } from '@/lib/rapport-i18n';
 
 // POST /api/admin/marker-sendt — markér de top-N fejl (samme udvalg som eksporten)
 // som "sendt til Zeekr nu". Gemmer deres nuvaerende stemmetal som nulpunkt, saa de
 // foerst kommer med igen i "kun nye + eskalerende", hvis de faar flere stemmer.
 export async function POST(req: Request) {
-  if (!erAdmin()) {
-    return NextResponse.json({ error: 'Kun for admin' }, { status: 401 });
+  if (!erLoggetInd()) {
+    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));

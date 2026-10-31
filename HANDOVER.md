@@ -11,7 +11,8 @@ kodeord og logges direkte ind. To roller:
 - **admin (formand):** alt (eksport, adgangs-styring, oprydning/snyd-panel/statistik, slet,
   rediger, status).
 - **moderator:** daglig moderation (rediger, status, markér løsning, slet meldinger +
-  henvendelser) — men IKKE eksport, adgangs-styring eller statistik/oprydning.
+  henvendelser) **+ generér Zeekr-rapport (eksport PDF/CSV + markér-sendt)** — men IKKE
+  adgangs-styring eller statistik/oprydning/snyd.
 
 **Auth (lib/auth.ts):** session-token signeret og bærer nu rolle+navn
 (`<rolle>.<navn-b64>.<hmac>`); `sessionInfo()`, `erAdmin()`, `erLoggetInd()`.
@@ -28,8 +29,9 @@ auto-login. Admin kan spærre/genåbne/slette adgange + slette åbne invitatione
 **Login (`/api/admin/login`):** master → admin; ellers slå koden op i aktive adgange →
 rolle fra DB. Let brute-force-værn (10 forsøg/15 min pr. IP). `/api/tilmeld` rate-limited.
 
-**Gating:** export/csv/marker-sendt/ryd-stemmer/adgang + `/admin/statistik` → `erAdmin`;
-status/rediger/slet/slet-henvendelse/loesning → `erLoggetInd` (moderator+admin).
+**Gating:** ryd-stemmer/adgang + `/admin/statistik` → `erAdmin`;
+export/csv/marker-sendt + status/rediger/slet/slet-henvendelse/loesning → `erLoggetInd`
+(moderator+admin). Moderatorer må altså generere rapporten.
 Admin-UI skjuler eksport/Aktivitet/Adgange for moderatorer og viser "Logget ind som X (rolle)".
 
 Verificeret end-to-end bag serveren: invitér → tilmeld → moderator blokeret fra eksport

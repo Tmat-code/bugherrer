@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
-import { erAdmin } from '@/lib/auth';
+import { erLoggetInd } from '@/lib/auth';
 import {
   I18N,
   erGyldigtSprog,
@@ -12,8 +12,8 @@ import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
 
 export async function GET(req: Request) {
-  if (!erAdmin()) {
-    return NextResponse.json({ error: 'Kun for admin' }, { status: 401 });
+  if (!erLoggetInd()) {
+    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
   }
   const { searchParams } = new URL(req.url);
   const topParam = searchParams.get('top');
