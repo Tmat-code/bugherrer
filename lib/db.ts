@@ -92,6 +92,30 @@ function migrate(db: Database.Database) {
       oprettet TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- Ekstra admin-adgange (ud over formandens master-kodeord). Hver adgang har en
+    -- rolle: 'admin' (alt) eller 'moderator' (daglig moderation). Koden gemmes KUN
+    -- som hash (noeglet med SESSION_SECRET), aldrig i klartekst.
+    CREATE TABLE IF NOT EXISTS admin_adgange (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn        TEXT NOT NULL,
+      rolle       TEXT NOT NULL DEFAULT 'moderator',
+      kode_hash   TEXT NOT NULL,
+      aktiv       INTEGER NOT NULL DEFAULT 1,
+      oprettet    TEXT NOT NULL DEFAULT (datetime('now')),
+      sidst_brugt TEXT
+    );
+
+    -- Invitationer: formanden opretter én (navn+rolle), sender linket, og personen
+    -- vaelger selv sit kodeord via linket (opretter saa en admin_adgange-raekke).
+    CREATE TABLE IF NOT EXISTS admin_invitationer (
+      id       INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn     TEXT NOT NULL,
+      rolle    TEXT NOT NULL DEFAULT 'moderator',
+      token    TEXT NOT NULL UNIQUE,
+      brugt    INTEGER NOT NULL DEFAULT 0,
+      oprettet TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
@@ -203,6 +227,25 @@ export interface Henvendelse {
   navn: string;
   email: string;
   besked: string;
+  oprettet: string;
+}
+
+export interface AdminAdgang {
+  id: number;
+  navn: string;
+  rolle: string; // 'admin' | 'moderator'
+  kode_hash: string;
+  aktiv: number;
+  oprettet: string;
+  sidst_brugt: string | null;
+}
+
+export interface AdminInvitation {
+  id: number;
+  navn: string;
+  rolle: string;
+  token: string;
+  brugt: number;
   oprettet: string;
 }
 
@@ -419,6 +462,40 @@ export const queries = {
     `SELECT COUNT(*) AS n FROM henvendelser WHERE oprettet > ?`
   ),
   sletHenvendelse: db.prepare(`DELETE FROM henvendelser WHERE id = ?`),
+
+  // --- Admin-adgange ---
+  opretAdgang: db.prepare(
+    `INSERT INTO admin_adgange (navn, rolle, kode_hash) VALUES (@navn, @rolle, @kode_hash)`
+  ),
+  alleAdgange: db.prepare<[], AdminAdgang>(
+    `SELECT * FROM admin_adgange ORDER BY oprettet DESC`
+  ),
+  findAktivAdgang: db.prepare<[string], AdminAdgang>(
+    `SELECT * FROM admin_adgange WHERE kode_hash = ? AND aktiv = 1`
+  ),
+  findAdgangVedHash: db.prepare<[string], AdminAdgang>(
+    `SELECT * FROM admin_adgange WHERE kode_hash = ?`
+  ),
+  saetAdgangAktiv: db.prepare(
+    `UPDATE admin_adgange SET aktiv = @aktiv WHERE id = @id`
+  ),
+  sletAdgang: db.prepare(`DELETE FROM admin_adgange WHERE id = ?`),
+  opdaterAdgangBrugt: db.prepare(
+    `UPDATE admin_adgange SET sidst_brugt = datetime('now') WHERE id = ?`
+  ),
+
+  // --- Invitationer ---
+  opretInvitation: db.prepare(
+    `INSERT INTO admin_invitationer (navn, rolle, token) VALUES (@navn, @rolle, @token)`
+  ),
+  alleInvitationer: db.prepare<[], AdminInvitation>(
+    `SELECT * FROM admin_invitationer ORDER BY oprettet DESC`
+  ),
+  findAabenInvitation: db.prepare<[string], AdminInvitation>(
+    `SELECT * FROM admin_invitationer WHERE token = ? AND brugt = 0`
+  ),
+  brugInvitation: db.prepare(`UPDATE admin_invitationer SET brugt = 1 WHERE id = ?`),
+  sletInvitation: db.prepare(`DELETE FROM admin_invitationer WHERE id = ?`),
 
   // --- Oversaettelses-cache ---
   hentOversaettelse: db.prepare<[number, string], Oversaettelse>(

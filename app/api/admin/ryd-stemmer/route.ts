@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queries, rydStemmerFoer } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { erAdmin } from '@/lib/auth';
 
 // POST /api/admin/ryd-stemmer  { foerDato: "YYYY-MM-DD", bekraeft?: boolean }
 // Uden bekraeft: returnerer kun ANTAL stemmer før datoen (forhåndsvisning).
@@ -9,8 +9,8 @@ import { erLoggetInd } from '@/lib/auth';
 // Datoen tolkes som "før YYYY-MM-DD 00:00" (UTC). Tidsstempler gemmes som
 // "YYYY-MM-DD HH:MM:SS", så en ren streng-sammenligning rammer korrekt.
 export async function POST(req: Request) {
-  if (!erLoggetInd()) {
-    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
+  if (!erAdmin()) {
+    return NextResponse.json({ error: 'Kun for admin' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);

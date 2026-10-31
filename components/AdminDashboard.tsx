@@ -39,12 +39,37 @@ export interface Overblik {
   aktivitet: AktivitetItem[];
 }
 
+export interface AdgangItem {
+  id: number;
+  navn: string;
+  rolle: string;
+  aktiv: boolean;
+  oprettet: string;
+  sidstBrugt: string | null;
+}
+
+export interface InvitationItem {
+  id: number;
+  navn: string;
+  rolle: string;
+  token: string;
+  oprettet: string;
+}
+
 export default function AdminDashboard({
   fejl,
   overblik,
+  erAdmin,
+  session,
+  adgange,
+  invitationer,
 }: {
   fejl: Fejl[];
   overblik: Overblik;
+  erAdmin: boolean;
+  session: { navn: string; rolle: string };
+  adgange: AdgangItem[];
+  invitationer: InvitationItem[];
 }) {
   const router = useRouter();
   const [top, setTop] = useState<number | 'alle'>(20);
@@ -56,6 +81,9 @@ export default function AdminDashboard({
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
   const [redigerer, setRedigerer] = useState<Fejl | null>(null);
+  const [invNavn, setInvNavn] = useState('');
+  const [invRolle, setInvRolle] = useState<'moderator' | 'admin'>('moderator');
+  const [invTravl, setInvTravl] = useState(false);
 
   async function skiftStatus(id: number, status: string) {
     setTravl(id);
@@ -129,17 +157,69 @@ export default function AdminDashboard({
     router.refresh();
   }
 
+  function kopierLink(token: string) {
+    const link = `${window.location.origin}/tilmeld?token=${token}`;
+    try {
+      navigator.clipboard?.writeText(link);
+    } catch {
+      /* ignore */
+    }
+    alert('Invitations-link kopieret — send det til personen:\n\n' + link);
+  }
+
+  async function opretInvitation() {
+    if (!invNavn.trim()) {
+      alert('Angiv et navn.');
+      return;
+    }
+    setInvTravl(true);
+    try {
+      const res = await fetch('/api/admin/adgang', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handling: 'inviter', navn: invNavn.trim(), rolle: invRolle }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        kopierLink(data.token);
+        setInvNavn('');
+        router.refresh();
+      } else {
+        alert(data.error || 'Noget gik galt.');
+      }
+    } finally {
+      setInvTravl(false);
+    }
+  }
+
+  async function adgangHandling(body: Record<string, unknown>) {
+    await fetch('/api/admin/adgang', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    router.refresh();
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-asfalt-900">
-            🏗️ Byggeledelse (admin)
+            🏗️ Byggeledelse
           </h1>
-          <p className="text-sm text-asfalt-500">{fejl.length} bugherrer i databasen.</p>
+          <p className="text-sm text-asfalt-500">
+            Logget ind som <strong>{session.navn}</strong>{' '}
+            <span className="rounded bg-asfalt-100 px-1.5 py-0.5 text-xs font-bold text-asfalt-600">
+              {erAdmin ? 'admin' : 'moderator'}
+            </span>{' '}
+            · {fejl.length} meldinger
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <a href="/admin/statistik" className="btn-ghost text-sm">📈 Aktivitet</a>
+          {erAdmin && (
+            <a href="/admin/statistik" className="btn-ghost text-sm">📈 Aktivitet</a>
+          )}
           <button onClick={logUd} className="btn-ghost text-sm">Log ud</button>
         </div>
       </div>
@@ -286,7 +366,8 @@ export default function AdminDashboard({
         </ul>
       </section>
 
-      {/* Eksport-panel */}
+      {/* Eksport-panel (kun admin) */}
+      {erAdmin && (
       <div className="kort mt-6 p-6">
         <h2 className="text-lg font-bold text-asfalt-900">📤 Eksport til Zeekr-importør</h2>
         <p className="mt-1 text-sm text-asfalt-500">
@@ -402,6 +483,133 @@ export default function AdminDashboard({
           </p>
         )}
       </div>
+      )}
+
+      {/* Adgange & invitationer (kun admin) */}
+      {erAdmin && (
+        <section className="kort mt-6 p-6">
+          <h2 className="text-lg font-bold text-asfalt-900">👥 Adgange</h2>
+          <p className="mt-1 text-sm text-asfalt-500">
+            Giv andre adgang til at administrere. Opret en invitation, kopiér linket og send
+            det — personen vælger selv sit kodeord. Dit eget kodeord er altid admin.
+          </p>
+
+          {/* Opret invitation */}
+          <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4">
+            <div>
+              <label className="label" htmlFor="inv-navn">Navn</label>
+              <input
+                id="inv-navn"
+                value={invNavn}
+                onChange={(e) => setInvNavn(e.target.value)}
+                placeholder="Fx Mette"
+                className="input !w-44"
+                maxLength={40}
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="inv-rolle">Rolle</label>
+              <select
+                id="inv-rolle"
+                value={invRolle}
+                onChange={(e) => setInvRolle(e.target.value as 'moderator' | 'admin')}
+                className="input !w-40"
+              >
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button onClick={opretInvitation} disabled={invTravl} className="btn-primary">
+              {invTravl ? 'Opretter…' : '+ Opret invitation & kopiér link'}
+            </button>
+          </div>
+
+          {/* Åbne invitationer */}
+          {invitationer.length > 0 && (
+            <>
+              <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+                Åbne invitationer
+              </h3>
+              <ul className="mt-2 space-y-2">
+                {invitationer.map((i) => (
+                  <li
+                    key={i.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border-2 border-dashed border-asfalt-200 p-3 text-sm"
+                  >
+                    <span>
+                      <strong>{i.navn}</strong> · {i.rolle === 'admin' ? 'admin' : 'moderator'}{' '}
+                      <span className="text-asfalt-400">· afventer</span>
+                    </span>
+                    <span className="flex gap-3">
+                      <button
+                        onClick={() => kopierLink(i.token)}
+                        className="font-bold text-hjelm-700 hover:underline"
+                      >
+                        Kopiér link
+                      </button>
+                      <button
+                        onClick={() => adgangHandling({ handling: 'slet-invitation', id: i.id })}
+                        className="font-bold text-murstensroed hover:underline"
+                      >
+                        Slet
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {/* Personer med adgang */}
+          <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+            Personer med adgang
+          </h3>
+          {adgange.length === 0 ? (
+            <p className="mt-2 text-sm text-asfalt-500">Ingen endnu — ud over dig som formand.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {adgange.map((a) => (
+                <li
+                  key={a.id}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-md border-2 border-asfalt-200 p-3 text-sm ${
+                    a.aktiv ? 'bg-white' : 'bg-asfalt-50 opacity-70'
+                  }`}
+                >
+                  <span>
+                    <strong>{a.navn}</strong>{' '}
+                    <span className="rounded bg-asfalt-100 px-1.5 py-0.5 text-xs font-bold text-asfalt-600">
+                      {a.rolle === 'admin' ? 'admin' : 'moderator'}
+                    </span>
+                    {!a.aktiv && (
+                      <span className="ml-2 text-xs font-bold text-murstensroed">spærret</span>
+                    )}
+                    <span className="ml-2 text-xs text-asfalt-400">
+                      {a.sidstBrugt ? `sidst inde ${relativTid(a.sidstBrugt)}` : 'aldrig logget ind'}
+                    </span>
+                  </span>
+                  <span className="flex gap-3">
+                    <button
+                      onClick={() => adgangHandling({ handling: 'aktiv', id: a.id, aktiv: !a.aktiv })}
+                      className="font-bold text-asfalt-600 hover:underline"
+                    >
+                      {a.aktiv ? 'Spær' : 'Genåbn'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Slet adgangen for ${a.navn}?`))
+                          adgangHandling({ handling: 'slet-adgang', id: a.id });
+                      }}
+                      className="font-bold text-murstensroed hover:underline"
+                    >
+                      Slet
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* Fejl-tabel */}
       <div className="kort mt-6 overflow-x-auto">

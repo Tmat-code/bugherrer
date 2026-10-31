@@ -4,6 +4,40 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-01 — Roller + invitér andre som admin/moderator
+
+Formanden kan nu give andre adgang via **invitations-link** — personen vælger selv sit
+kodeord og logges direkte ind. To roller:
+- **admin (formand):** alt (eksport, adgangs-styring, oprydning/snyd-panel/statistik, slet,
+  rediger, status).
+- **moderator:** daglig moderation (rediger, status, markér løsning, slet meldinger +
+  henvendelser) — men IKKE eksport, adgangs-styring eller statistik/oprydning.
+
+**Auth (lib/auth.ts):** session-token signeret og bærer nu rolle+navn
+(`<rolle>.<navn-b64>.<hmac>`); `sessionInfo()`, `erAdmin()`, `erLoggetInd()`.
+`hashAdgangsKode()` (HMAC m. SESSION_SECRET). Master `ADMIN_PASSWORD` = admin "Formand".
+NB: gammelt cookie-format er ugyldigt efter deploy → alle skal logge ind igen.
+
+**DB:** `admin_adgange` (navn, rolle, kode_hash, aktiv, sidst_brugt) + `admin_invitationer`
+(navn, rolle, token, brugt). Koder gemmes kun som hash.
+
+**Flow:** admin → 👥 Adgange-panel → "Opret invitation" (navn+rolle) → linket kopieres
+automatisk → send det → personen åbner `/tilmeld?token=…`, vælger kodeord (`/api/tilmeld`),
+auto-login. Admin kan spærre/genåbne/slette adgange + slette åbne invitationer.
+
+**Login (`/api/admin/login`):** master → admin; ellers slå koden op i aktive adgange →
+rolle fra DB. Let brute-force-værn (10 forsøg/15 min pr. IP). `/api/tilmeld` rate-limited.
+
+**Gating:** export/csv/marker-sendt/ryd-stemmer/adgang + `/admin/statistik` → `erAdmin`;
+status/rediger/slet/slet-henvendelse/loesning → `erLoggetInd` (moderator+admin).
+Admin-UI skjuler eksport/Aktivitet/Adgange for moderatorer og viser "Logget ind som X (rolle)".
+
+Verificeret end-to-end bag serveren: invitér → tilmeld → moderator blokeret fra eksport
+(401), må skifte status (200); admin ser Adgange, moderator ser ingen admin-sektioner.
+Build grøn (31 sider).
+
+---
+
 ## 2026-10-31 — Tjekliste til afhentning (side + PDF)
 
 Ny tjekliste folk kan bruge ved afhentning af bilen — både klik-af-på-skærmen og

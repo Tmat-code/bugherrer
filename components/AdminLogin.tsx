@@ -36,7 +36,7 @@ export default function AdminLogin() {
       <div className="kort p-8 text-center">
         <span className="text-4xl" aria-hidden>🔐</span>
         <h1 className="mt-3 text-xl font-black text-asfalt-900">Admin-adgang</h1>
-        <p className="mt-1 text-sm text-asfalt-500">Kun for byggepladsens formand.</p>
+        <p className="mt-1 text-sm text-asfalt-500">For formand og moderatorer.</p>
         <form onSubmit={submit} className="mt-6 space-y-3 text-left">
           <div>
             <label htmlFor="kodeord" className="label">Kodeord</label>

@@ -1,10 +1,12 @@
 import { queries } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { erLoggetInd, sessionInfo } from '@/lib/auth';
 import AdminLogin from '@/components/AdminLogin';
 import AdminDashboard, {
   type Overblik,
   type AktivitetItem,
   type HenvendelseItem,
+  type AdgangItem,
+  type InvitationItem,
 } from '@/components/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +15,28 @@ export default function AdminSide() {
   if (!erLoggetInd()) {
     return <AdminLogin />;
   }
+  const session = sessionInfo()!;
+  const erAdmin = session.rolle === 'admin';
 
   const fejl = queries.alleFejl.all();
+
+  // Adgange + invitationer kun relevant (og kun vist) for admin.
+  const adgange: AdgangItem[] = erAdmin
+    ? queries.alleAdgange.all().map((a) => ({
+        id: a.id,
+        navn: a.navn,
+        rolle: a.rolle,
+        aktiv: a.aktiv === 1,
+        oprettet: a.oprettet,
+        sidstBrugt: a.sidst_brugt,
+      }))
+    : [];
+  const invitationer: InvitationItem[] = erAdmin
+    ? queries.alleInvitationer
+        .all()
+        .filter((i) => i.brugt === 0)
+        .map((i) => ({ id: i.id, navn: i.navn, rolle: i.rolle, token: i.token, oprettet: i.oprettet }))
+    : [];
 
   // --- Overblik: server-side "sidst set" (paalideligt, uafhaengigt af browser) ---
   const sidstSet = queries.hentMeta.get('admin_sidst_set')?.vaerdi ?? null;
@@ -80,5 +102,14 @@ export default function AdminSide() {
   // Markér "nu" som sidst set, saa naeste besoeg viser hvad der er kommet siden.
   queries.saetMetaNu.run('admin_sidst_set');
 
-  return <AdminDashboard fejl={fejl} overblik={overblik} />;
+  return (
+    <AdminDashboard
+      fejl={fejl}
+      overblik={overblik}
+      erAdmin={erAdmin}
+      session={session}
+      adgange={adgange}
+      invitationer={invitationer}
+    />
+  );
 }

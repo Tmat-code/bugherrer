@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { queries } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { erLoggetInd, erAdmin } from '@/lib/auth';
 import AdminLogin from '@/components/AdminLogin';
 import RydStemmer from '@/components/RydStemmer';
 
@@ -65,6 +65,20 @@ function kortSpan(sek: number): string {
 
 export default function StatistikSide() {
   if (!erLoggetInd()) return <AdminLogin />;
+  if (!erAdmin()) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-16 text-center">
+        <p className="text-4xl" aria-hidden>🔒</p>
+        <h1 className="mt-3 text-xl font-black text-asfalt-900">Kun for admin</h1>
+        <p className="mt-2 text-sm text-asfalt-500">
+          Statistik, oprydning og snyd-detektion er forbeholdt formanden.
+        </p>
+        <Link href="/admin" className="btn-ghost mt-5">
+          ← Tilbage til admin
+        </Link>
+      </div>
+    );
+  }
 
   // Hent 90 dages aktivitet (UTC-grænse).
   const graense = new Date(Date.now() - 90 * 86_400_000)
