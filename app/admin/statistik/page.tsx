@@ -122,16 +122,22 @@ export default function StatistikSide() {
   const toCifret = (n: number) => String(n).padStart(2, '0');
 
   // --- Snyd-detektion ---
-  // Pr. token: flag hvis FLERE forskellige varianter bekræftet (én person = én bil),
-  // eller mange stemmer i et meget kort vindue (ikke menneskeligt læsetempo).
+  // ÉT rødt flag, og det er stærkt: samme browser har bekræftet FLERE forskellige
+  // varianter. Man kan kun eje én bil, så det er den eneste adfærd, der reelt afslører
+  // snyd. Mange hurtige klik ("burst") er IKKE et rødt flag — en ivrig ejer, der stemmer
+  // "mig med" på alle de bugs, han selv oplever, ser præcis sådan ud. Det vises som info.
   const tokenRows = queries.tokenAktivitet.all();
   const tokenAnalyse = tokenRows.map((t) => {
     const span = spanSek(t.foerste, t.sidste);
-    const flereVarianter = t.distinkte_varianter > 1;
-    const hurtigtBurst = t.stemmer >= 8 && span < 120;
-    return { ...t, span, flereVarianter, hurtigtBurst, flag: flereVarianter || hurtigtBurst };
+    const flereVarianter = t.distinkte_varianter > 1; // det ægte røde flag
+    const hurtigtBurst = t.stemmer >= 8 && span < 120; // kun info
+    return { ...t, span, flereVarianter, hurtigtBurst };
   });
-  const flaggede = tokenAnalyse.filter((t) => t.flag).slice(0, 25);
+  const flaggede = tokenAnalyse.filter((t) => t.flereVarianter).slice(0, 25);
+  const burstInfo = tokenAnalyse
+    .filter((t) => t.hurtigtBurst && !t.flereVarianter)
+    .sort((a, b) => b.stemmer - a.stemmer)
+    .slice(0, 10);
   const travleste = [...tokenAnalyse].sort((a, b) => b.stemmer - a.stemmer).slice(0, 6);
 
   // "med" -> variant: hvor hurtigt vælges varianten efter stemmen?
@@ -258,35 +264,36 @@ export default function StatistikSide() {
       <section className="kort mt-6 p-6">
         <h2 className="text-lg font-bold text-asfalt-900">🕵️ Mistænkelig aktivitet</h2>
         <p className="mt-0.5 text-xs text-asfalt-500">
-          Indbygget spærre: én browser = én stemme + én bekræftelse pr. bug. Så en enkelt
-          person kan ikke puste én bug op alene — det kræver mange browsere/inkognito. Her er
-          signalerne på det.
+          Indbygget spærre: én browser = én stemme + én bekræftelse pr. bug, og der er
+          rate-limit pr. IP. Det eneste <strong>røde flag</strong> her er, når samme browser
+          har bekræftet <strong>flere forskellige varianter</strong> — man kan kun eje én bil.
+          Hurtige klik-serier er ikke snyd i sig selv (en ivrig ejer ligner det), så dem viser
+          vi kun som info.
         </p>
 
-        {/* med -> variant timing */}
+        {/* med -> variant timing (info, ikke et flag) */}
         <div className="mt-4 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4 text-sm">
-          <p className="font-bold text-asfalt-800">⏱️ Hvor hurtigt vælges variant efter “med”?</p>
+          <p className="font-bold text-asfalt-800">⏱️ Hvor hurtigt vælges variant efter “med”? (info)</p>
           {antalBekr === 0 ? (
             <p className="mt-1 text-asfalt-500">Ingen bil-bekræftelser med tidsstempel endnu.</p>
           ) : (
             <p className="mt-1 text-asfalt-600">
               {antalBekr} bekræftelser · median{' '}
               <strong>{medianDelay !== null ? kortSpan(medianDelay) : '—'}</strong> · heraf{' '}
-              <strong className={lynhurtige > 0 ? 'text-murstensroed' : ''}>
-                {lynhurtige} lynhurtige (&lt;2s)
-              </strong>
-              . Mange lynhurtige kan tyde på scriptede klik.
+              <strong>{lynhurtige} lynhurtige (&lt;2s)</strong>. Hurtige valg er oftest bare
+              folk, der ved, hvilken bil de har — kun relevant, hvis det kombineres med flere
+              varianter fra samme browser.
             </p>
           )}
         </div>
 
-        {/* Flaggede tokens */}
-        <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
-          Flaggede browsere
+        {/* Røde flag: kun multi-variant */}
+        <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-murstensroed">
+          🚩 Røde flag — flere varianter fra samme browser
         </h3>
         {flaggede.length === 0 ? (
           <p className="mt-2 rounded-md bg-green-50 p-3 text-sm font-bold text-asfalt-700">
-            ✅ Intet mistænkeligt lige nu.
+            ✅ Ingen røde flag. Ingen browser har bekræftet mere end én variant.
           </p>
         ) : (
           <div className="mt-2 overflow-x-auto">
@@ -298,30 +305,47 @@ export default function StatistikSide() {
                   <th className="p-2">Bekr.</th>
                   <th className="p-2">Varianter</th>
                   <th className="p-2">Tidsspan</th>
-                  <th className="p-2">Flag</th>
                 </tr>
               </thead>
               <tbody>
                 {flaggede.map((t) => (
                   <tr key={t.token} className="border-b border-asfalt-100">
                     <td className="p-2 font-mono text-xs text-asfalt-500">{t.token.slice(0, 8)}…</td>
-                    <td className="p-2 font-bold">{t.stemmer}</td>
+                    <td className="p-2">{t.stemmer}</td>
                     <td className="p-2">{t.bekraeftelser}</td>
-                    <td className="p-2">{t.distinkte_varianter}</td>
+                    <td className="p-2 font-bold text-murstensroed">{t.distinkte_varianter}</td>
                     <td className="p-2">{kortSpan(t.span)}</td>
-                    <td className="p-2 text-xs font-bold text-murstensroed">
-                      {[
-                        t.flereVarianter ? 'flere varianter' : '',
-                        t.hurtigtBurst ? 'hurtigt burst' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+
+        {/* Hurtige klik-serier (kun info) */}
+        {burstInfo.length > 0 && (
+          <>
+            <h3 className="mt-5 text-sm font-bold uppercase tracking-wide text-asfalt-400">
+              Hurtige klik-serier (info)
+            </h3>
+            <p className="mt-2 text-xs text-asfalt-500">
+              Browsere med mange stemmer på kort tid — men kun én variant. Det er næsten altid
+              en ægte ejer, der stemmer “mig med” på alle de bugs, han selv oplever. Tag det
+              kun alvorligt, hvis det hopper op i flere varianter.
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {burstInfo.map((t) => (
+                <li key={t.token} className="flex flex-wrap gap-x-3 text-asfalt-600">
+                  <span className="font-mono text-xs text-asfalt-400">{t.token.slice(0, 8)}…</span>
+                  <span>
+                    <strong>{t.stemmer}</strong> stemmer
+                  </span>
+                  <span>på {kortSpan(t.span)}</span>
+                  <span>{t.distinkte_varianter} variant(er)</span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         {/* Travleste tokens (info) */}

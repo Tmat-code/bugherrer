@@ -2,12 +2,25 @@ import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
 import { getVoteToken, setVoteTokenCookie } from '@/lib/voteToken';
 import { ZEEKR_VARIANTER } from '@/lib/config';
+import { klientIp } from '@/lib/turnstile';
+import { tilladt } from '@/lib/ratelimit';
+
+const BEKR_MAKS = 60;
+const BEKR_VINDUE = 10 * 60 * 1000;
 
 // POST /api/bekraeft-ejer  { fejlId, variant }
 // Markerer den aktuelle browsers stemme som "bil-bekraeftet" med en 7GT-variant.
 // Kraever at browseren allerede har stemt paa fejlen (der skal findes en stemmer_log-raekke).
 // Gemmer KUN variant-navnet — ingen VIN, intet personhenfoerbart.
 export async function POST(req: Request) {
+  const ip = klientIp(req);
+  if (!tilladt(`bekraeft:${ip}`, BEKR_MAKS, BEKR_VINDUE)) {
+    return NextResponse.json(
+      { error: 'For mange bekræftelser på kort tid. Vent et øjeblik og prøv igen.' },
+      { status: 429 }
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const id = Number(body?.fejlId);
   const variant = String(body?.variant || '');

@@ -4,6 +4,39 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-01 — Stemme-sikkerhed: rate-limit + fraud-panel justeret + rapport fremhæver bekræftede ejere
+
+**Baggrund:** afklaring af sikkerhedsmodellen for stemmer. Variant-bekræftelse er IKKE
+bot-beskyttelse (enhver kan klikke en variant) — det er et troværdighedssignal til Zeekr.
+Rigtig bot-beskyttelse = Turnstile + cookie-dedup + rate-limit. Det reelle hul var, at
+`/api/upvote` og `/api/bekraeft-ejer` hverken havde Turnstile eller rate-limit (kun
+cookie-dedup pr. bug).
+
+**Rate-limit på at stemme/bekræfte:** `/api/upvote` og `/api/bekraeft-ejer` fik IP-rate-limit
+(60 pr. 10 min pr. IP via `lib/ratelimit`). En ægte ejer stemmer højst på antal-bugs (<60),
+så det rammer aldrig et menneske, men bremser flod/scripts. Verificeret: stemme #61-63 fra
+samme IP → 429, ny IP upåvirket.
+
+**Fraud-panel (statistik) mindre "ulv, ulv":** ENESTE røde flag er nu *flere forskellige
+varianter fra samme browser* (`distinkte_varianter > 1`) — man kan kun eje én bil. "Hurtigt
+burst" (mange stemmer på kort tid) er flyttet til et rent **info-afsnit** ("Hurtige
+klik-serier"), fordi en ivrig ejer der stemmer "mig med" ligner præcis det. Timing-boksen
+(lynhurtige <2s) er nu neutral info, ikke rød. `flaggede` = kun multi-variant; nyt
+`burstInfo`-afsnit.
+
+**Rapport fremhæver bekræftede ejere:** i PDF'en vises **bil-bekræftede ejere nu som egen
+grøn, fed linje** pr. post (antal + variant-opdeling), i stedet for gemt i den grå meta-linje.
+Det er det tal Zeekr skal veje. (CSV uændret — havde allerede kolonnerne.)
+
+**UDESTÅR (kræver Coolify):** Turnstile på selve stemme-handlingen. Bevidst ikke bygget endnu
+— skal kunne ses udfordre live (kun aktiv hvis `TURNSTILE_SECRET_KEY` er sat), og er den eneste
+med en deltagelses-pris. Tages sammen med Torben når han har Coolify-adgang. Overvej "verificér
+menneske én gang → HMAC-signet cookie" frem for captcha pr. klik.
+
+Build grøn.
+
+---
+
 ## 2026-11-01 — Rapport-log + nulstil glemt kodeord
 
 **Rapport-log (revision):** hver download af en Zeekr-rapport logges med **navn, rolle,

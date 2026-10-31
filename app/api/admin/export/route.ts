@@ -139,6 +139,22 @@ export async function GET(req: Request) {
         doc.moveDown(0.2);
       }
 
+      // Bil-bekraeftede ejere: det staerke signal til Zeekr. Egen fremhaevet linje
+      // (antal + variant-opdeling, fx "8 — 4× Long Range RWD, 3× Privilege AWD").
+      const vrows = queries.ejerVarianter.all(f.id);
+      const bilBekr = vrows.reduce((s, r) => s + r.n, 0);
+      if (bilBekr > 0) {
+        const br = vrows.map((r) => `${r.n}× ${r.variant}`).join(', ');
+        doc
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .fillColor('#2f7d32')
+          .text(`${t.metaLabels.bilBekraeftet}: ${bilBekr}  —  ${br}`, 58, doc.y + 2, {
+            width: sideBredde,
+          });
+        doc.moveDown(0.2);
+      }
+
       // Meta-linje (model, software, evt. telefon, status)
       const metaDele = [
         `${t.metaLabels.model}: ${f.bilmodel}`,
@@ -148,13 +164,6 @@ export async function GET(req: Request) {
         metaDele.push(
           `${t.metaLabels.telefon}: ${[f.telefon, f.telefon_os].filter(Boolean).join(' / ')}`
         );
-      }
-      // Bil-bekraeftet: antal + variant-opdeling (fx "8 (4× Long Range RWD, 3× Privilege AWD)").
-      const vrows = queries.ejerVarianter.all(f.id);
-      const bilBekr = vrows.reduce((s, r) => s + r.n, 0);
-      if (bilBekr > 0) {
-        const br = vrows.map((r) => `${r.n}× ${r.variant}`).join(', ');
-        metaDele.push(`${t.metaLabels.bilBekraeftet}: ${bilBekr} (${br})`);
       }
       const antalSvar = queries.antalKommForFejl.get(f.id)!.n;
       if (antalSvar > 0) metaDele.push(`${antalSvar} ${t.svar}`);
