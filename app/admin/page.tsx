@@ -8,6 +8,7 @@ import AdminDashboard, {
   type AdgangItem,
   type InvitationItem,
   type RapportLogItem,
+  type SidstSendt,
 } from '@/components/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,12 @@ export default function AdminSide() {
         oprettet: r.oprettet,
       }))
     : [];
+
+  // Sidste (ikke-fortrudte) "Dan rapport"-markering — til visning + fortryd-knap.
+  const sm = queries.sidsteMarkering.get();
+  const sidstSendt: SidstSendt | null = sm
+    ? { navn: sm.navn, rolle: sm.rolle, antal: sm.antal, oprettet: sm.oprettet }
+    : null;
 
   // --- Overblik: server-side "sidst set" (paalideligt, uafhaengigt af browser) ---
   const sidstSet = queries.hentMeta.get('admin_sidst_set')?.vaerdi ?? null;
@@ -124,6 +131,7 @@ export default function AdminSide() {
       adgange={adgange}
       invitationer={invitationer}
       rapportLog={rapportLog}
+      sidstSendt={sidstSendt}
     />
   );
 }

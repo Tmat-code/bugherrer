@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { db, queries } from '@/lib/db';
-import { erLoggetInd } from '@/lib/auth';
+import { queries, danRapportMarkering } from '@/lib/db';
+import { erAdmin, sessionInfo } from '@/lib/auth';
 import { erGyldigRapportType } from '@/lib/rapport-i18n';
 
-// POST /api/admin/marker-sendt — markér de top-N fejl (samme udvalg som eksporten)
-// som "sendt til Zeekr nu". Gemmer deres nuvaerende stemmetal som nulpunkt, saa de
-// foerst kommer med igen i "kun nye + eskalerende", hvis de faar flere stemmer.
+// POST /api/admin/marker-sendt — "Dan Zeekr-rapport": markér de valgte fejl (samme
+// udvalg som eksporten) som sendt til Zeekr nu. Gemmer deres nuvaerende stemmetal som
+// nulpunkt + et snapshot, saa handlingen kan fortrydes. KUN admin (formand) — committen
+// af delta-sporet er formandens ansvar, saa en moderator ikke kan skubbe det skaevt.
 export async function POST(req: Request) {
-  if (!erLoggetInd()) {
-    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
+  if (!erAdmin()) {
+    return NextResponse.json({ error: 'Kun admin kan danne rapporten' }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -25,10 +26,20 @@ export async function POST(req: Request) {
         ? queries.topFejlKunAendredeType.all(rapportType, antal)
         : queries.topFejlType.all(rapportType, antal);
 
-  const markerAlle = db.transaction((ider: number[]) => {
-    for (const id of ider) queries.markerSendt.run(id);
-  });
-  markerAlle(fejl.map((f) => f.id));
+  if (fejl.length === 0) {
+    return NextResponse.json({ error: 'Der er ingen opslag at markere i det valgte udvalg.' }, { status: 400 });
+  }
 
-  return NextResponse.json({ ok: true, antal: fejl.length });
+  const s = sessionInfo()!;
+  const n = danRapportMarkering(
+    fejl.map((f) => ({
+      id: f.id,
+      sidst_sendt_stemmer: f.sidst_sendt_stemmer,
+      sidst_sendt_dato: f.sidst_sendt_dato,
+    })),
+    s.navn,
+    s.rolle
+  );
+
+  return NextResponse.json({ ok: true, antal: n });
 }

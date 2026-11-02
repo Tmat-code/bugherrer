@@ -4,6 +4,34 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-02 — "Dan Zeekr-rapport": download + markér-sendt i ét, med spærre + fortryd
+
+**Problem:** markér-sendt var en SEPARAT knap fra download, så delta-sporet (NY / +N siden
+sidst) hang på, at man huskede at trykke den bagefter. Skævt og nemt at glemme/drive ud af trit.
+
+**Løsning — én officiel handling:**
+- **Forhåndsvisning** (PDF/CSV-links) henter rapporten og **rører intet** — både admin og moderator.
+- **"📤 Dan Zeekr-rapport"** (nederst i eksport-panelet, **KUN admin**): henter PDF'en *og*
+  markerer hele udvalget som sendt i ét hug. Rækkefølge: PDF hentes først (så filen er i hånden),
+  derefter markeres. Spærre: en **advarsel** + man skal skrive **`Dan rapport`** i et felt for at
+  låse knappen op (ingen tilfældige klik).
+- **"📨 Sidst sendt til Zeekr: [dato] af [navn] · N opslag"** vises øverst (for alle).
+- **"↩️ Fortryd sidste"** (nødbremse, kun admin): ruller den seneste markering tilbage, hvis
+  rapporten alligevel ikke blev sendt. NY/+N kommer tilbage som før.
+
+**Teknisk:** ny tabel `rapport_markering` (navn, rolle, antal, data=JSON-snapshot af forrige
+sidst_sendt-værdier, fortrudt, oprettet) — idempotent `CREATE TABLE IF NOT EXISTS`. Transaktioner
+`danRapportMarkering` (markér + gem snapshot) og `fortrydSidsteMarkering` (gendan snapshot +
+markér batch fortrudt) i `lib/db.ts`. `markerSendt`-routen → admin-only + bruger snapshot-txn;
+ny `/api/admin/fortryd-markering` (admin-only). `app/admin/page.tsx` sender `sidstSendt` (seneste
+ikke-fortrudte batch) til `AdminDashboard`. Rollevalg: begge kan forhåndsvise; **kun admin kan
+committe + fortryde** (formandens kontrol over delta-sporet — Torbens valg).
+
+Verificeret lokalt: moderator → 401 på begge; admin markér 3 → snapshot gemt, sidst_sendt sat,
+1 batch; fortryd → alle 3 tilbage til NY, batch fortrudt=1; fortryd igen → 400. Build grøn.
+
+---
+
 ## 2026-11-01 — Stemme-sikkerhed: rate-limit + fraud-panel justeret + rapport fremhæver bekræftede ejere
 
 **Baggrund:** afklaring af sikkerhedsmodellen for stemmer. Variant-bekræftelse er IKKE

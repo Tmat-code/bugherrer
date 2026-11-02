@@ -67,6 +67,13 @@ export interface RapportLogItem {
   oprettet: string;
 }
 
+export interface SidstSendt {
+  navn: string;
+  rolle: string;
+  antal: number;
+  oprettet: string;
+}
+
 // Eksakt dato + klokkeslæt i dansk tid.
 function dkTidspunkt(utc: string): string {
   const d = new Date(utc.replace(' ', 'T') + 'Z');
@@ -94,6 +101,7 @@ export default function AdminDashboard({
   adgange,
   invitationer,
   rapportLog,
+  sidstSendt,
 }: {
   fejl: Fejl[];
   overblik: Overblik;
@@ -102,6 +110,7 @@ export default function AdminDashboard({
   adgange: AdgangItem[];
   invitationer: InvitationItem[];
   rapportLog: RapportLogItem[];
+  sidstSendt: SidstSendt | null;
 }) {
   const router = useRouter();
   const [top, setTop] = useState<number | 'alle'>(20);
@@ -109,7 +118,10 @@ export default function AdminDashboard({
   const [kunAendrede, setKunAendrede] = useState(false);
   const [medKommentarer, setMedKommentarer] = useState(false);
   const [rapportType, setRapportType] = useState<'fejl' | 'oenske' | 'begge'>('fejl');
-  const [markerTravl, setMarkerTravl] = useState(false);
+  const [danTravl, setDanTravl] = useState(false);
+  const [fortrydTravl, setFortrydTravl] = useState(false);
+  const [visDanRapport, setVisDanRapport] = useState(false);
+  const [danBekraeft, setDanBekraeft] = useState('');
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
   const [redigerer, setRedigerer] = useState<Fejl | null>(null);
@@ -146,26 +158,66 @@ export default function AdminDashboard({
     }
   }
 
-  async function markerSendt() {
-    if (
-      !confirm(
-        `Markér ${top === 'alle' ? 'alle' : 'de ' + top + ' øverste'}${kunAendrede ? ' (nye + eskalerende)' : ''} som sendt til Zeekr nu?\n\n` +
-          'Deres nuværende stemmetal gemmes som nulpunkt, så de først dukker op igen næste gang, hvis de får flere stemmer.'
-      )
-    )
-      return;
-    setMarkerTravl(true);
+  // Fælles URL til eksport/forhåndsvisning — samme udvalg bruges til den officielle rapport.
+  function eksportUrl(format: 'pdf' | 'csv') {
+    const sti = format === 'csv' ? '/api/admin/export/csv' : '/api/admin/export';
+    return `${sti}?top=${top}&sprog=${sprog}&type=${rapportType}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`;
+  }
+
+  // "Dan Zeekr-rapport": hent PDF'en FØRST (så filen er i hånden), markér derefter alt
+  // som sendt. Rækkefølgen sikrer, at vi aldrig markerer uden at du har fået filen.
+  async function danRapport() {
+    setDanTravl(true);
     try {
+      const pdfRes = await fetch(eksportUrl('pdf'));
+      if (!pdfRes.ok) {
+        alert('Kunne ikke danne PDF’en — intet blev markeret. Prøv igen.');
+        return;
+      }
+      const blob = await pdfRes.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bugherrer-zeekr-rapport-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
       const res = await fetch('/api/admin/marker-sendt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ top, kunAendrede, type: rapportType }),
       });
       const data = await res.json();
-      alert(res.ok ? `✅ ${data.antal} bugherrer markeret som sendt.` : data.error || 'Noget gik galt.');
+      if (res.ok) {
+        setVisDanRapport(false);
+        setDanBekraeft('');
+        alert(`✅ Rapport dannet. ${data.antal} opslag markeret som sendt til Zeekr.`);
+        router.refresh();
+      } else {
+        alert((data.error || 'Markering gik galt.') + '\n\n(PDF’en er hentet, men INTET er markeret som sendt.)');
+      }
+    } finally {
+      setDanTravl(false);
+    }
+  }
+
+  async function fortrydMarkering() {
+    if (
+      !confirm(
+        'Fortryd den seneste dan-rapport?\n\nOpslagenes NY / +N-markører rulles tilbage, som om rapporten aldrig blev sendt. Brug det, hvis du kom til at danne rapporten uden at sende den.'
+      )
+    )
+      return;
+    setFortrydTravl(true);
+    try {
+      const res = await fetch('/api/admin/fortryd-markering', { method: 'POST' });
+      const data = await res.json();
+      alert(res.ok ? `↩️ Fortrudt. ${data.antal} opslag rullet tilbage.` : data.error || 'Kunne ikke fortryde.');
       router.refresh();
     } finally {
-      setMarkerTravl(false);
+      setFortrydTravl(false);
     }
   }
 
@@ -424,7 +476,9 @@ export default function AdminDashboard({
       <div className="kort mt-6 p-6">
         <h2 className="text-lg font-bold text-asfalt-900">📤 Eksport til Zeekr-importør</h2>
         <p className="mt-1 text-sm text-asfalt-500">
-          Generér en rapport med de mest upvotede bugherrer — klar til at sende videre.
+          <strong>Forhåndsvisning</strong> henter en rapport uden at ændre noget — kig så
+          meget du vil. Den <strong>officielle</strong> rapport (nederst, kun admin) markerer
+          samtidig alt som sendt til Zeekr.
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
@@ -467,17 +521,11 @@ export default function AdminDashboard({
               <option value="sv">🇸🇪 Svenska</option>
             </select>
           </div>
-          <a
-            href={`/api/admin/export?top=${top}&sprog=${sprog}&type=${rapportType}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
-            className="btn-primary"
-          >
-            📄 Download PDF-rapport
+          <a href={eksportUrl('pdf')} className="btn-secondary">
+            📄 Forhåndsvis PDF
           </a>
-          <a
-            href={`/api/admin/export/csv?top=${top}&sprog=${sprog}&type=${rapportType}${kunAendrede ? '&kunAendrede=1' : ''}${medKommentarer ? '&kommentarer=1' : ''}`}
-            className="btn-secondary"
-          >
-            📊 Download CSV
+          <a href={eksportUrl('csv')} className="btn-secondary">
+            📊 Forhåndsvis CSV
           </a>
         </div>
 
@@ -498,7 +546,7 @@ export default function AdminDashboard({
           </span>
         </label>
 
-        {/* Eskalerings-filter + markér-sendt */}
+        {/* Eskalerings-filter */}
         <div className="mt-4 rounded-lg border-2 border-asfalt-200 bg-asfalt-50 p-4">
           <label className="flex items-start gap-2 text-sm font-bold text-asfalt-800">
             <input
@@ -514,19 +562,92 @@ export default function AdminDashboard({
             siden sidst de blev sendt. Rapporten viser <strong>NY</strong> eller{' '}
             <strong>+N siden sidst</strong>, så Zeekr kan se, hvad der eskalerer.
           </p>
-          <button
-            onClick={markerSendt}
-            disabled={markerTravl}
-            className="btn-ghost mt-3 text-sm"
-          >
-            {markerTravl
-              ? 'Markerer…'
-              : `📮 Markér ${top === 'alle' ? 'alle' : 'top ' + top} som sendt til Zeekr`}
-          </button>
-          <p className="mt-1 text-xs text-asfalt-400">
-            Tryk her <em>når du har sendt rapporten</em> — så starter deres delta forfra.
-          </p>
         </div>
+
+        {/* Sidst sendt — vises for alle */}
+        {sidstSendt && (
+          <p className="mt-4 text-sm text-asfalt-600">
+            📨 Sidst sendt til Zeekr:{' '}
+            <strong>{dkTidspunkt(sidstSendt.oprettet)}</strong> af {sidstSendt.navn} ·{' '}
+            {sidstSendt.antal} opslag
+          </p>
+        )}
+
+        {/* Dan den officielle rapport (markér sendt) — KUN admin */}
+        {erAdmin ? (
+          <div className="mt-3 rounded-lg border-2 border-hjelm-500 bg-hjelm-50 p-4">
+            <h3 className="text-sm font-black text-asfalt-900">
+              📤 Dan Zeekr-rapport (officiel — markerer som sendt)
+            </h3>
+            <p className="mt-1 text-xs text-asfalt-600">
+              Henter PDF&apos;en <strong>og</strong> markerer hele udvalget som sendt til Zeekr i
+              ét hug. Gør det kun, når du faktisk sender rapporten nu.
+            </p>
+
+            {!visDanRapport ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={() => setVisDanRapport(true)} className="btn-primary text-sm">
+                  📤 Dan Zeekr-rapport…
+                </button>
+                {sidstSendt && (
+                  <button
+                    onClick={fortrydMarkering}
+                    disabled={fortrydTravl}
+                    className="btn-ghost text-sm"
+                  >
+                    {fortrydTravl ? 'Fortryder…' : '↩️ Fortryd sidste'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg border-2 border-murstensroed/50 bg-white p-3">
+                <p className="text-sm font-bold text-murstensroed">⚠️ Sidste advarsel</p>
+                <p className="mt-1 text-xs text-asfalt-600">
+                  Alle opslag i{' '}
+                  <strong>{top === 'alle' ? 'hele listen' : 'top ' + top}</strong>
+                  {kunAendrede ? ' (nye + eskalerende)' : ''} markeres som{' '}
+                  <strong>sendt til Zeekr</strong>. Hvis rapporten ikke rent faktisk sendes,
+                  tror systemet alligevel, at Zeekr har set dem — og de kommer ikke med som nye
+                  næste gang. (Du kan fortryde bagefter med &quot;Fortryd sidste&quot;.)
+                </p>
+                <label htmlFor="danbekraeft" className="mt-3 block text-xs font-bold text-asfalt-700">
+                  Skriv <code>Dan rapport</code> for at låse op:
+                </label>
+                <input
+                  id="danbekraeft"
+                  value={danBekraeft}
+                  onChange={(e) => setDanBekraeft(e.target.value)}
+                  placeholder="Dan rapport"
+                  autoComplete="off"
+                  className="input mt-1 !w-56"
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={danRapport}
+                    disabled={danTravl || danBekraeft.trim().toLowerCase() !== 'dan rapport'}
+                    className="btn-primary text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {danTravl ? 'Danner…' : '📤 Dan rapport & markér sendt'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setVisDanRapport(false);
+                      setDanBekraeft('');
+                    }}
+                    className="btn-ghost text-sm"
+                  >
+                    Annullér
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-asfalt-400">
+            Kun formanden (admin) kan danne den officielle rapport og markere som sendt. Du kan
+            forhåndsvise ovenfor.
+          </p>
+        )}
 
         {sprog !== 'da' && (
           <p className="mt-3 text-xs text-asfalt-500">

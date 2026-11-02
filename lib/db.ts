@@ -130,6 +130,18 @@ function migrate(db: Database.Database) {
       oprettet        TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- Markerings-batch: hver "Dan Zeekr-rapport" gemmer et snapshot af de ramte
+    -- fejls FORRIGE sidst_sendt-vaerdier, saa en markering kan rulles tilbage ("fortryd").
+    CREATE TABLE IF NOT EXISTS rapport_markering (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      navn      TEXT NOT NULL,
+      rolle     TEXT NOT NULL,
+      antal     INTEGER NOT NULL,
+      data      TEXT NOT NULL,            -- JSON: [{id, ps (prev stemmer), pd (prev dato)}]
+      fortrudt  INTEGER NOT NULL DEFAULT 0,
+      oprettet  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
@@ -283,6 +295,16 @@ export interface RapportLog {
   oprettet: string;
 }
 
+export interface RapportMarkering {
+  id: number;
+  navn: string;
+  rolle: string;
+  antal: number;
+  data: string; // JSON: [{id, ps, pd}]
+  fortrudt: number;
+  oprettet: string;
+}
+
 // --- Forespoergsler ---
 export const queries = {
   alleFejl: db.prepare<[], Fejl>(`SELECT * FROM fejl ORDER BY stemmer DESC, oprettet DESC`),
@@ -351,6 +373,21 @@ export const queries = {
   markerSendt: db.prepare(
     `UPDATE fejl SET sidst_sendt_stemmer = stemmer, sidst_sendt_dato = datetime('now') WHERE id = ?`
   ),
+  // Gendan en fejls sidst_sendt-vaerdier til et tidligere snapshot (bruges af "fortryd").
+  // ps/pd kan vaere null (fejlen var aldrig sendt foer markeringen).
+  gendanSidstSendt: db.prepare(
+    `UPDATE fejl SET sidst_sendt_stemmer = @stemmer, sidst_sendt_dato = @dato WHERE id = @id`
+  ),
+
+  // --- Rapport-markeringer (dan rapport + fortryd) ---
+  opretMarkering: db.prepare(
+    `INSERT INTO rapport_markering (navn, rolle, antal, data) VALUES (@navn, @rolle, @antal, @data)`
+  ),
+  // Seneste markering der IKKE er fortrudt — til "fortryd" og til "sidst sendt"-visning.
+  sidsteMarkering: db.prepare<[], RapportMarkering>(
+    `SELECT * FROM rapport_markering WHERE fortrudt = 0 ORDER BY oprettet DESC, id DESC LIMIT 1`
+  ),
+  markerMarkeringFortrudt: db.prepare(`UPDATE rapport_markering SET fortrudt = 1 WHERE id = ?`),
 
   harStemt: db.prepare<[number, string], { n: number }>(
     `SELECT COUNT(*) AS n FROM stemmer_log WHERE fejl_id = ? AND token = ?`
@@ -577,4 +614,33 @@ export const afgivStemme = db.transaction((fejlId: number, token: string): boole
   queries.logStemme.run(fejlId, token);
   queries.taelStemmeOp.run(fejlId);
   return true;
+});
+
+// "Dan Zeekr-rapport": markér et udvalg af fejl som sendt nu, OG gem et snapshot af
+// deres forrige sidst_sendt-vaerdier, saa markeringen kan fortrydes i ét hug.
+// Returnerer antal markerede. Atomar.
+export const danRapportMarkering = db.transaction(
+  (
+    fejl: { id: number; sidst_sendt_stemmer: number | null; sidst_sendt_dato: string | null }[],
+    navn: string,
+    rolle: string
+  ): number => {
+    const data = JSON.stringify(
+      fejl.map((f) => ({ id: f.id, ps: f.sidst_sendt_stemmer, pd: f.sidst_sendt_dato }))
+    );
+    for (const f of fejl) queries.markerSendt.run(f.id);
+    queries.opretMarkering.run({ navn, rolle, antal: fejl.length, data });
+    return fejl.length;
+  }
+);
+
+// Fortryd den seneste (ikke-fortrudte) markering: rul hver ramt fejls sidst_sendt
+// tilbage til snapshot'et. Returnerer antal gendannede, eller null hvis intet at fortryde.
+export const fortrydSidsteMarkering = db.transaction((): { antal: number; oprettet: string } | null => {
+  const sidste = queries.sidsteMarkering.get();
+  if (!sidste) return null;
+  const snapshot = JSON.parse(sidste.data) as { id: number; ps: number | null; pd: string | null }[];
+  for (const r of snapshot) queries.gendanSidstSendt.run({ id: r.id, stemmer: r.ps, dato: r.pd });
+  queries.markerMarkeringFortrudt.run(sidste.id);
+  return { antal: snapshot.length, oprettet: sidste.oprettet };
 });
