@@ -4,6 +4,32 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — "Test oversættelse"-knap (diagnose af LibreTranslate)
+
+**Problem:** EN-rapport kom ud med engelsk ramme (faste labels) men dansk fejltekst
+(titler/beskrivelser). Diagnose: IKKE en kodefejl — eksport-ruterne kalder korrekt
+`oversaetFejl`, men den er graceful og falder tilbage til dansk, hvis `LIBRETRANSLATE_URL`
+ikke er sat, eller LibreTranslate ikke svarer. De faste labels er indbygget i `rapport-i18n`
+(ikke live-oversat), så de narrer: engelsk ramme beviser ikke, at oversætteren virker.
+Mest sandsynligt: LibreTranslate er aldrig deployet/wired på Pixa.
+
+**Ændring:** `lib/oversaet.ts` → ny `oversaetDiagnose()` (live da→en-prøve, rapporterer
+konfigureret/vært/ok/fejl). Ny `GET /api/admin/oversaet-status` (erLoggetInd). I
+AdminDashboard: **"🔎 Test oversættelse"-knap** i eksport-panelet, der viser:
+- ⚠️ ikke sat op (LIBRETRANSLATE_URL mangler),
+- ✅ virker (via vært) + en prøveoversættelse, eller
+- ❌ kan ikke nå + fejltekst.
+
+Så kan admin/moderator se fra browseren, hvorfor en rapport ikke blev oversat, uden
+Coolify-logs. Verificeret lokalt: 401 uautoriseret; ingen LT_URL → konfigureret:false;
+død LT_URL → ok:false + "fetch failed". Build grøn.
+
+**NÆSTE (på Torbens side):** afklar via knappen om LibreTranslate kører. Hvis "ikke sat op":
+deploy LibreTranslate i Coolify (`libretranslate/libretranslate`, port 5000,
+`LT_LOAD_ONLY=en,da,sv`), sæt `LIBRETRANSLATE_URL` på bugherrer-appen, redeploy.
+
+---
+
 ## 2026-11-02 — "Dan Zeekr-rapport": download + markér-sendt i ét, med spærre + fortryd
 
 **Problem:** markér-sendt var en SEPARAT knap fra download, så delta-sporet (NY / +N siden

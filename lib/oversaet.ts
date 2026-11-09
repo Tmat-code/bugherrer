@@ -113,6 +113,33 @@ export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<O
   return resultat;
 }
 
+export interface OversaetStatus {
+  konfigureret: boolean; // er LIBRETRANSLATE_URL sat?
+  vaert: string | null; // host:port (uden sti) — til visning
+  ok: boolean; // svarede et live da->en kald korrekt?
+  prove?: { kilde: string; resultat: string };
+  fejl?: string;
+}
+
+// Live-diagnose af oversaettelsen: er LibreTranslate sat op, kan vi naa den, og
+// oversaetter den rent faktisk? Bruges af admin-knappen "Test oversaettelse".
+export async function oversaetDiagnose(): Promise<OversaetStatus> {
+  if (!LT_URL) return { konfigureret: false, vaert: null, ok: false };
+  let vaert = LT_URL;
+  try {
+    vaert = new URL(LT_URL).host;
+  } catch {
+    /* behold raa vaerdi */
+  }
+  const kilde = 'Bilen bremser pludseligt i bakgear.';
+  try {
+    const [resultat] = await libreOversaet([kilde], 'en');
+    return { konfigureret: true, vaert, ok: true, prove: { kilde, resultat } };
+  } catch (e) {
+    return { konfigureret: true, vaert, ok: false, fejl: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // Oversaetter en simpel liste af tekster (fx kommentarer) til rapportsproget.
 // Ingen DB-cache — bruges sjaeldent (kun ved eksport med kommentarer slaaet til).
 // Graceful: dansk/ingen oversaetter, eller fejl → original tekst tilbage.

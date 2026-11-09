@@ -122,6 +122,14 @@ export default function AdminDashboard({
   const [fortrydTravl, setFortrydTravl] = useState(false);
   const [visDanRapport, setVisDanRapport] = useState(false);
   const [danBekraeft, setDanBekraeft] = useState('');
+  const [oversTravl, setOversTravl] = useState(false);
+  const [oversStatus, setOversStatus] = useState<null | {
+    konfigureret: boolean;
+    vaert: string | null;
+    ok: boolean;
+    prove?: { kilde: string; resultat: string };
+    fejl?: string;
+  }>(null);
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
   const [redigerer, setRedigerer] = useState<Fejl | null>(null);
@@ -200,6 +208,21 @@ export default function AdminDashboard({
       }
     } finally {
       setDanTravl(false);
+    }
+  }
+
+  async function testOversaettelse() {
+    setOversTravl(true);
+    try {
+      const res = await fetch('/api/admin/oversaet-status');
+      const data = await res.json();
+      if (res.ok) setOversStatus(data);
+      else {
+        setOversStatus(null);
+        alert(data.error || 'Kunne ikke hente status.');
+      }
+    } finally {
+      setOversTravl(false);
     }
   }
 
@@ -656,6 +679,42 @@ export default function AdminDashboard({
             fejl-teksten forbliver dansk.
           </p>
         )}
+
+        {/* Live-tjek af oversættelsen */}
+        <div className="mt-3">
+          <button onClick={testOversaettelse} disabled={oversTravl} className="btn-ghost text-sm">
+            {oversTravl ? 'Tester…' : '🔎 Test oversættelse'}
+          </button>
+          {oversStatus && (
+            <div
+              className={`mt-2 rounded-lg border-2 p-3 text-sm ${
+                !oversStatus.konfigureret
+                  ? 'border-hjelm-500 bg-hjelm-50'
+                  : oversStatus.ok
+                    ? 'border-green-600 bg-green-50'
+                    : 'border-murstensroed/60 bg-white'
+              }`}
+            >
+              {!oversStatus.konfigureret ? (
+                <p className="text-asfalt-700">
+                  ⚠️ <strong>LibreTranslate er ikke sat op.</strong> <code>LIBRETRANSLATE_URL</code>{' '}
+                  mangler på appen, så rapporter oversættes ikke — fejl-teksten forbliver dansk. Sæt
+                  den i Coolify og redeploy.
+                </p>
+              ) : oversStatus.ok ? (
+                <p className="text-asfalt-700">
+                  ✅ <strong>Oversættelse virker</strong> (via {oversStatus.vaert}).<br />
+                  Prøve: «{oversStatus.prove?.kilde}» → «<strong>{oversStatus.prove?.resultat}</strong>»
+                </p>
+              ) : (
+                <p className="text-asfalt-700">
+                  ❌ <strong>Kan ikke nå LibreTranslate</strong> på {oversStatus.vaert}.<br />
+                  <span className="font-mono text-xs text-murstensroed">{oversStatus.fejl}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Adgange & invitationer (kun admin) */}
