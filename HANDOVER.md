@@ -25,6 +25,11 @@ oversat+cachet (7 rækker), klump 2 forblev dansk, resten upåvirket.
 standardfont ikke kan tegne → kom ud som "%²". Skiftet til `>>`.
 
 Første EN-eksport efter deploy udløser oversættelsen (få sekunder); derefter instant fra cache.
+Bekræftet live: "Nødbremsning i bakgear" → "Emergency braking in reverse".
+
+**Også:** PDF-filnavnet brugte `rapportType` råt ("bugherrer-fejl-report-en"). Ny
+`TYPE_FILNAVN`-map pr. sprog i `rapport-i18n.ts` → EN hedder nu "bugherrer-bug-report-en",
+ønsker→"wishes", begge→"all" (sv: fel/onskemal/allt).
 
 ---
 
