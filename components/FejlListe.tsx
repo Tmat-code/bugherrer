@@ -317,13 +317,17 @@ export default function FejlListe({
                       {f.softwareversion}
                     </span>
                   )}
-                  <StatusTag
-                    status={beregnStatus({
+                  {(() => {
+                    // På listen viser vi kun status-mærket for de MILEPÆLE, der flytter noget
+                    // (Sendt til Zeekr, Løst). "Bekræftet" bæres af "N biler bekræftet"-badgen
+                    // længere nede, så signalet ikke står to gange.
+                    const st = beregnStatus({
                       loest_dato: f.loest_dato,
                       sidst_sendt_dato: f.sidst_sendt_dato,
                       bekraeftedeBiler: f.antal_ejer_bekraeftet,
-                    })}
-                  />
+                    });
+                    return st === 'Sendt til Zeekr' || st === 'Løst!' ? <StatusTag status={st} /> : null;
+                  })()}
                   <span className="text-asfalt-400">· 🕑 {relativTid(f.oprettet)}</span>
                   {(() => {
                     const antal = f.antal_kommentarer;
