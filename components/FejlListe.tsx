@@ -350,7 +350,7 @@ export default function FejlListe({
                     const bekr = bekraeftOverlay[f.id] ?? f.antal_ejer_bekraeftet;
                     return bekr > 0 ? (
                       <span className="rounded bg-asfalt-100 px-2 py-0.5 font-bold text-asfalt-700">
-                        🚗 {bekr} bil-bekræftet
+                        🚗 {bekr} bil-bekræftet{bekr === 1 ? '' : 'e'}
                       </span>
                     ) : null;
                   })()}
