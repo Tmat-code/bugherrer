@@ -32,8 +32,9 @@ async function ltKald(tekster: string[], kilde: string, maal: string): Promise<s
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    // Undgaa at en haengende server blokerer eksporten for evigt.
-    signal: AbortSignal.timeout(20000),
+    // Undgaa at en haengende server blokerer eksporten for evigt. Klumperne er smaa,
+    // saa 30s er rigeligt — ogsaa hvis modellen lige skal varmes op paa foerste kald.
+    signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) throw new Error(`LibreTranslate svarede ${res.status} (${kilde}->${maal})`);
   const data = (await res.json()) as { translatedText: string | string[] };
@@ -63,8 +64,7 @@ export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<O
   }
 
   const resultat: OversatFejl[] = [];
-  const atOversaette: string[] = [];
-  const uoversatte: { indeks: number; base: number }[] = [];
+  const mangler: number[] = [];
 
   // 1) Brug cache hvor kildeteksten er uaendret; saml resten.
   fejl.forEach((f, i) => {
@@ -74,40 +74,48 @@ export async function oversaetFejl(fejl: Fejl[], sprog: RapportSprog): Promise<O
       resultat[i] = { ...f, titel: cache.titel, beskrivelse: cache.beskrivelse, oversat: true };
     } else {
       resultat[i] = { ...f, oversat: false };
-      const base = atOversaette.length;
-      atOversaette.push(f.titel, f.beskrivelse);
-      uoversatte.push({ indeks: i, base });
+      mangler.push(i);
     }
   });
 
-  if (atOversaette.length === 0) return resultat;
+  if (mangler.length === 0) return resultat;
 
-  // 2) Ét samlet kald for alt der mangler.
-  let oversat: string[];
-  try {
-    oversat = await libreOversaet(atOversaette, maal);
-  } catch (e) {
-    console.error('[oversaet] LibreTranslate fejlede, falder tilbage til dansk:', e);
-    return fejl.map((f, i) => resultat[i] ?? { ...f, oversat: false });
-  }
+  // 2) Oversaet de manglende i SMAA klumper (5 fejl = 10 strenge ad gangen) frem for ét
+  //    kaempe kald. Et stort/koldt kald paa alle 40+ strenge kan time ud og vaelte HELE
+  //    rapporten til dansk; smaa klumper er hurtige. Hver klump der lykkes caches med det
+  //    samme (progressivt — naeste eksport henter resten), og en klump der fejler beholder
+  //    bare dansk for netop de fejl i stedet for at smitte af paa resten.
+  const KLUMP = 5;
+  for (let start = 0; start < mangler.length; start += KLUMP) {
+    const gruppe = mangler.slice(start, start + KLUMP);
+    const tekster: string[] = [];
+    gruppe.forEach((i) => tekster.push(fejl[i].titel, fejl[i].beskrivelse));
 
-  // 3) Flet oversaettelserne ind + gem i cache.
-  for (const { indeks, base } of uoversatte) {
-    const f = fejl[indeks];
-    const nyTitel = oversat[base] ?? f.titel;
-    const nyBesk = oversat[base + 1] ?? f.beskrivelse;
-    resultat[indeks] = { ...f, titel: nyTitel, beskrivelse: nyBesk, oversat: true };
+    let oversat: string[];
     try {
-      queries.gemOversaettelse.run({
-        fejl_id: f.id,
-        sprog,
-        kilde_hash: hash(`${f.titel}\n${f.beskrivelse}`),
-        titel: nyTitel,
-        beskrivelse: nyBesk,
-      });
+      oversat = await libreOversaet(tekster, maal);
     } catch (e) {
-      console.error('[oversaet] kunne ikke cache oversaettelse:', e);
+      console.error('[oversaet] klump fejlede, beholder dansk for den:', e);
+      continue; // resultat[i] er allerede sat til dansk (oversat:false)
     }
+
+    gruppe.forEach((i, j) => {
+      const f = fejl[i];
+      const nyTitel = oversat[j * 2] ?? f.titel;
+      const nyBesk = oversat[j * 2 + 1] ?? f.beskrivelse;
+      resultat[i] = { ...f, titel: nyTitel, beskrivelse: nyBesk, oversat: true };
+      try {
+        queries.gemOversaettelse.run({
+          fejl_id: f.id,
+          sprog,
+          kilde_hash: hash(`${f.titel}\n${f.beskrivelse}`),
+          titel: nyTitel,
+          beskrivelse: nyBesk,
+        });
+      } catch (e) {
+        console.error('[oversaet] kunne ikke cache oversaettelse:', e);
+      }
+    });
   }
 
   return resultat;

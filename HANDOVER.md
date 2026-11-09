@@ -4,6 +4,30 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — FIX: EN-rapport oversatte ikke (batch for stor) + ▲-glyph i PDF
+
+**Symptom:** EN-rapport kom med engelsk ramme men dansk fejltekst (titler+beskrivelser),
+selvom "Test oversættelse"-knappen viste ✅ virker. Virkede den 25/10 (demo-bugs var engelske)
+→ regression. De nuværende rigtige bugs var aldrig blevet oversat.
+
+**Årsag:** `oversaetFejl` lavede ÉT kæmpe LibreTranslate-kald på alle manglende strenge
+(~40 for 20 bugs). Det kald timede ud/fejlede (kold model + load på Pixa, 20s timeout), og
+hele rapporten faldt tilbage til dansk uden at cache noget. Enkelt-prøven (1 kort streng) var
+hurtig → gav falsk tryghed.
+
+**Fix (`lib/oversaet.ts`):** oversæt i **små klumper (5 fejl = 10 strenge)** i stedet for ét
+stort kald. Hver klump der lykkes caches straks pr. fejl (progressivt — næste eksport henter
+resten); en klump der fejler beholder kun dansk for de 5, ikke hele rapporten. Timeout hævet
+20s→30s. Verificeret mod mock-LibreTranslate: 12 fejl, bevidst fejlende klump 2 → klump 1+3
+oversat+cachet (7 rækker), klump 2 forblev dansk, resten upåvirket.
+
+**Bonus (`app/api/admin/export/route.ts`):** NY/`+N`-badgen brugte `▲`, som pdfkit's
+standardfont ikke kan tegne → kom ud som "%²". Skiftet til `>>`.
+
+Første EN-eksport efter deploy udløser oversættelsen (få sekunder); derefter instant fra cache.
+
+---
+
 ## 2026-11-09 — FIX: build fejlede med "database is locked" (brug in-memory DB under build)
 
 **Symptom:** Coolify-deploy fejlede: `SqliteError: database is locked` under `npm run build`

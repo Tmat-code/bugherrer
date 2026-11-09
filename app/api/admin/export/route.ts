@@ -135,7 +135,7 @@ export async function GET(req: Request) {
           .fontSize(9)
           .font('Helvetica-Bold')
           .fillColor('#b5790f')
-          .text(`▲ ${delta}`, 58, doc.y + 2, { width: sideBredde });
+          .text(`>> ${delta}`, 58, doc.y + 2, { width: sideBredde });
         doc.moveDown(0.2);
       }
 
