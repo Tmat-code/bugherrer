@@ -50,7 +50,10 @@ export default function Forside({
             <Link href="/opret?type=oenske" className="btn-secondary">
               💡 Foreslå et ønske
             </Link>
-            <a href="#listen" className="btn-ghost !text-white hover:!bg-asfalt-700">
+            <a
+              href="#listen"
+              className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
+            >
               Se listen ↓
             </a>
           </div>
