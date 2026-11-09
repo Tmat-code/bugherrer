@@ -107,7 +107,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
           Meldt {datoTekst(fejl.oprettet)} · {fejl.stemmer} stemmer
           {bilBekraeftet > 0 && (
             <span className="font-bold text-asfalt-500">
-              {' '}· 🚗 {bilBekraeftet} bil-bekræftet{bilBekraeftet === 1 ? '' : 'e'}
+              {' '}· 🚗 {bilBekraeftet === 1 ? '1 bil-bekræftet' : `${bilBekraeftet} biler bekræftet`}
             </span>
           )}
         </p>

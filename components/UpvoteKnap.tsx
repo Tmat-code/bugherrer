@@ -125,7 +125,7 @@ export default function UpvoteKnap({
       )}
       {!minVariant && bekraeftet > 0 && (
         <p className="mt-2 text-xs font-bold text-asfalt-500">
-          🚗 {bekraeftet} bil-bekræftet{bekraeftet === 1 ? '' : 'e'}
+          🚗 {bekraeftet === 1 ? '1 bil-bekræftet' : `${bekraeftet} biler bekræftet`}
         </p>
       )}
     </div>
