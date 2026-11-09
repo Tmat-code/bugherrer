@@ -5,11 +5,21 @@ import fs from 'node:fs';
 // --- Databasesti ---
 // I produktion (Coolify) peger DATABASE_PATH paa en persistent volume, fx /app/data/bygherrer.db.
 // Lokalt falder vi tilbage til ./data/bygherrer.db.
-const DB_PATH =
-  process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'bygherrer.db');
+//
+// VIGTIGT: under `next build` importeres alle API-ruter for at "samle page data", hvilket
+// aabner denne DB ved import. Vi maa IKKE aabne/laase prod-volumen (eller koere migreringer
+// mod den) under build — den koerende container holder filen laast (WAL), hvilket giver
+// "database is locked" og vaelter build'et. Under build bruger vi derfor en flygtig
+// in-memory DB: skemaet oprettes friskt, ruterne kan importeres, og volumen roeres ikke.
+const ER_BUILD = process.env.NEXT_PHASE === 'phase-production-build';
+const DB_PATH = ER_BUILD
+  ? ':memory:'
+  : process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'bygherrer.db');
 
-// Sikr at mappen findes (vigtigt foerste gang volumen er tom).
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+// Sikr at mappen findes (kun for en rigtig fil; ikke for :memory:).
+if (DB_PATH !== ':memory:') {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+}
 
 // --- Singleton ---
 // Next.js hot-reloader kan koere modulet flere gange i dev; vi genbruger forbindelsen.

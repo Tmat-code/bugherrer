@@ -4,6 +4,28 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — FIX: build fejlede med "database is locked" (brug in-memory DB under build)
+
+**Symptom:** Coolify-deploy fejlede: `SqliteError: database is locked` under `npm run build`
+→ "Failed to collect page data for /api/admin/adgang" → exit 1. (Forrige version blev ved
+med at køre, så sitet var oppe.)
+
+**Årsag:** `next build` importerer alle API-ruter for at samle page-data, og `lib/db.ts`
+åbner DB'en + kører migreringer **ved import**. Mod prod-volumet, mens den kørende container
+holder WAL-låsen → "database is locked". Tidligere builds vandt bare kapløbet; dette tabte.
+Bonus-problem: build'et har kørt migreringer mod prod-DB hver gang — forkert.
+
+**Fix:** i `lib/db.ts` bruges nu en flygtig **`:memory:`-DB under build**
+(`process.env.NEXT_PHASE === 'phase-production-build'`). Skemaet oprettes friskt i hukommelsen,
+ruterne kan importeres, og volumen/migreringerne røres slet ikke under build. Ved runtime
+bruges `DATABASE_PATH` som før. Verificeret: `DATABASE_PATH=/tmp npm run build` (ugyldig sti)
+er nu grøn — beviser at build ikke åbner den rigtige DB længere.
+
+Dette unblocker samtidig forrige commit (oversæt-status-knappen), som fulgte med i den
+fejlede deploy.
+
+---
+
 ## 2026-11-09 — "Test oversættelse"-knap (diagnose af LibreTranslate)
 
 **Problem:** EN-rapport kom ud med engelsk ramme (faste labels) men dansk fejltekst
