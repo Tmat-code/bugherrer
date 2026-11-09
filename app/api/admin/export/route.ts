@@ -10,6 +10,7 @@ import {
   DATO_LOCALE,
   RAPPORT_RAMME,
   erGyldigRapportType,
+  TYPE_FILNAVN,
 } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
@@ -283,7 +284,7 @@ export async function GET(req: Request) {
   return new NextResponse(new Uint8Array(pdfBytes), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="bugherrer-${rapportType}-${t.filnavn}-${datoFil}.pdf"`,
+      'Content-Disposition': `attachment; filename="bugherrer-${TYPE_FILNAVN[sprog][rapportType]}-${t.filnavn}-${datoFil}.pdf"`,
     },
   });
 }

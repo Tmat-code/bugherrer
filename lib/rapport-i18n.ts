@@ -227,6 +227,13 @@ export function erGyldigRapportType(s: string | null): RapportType {
   return s === 'oenske' ? 'oenske' : s === 'begge' ? 'begge' : 'fejl';
 }
 
+// Slug for meldingstypen i filnavnet, oversat pr. sprog (ASCII-sikkert — ingen æøå).
+export const TYPE_FILNAVN: Record<RapportSprog, Record<RapportType, string>> = {
+  da: { fejl: 'fejl', oenske: 'oensker', begge: 'alt' },
+  en: { fejl: 'bug', oenske: 'wishes', begge: 'all' },
+  sv: { fejl: 'fel', oenske: 'onskemal', begge: 'allt' },
+};
+
 // Titel + intro afhænger af hvad rapporten dækker. Resten af rammen (undertitel,
 // disclaimer, labels) er fælles.
 export const RAPPORT_RAMME: Record<RapportSprog, Record<RapportType, { titel: string; intro: string }>> = {
