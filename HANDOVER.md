@@ -4,6 +4,33 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — Forside: resultattavle + status-redesign + admin-styret besked
+
+Formål: få forsiden til at føles som **fremdrift**, ikke bare en opsamling (Torbens spørgsmål).
+
+**Resultattavle** øverst på forsiden (under hero): 📋 meldte fejl · ✓ bekræftet af ejere ·
+📮 sendt til Zeekr · ✅ løst. Udledt via ny `forsideStats`-query (kun type='fejl';
+bekræftet = ≥ `BEKRAEFT_TAERSKEL` biler). Giver øjeblikkelig fornemmelse af kollektiv progression.
+
+**Status-redesign** (STATUS_STYLE i config): "Bekræftet" væk fra advarsels-looket (var
+`advarsel-500` + ⚠️, læste som en alarm) → `hjelm-400` + ✓ (solidt/positivt). Trappen:
+Undersøges (grå 🔍) → Bekræftet (amber ✓) → Sendt til Zeekr (mørk 📮) → Løst (grøn ✅).
+Fjernet den gentagne "🚗 Zeekr 7GT"-badge pr. række (hele boardet ER 7GT = støj).
+
+**Admin-styret forside-besked**: ny meta-nøgler `forside_besked` + `forside_besked_aktiv`,
+generisk `saetMeta`-query, `/api/admin/forside-besked` (admin). Panel i AdminDashboard
+("📣 Forside-besked") med tekstfelt + "Vis på forsiden"/"Sluk". Vises som banner øverst på
+forsiden. Til fx "Vi har sendt første rapport til Zeekr". Torben er ved at sende den første
+rapport nu.
+
+Verificeret lokalt: tavle-tal korrekte (meldinger ekskl. ønsker, sendt/løst/bekræftet);
+besked tænd→vises, sluk→væk. Build grøn.
+
+ÅBENT (afventer Torbens visuelle review): om "Bekræftet"-status + "N biler bekræftet"-badge
+stadig føles dobbelt — kan slås sammen hvis ønsket.
+
+---
+
 ## 2026-11-09 — Status udledes nu automatisk (minimal administration)
 
 **Beslutning (Torben):** statusserne skal kræve mindst mulig administration. De fire

@@ -509,6 +509,20 @@ export const queries = {
     `INSERT INTO meta (noegle, vaerdi) VALUES (?, datetime('now'))
      ON CONFLICT(noegle) DO UPDATE SET vaerdi = datetime('now')`
   ),
+  saetMeta: db.prepare(
+    `INSERT INTO meta (noegle, vaerdi) VALUES (@noegle, @vaerdi)
+     ON CONFLICT(noegle) DO UPDATE SET vaerdi = @vaerdi`
+  ),
+  // Forside-tal (kun fejl): meldinger, bekraeftede (>= taerskel biler), sendt, loest.
+  forsideStats: db.prepare<[{ taerskel: number }], { meldinger: number; bekraeftet: number; sendt: number; loest: number }>(`
+    SELECT
+      COUNT(*) AS meldinger,
+      COALESCE(SUM(CASE WHEN (SELECT COUNT(*) FROM stemmer_log sl WHERE sl.fejl_id = f.id AND sl.ejer_variant IS NOT NULL) >= @taerskel THEN 1 ELSE 0 END), 0) AS bekraeftet,
+      COALESCE(SUM(CASE WHEN sidst_sendt_dato IS NOT NULL THEN 1 ELSE 0 END), 0) AS sendt,
+      COALESCE(SUM(CASE WHEN loest_dato IS NOT NULL THEN 1 ELSE 0 END), 0) AS loest
+    FROM fejl f
+    WHERE f.type = 'fejl'
+  `),
   antalFejl: db.prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM fejl`),
   antalKommentarer: db.prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM kommentarer`),
   antalFejlSiden: db.prepare<[string | null], { n: number }>(

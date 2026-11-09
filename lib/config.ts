@@ -57,9 +57,11 @@ export const STATUS_STYLE: Record<
   Status,
   { bg: string; text: string; ikon: string }
 > = {
-  'Undersøges': { bg: 'bg-hjelm-200', text: 'text-asfalt-800', ikon: '🔍' },
-  'Bekræftet': { bg: 'bg-advarsel-500', text: 'text-white', ikon: '⚠️' },
-  'Sendt til Zeekr': { bg: 'bg-asfalt-700', text: 'text-hjelm-300', ikon: '📮' },
+  // Et forløb, der føles som fremdrift — fra "i bunken" til "løst". "Bekræftet" skal
+  // signalere noget SOLIDT/positivt (flueben), ikke en advarsel.
+  'Undersøges': { bg: 'bg-asfalt-100', text: 'text-asfalt-600', ikon: '🔍' },
+  'Bekræftet': { bg: 'bg-hjelm-400', text: 'text-asfalt-900', ikon: '✓' },
+  'Sendt til Zeekr': { bg: 'bg-asfalt-800', text: 'text-hjelm-300', ikon: '📮' },
   'Løst!': { bg: 'bg-graes', text: 'text-white', ikon: '✅' },
 };
 

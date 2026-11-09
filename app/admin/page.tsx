@@ -58,6 +58,9 @@ export default function AdminSide() {
     ? { navn: sm.navn, rolle: sm.rolle, antal: sm.antal, oprettet: sm.oprettet }
     : null;
 
+  const forsideBesked = queries.hentMeta.get('forside_besked')?.vaerdi ?? '';
+  const forsideBeskedAktiv = queries.hentMeta.get('forside_besked_aktiv')?.vaerdi === '1';
+
   // --- Overblik: server-side "sidst set" (paalideligt, uafhaengigt af browser) ---
   const sidstSet = queries.hentMeta.get('admin_sidst_set')?.vaerdi ?? null;
 
@@ -132,6 +135,8 @@ export default function AdminSide() {
       invitationer={invitationer}
       rapportLog={rapportLog}
       sidstSendt={sidstSendt}
+      forsideBesked={forsideBesked}
+      forsideBeskedAktiv={forsideBeskedAktiv}
     />
   );
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { queries } from '@/lib/db';
+import { BEKRAEFT_TAERSKEL } from '@/lib/config';
 import FejlListe from '@/components/FejlListe';
 
 // Altid frisk fra databasen (ingen statisk caching af listen).
@@ -13,6 +14,17 @@ export default function Forside({
   const fejl = queries.alleFejlMedSvar.all();
   const startFilter =
     searchParams?.type === 'oenske' ? 'oenske' : searchParams?.type === 'fejl' ? 'fejl' : 'alle';
+
+  const stats = queries.forsideStats.get({ taerskel: BEKRAEFT_TAERSKEL })!;
+  const beskedTekst = queries.hentMeta.get('forside_besked')?.vaerdi ?? '';
+  const beskedAktiv = queries.hentMeta.get('forside_besked_aktiv')?.vaerdi === '1';
+
+  const tavle = [
+    { n: stats.meldinger, label: 'meldte fejl', ikon: '📋' },
+    { n: stats.bekraeftet, label: 'bekræftet af ejere', ikon: '✓' },
+    { n: stats.sendt, label: 'sendt til Zeekr', ikon: '📮' },
+    { n: stats.loest, label: 'løst', ikon: '✅' },
+  ];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -45,6 +57,31 @@ export default function Forside({
         </div>
         <div className="h-3 w-full bg-advarselsstriber" aria-hidden />
       </section>
+
+      {/* Admin-styret forside-besked (fx "rapporten er sendt til Zeekr") */}
+      {beskedAktiv && beskedTekst && (
+        <section className="mt-6 flex items-start gap-3 rounded-xl border-2 border-hjelm-500 bg-hjelm-50 px-5 py-4">
+          <span className="text-2xl" aria-hidden>📣</span>
+          <p className="font-bold text-asfalt-900">{beskedTekst}</p>
+        </section>
+      )}
+
+      {/* Resultattavle: hvor langt er vi? */}
+      <div className="mt-6 grid grid-cols-2 overflow-hidden rounded-xl border-2 border-asfalt-200 bg-white sm:grid-cols-4 sm:divide-x-2 sm:divide-asfalt-100">
+        {tavle.map((s, i) => (
+          <div
+            key={s.label}
+            className={`px-4 py-4 text-center ${i < 2 ? 'border-b-2 border-asfalt-100 sm:border-b-0' : ''} ${
+              i % 2 === 1 ? 'border-l-2 border-asfalt-100 sm:border-l-0' : ''
+            }`}
+          >
+            <div className="text-3xl font-black text-asfalt-900">{s.n}</div>
+            <div className="mt-0.5 text-xs font-bold uppercase tracking-wide text-asfalt-500">
+              <span aria-hidden>{s.ikon}</span> {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Info-striber */}
       <div className="mt-6 grid gap-3 sm:grid-cols-3">

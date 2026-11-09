@@ -102,6 +102,8 @@ export default function AdminDashboard({
   invitationer,
   rapportLog,
   sidstSendt,
+  forsideBesked,
+  forsideBeskedAktiv,
 }: {
   fejl: FejlMedSvar[];
   overblik: Overblik;
@@ -111,6 +113,8 @@ export default function AdminDashboard({
   invitationer: InvitationItem[];
   rapportLog: RapportLogItem[];
   sidstSendt: SidstSendt | null;
+  forsideBesked: string;
+  forsideBeskedAktiv: boolean;
 }) {
   const router = useRouter();
   const [top, setTop] = useState<number | 'alle'>(20);
@@ -130,6 +134,9 @@ export default function AdminDashboard({
     prove?: { kilde: string; resultat: string };
     fejl?: string;
   }>(null);
+  const [beskedTekst, setBeskedTekst] = useState(forsideBesked);
+  const [beskedAktiv, setBeskedAktiv] = useState(forsideBeskedAktiv);
+  const [beskedTravl, setBeskedTravl] = useState(false);
   const [travl, setTravl] = useState<number | null>(null);
   const [henvTravl, setHenvTravl] = useState<number | null>(null);
   const [redigerer, setRedigerer] = useState<Fejl | null>(null);
@@ -208,6 +215,21 @@ export default function AdminDashboard({
       }
     } finally {
       setDanTravl(false);
+    }
+  }
+
+  async function gemBesked(aktiv: boolean) {
+    setBeskedTravl(true);
+    try {
+      await fetch('/api/admin/forside-besked', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tekst: beskedTekst, aktiv }),
+      });
+      setBeskedAktiv(aktiv);
+      router.refresh();
+    } finally {
+      setBeskedTravl(false);
     }
   }
 
@@ -716,6 +738,48 @@ export default function AdminDashboard({
           )}
         </div>
       </div>
+
+      {/* Forside-besked (kun admin) */}
+      {erAdmin && (
+        <section className="kort mt-6 p-6">
+          <h2 className="text-lg font-bold text-asfalt-900">📣 Forside-besked</h2>
+          <p className="mt-1 text-sm text-asfalt-500">
+            En besked, der vises øverst på forsiden — fx når du har sendt en rapport til Zeekr.
+            Tænd den med ét klik, og sluk igen når den ikke er aktuel.
+          </p>
+          <textarea
+            value={beskedTekst}
+            onChange={(e) => setBeskedTekst(e.target.value)}
+            rows={2}
+            maxLength={280}
+            placeholder="Vi har sendt vores første samlede rapport til Zeekr support 🎉 Tak for alle meldinger!"
+            className="mt-3 w-full rounded-lg border-2 border-asfalt-200 p-3 text-sm"
+          />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {beskedAktiv ? (
+              <>
+                <span className="rounded-full bg-graes px-2.5 py-0.5 text-xs font-bold text-white">
+                  ● Vises på forsiden nu
+                </span>
+                <button onClick={() => gemBesked(true)} disabled={beskedTravl} className="btn-secondary text-sm">
+                  {beskedTravl ? 'Gemmer…' : 'Gem ændringer'}
+                </button>
+                <button onClick={() => gemBesked(false)} disabled={beskedTravl} className="btn-ghost text-sm">
+                  Sluk
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => gemBesked(true)}
+                disabled={beskedTravl || !beskedTekst.trim()}
+                className="btn-primary text-sm disabled:opacity-40"
+              >
+                {beskedTravl ? 'Tænder…' : '📣 Vis på forsiden'}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Adgange & invitationer (kun admin) */}
       {erAdmin && (

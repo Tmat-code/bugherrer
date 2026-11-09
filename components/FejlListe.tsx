@@ -312,9 +312,6 @@ export default function FejlListe({
                   <span className="rounded bg-asfalt-900 px-2 py-0.5 font-bold text-white">
                     {mType(f.type).ikon} {mType(f.type).badge}
                   </span>
-                  <span className="rounded bg-asfalt-100 px-2 py-0.5 font-bold text-asfalt-700">
-                    🚗 {f.bilmodel}
-                  </span>
                   {f.softwareversion && (
                     <span className="rounded bg-asfalt-100 px-2 py-0.5 font-mono text-asfalt-700">
                       {f.softwareversion}
