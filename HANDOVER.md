@@ -4,6 +4,36 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — Status udledes nu automatisk (minimal administration)
+
+**Beslutning (Torben):** statusserne skal kræve mindst mulig administration. De fire
+statusser er nu et **automatisk forløb**, hvor kun "Løst!" er manuel:
+- **Undersøges** (default)
+- **Bekræftet** — auto, når **≥ 5 bil-bekræftede ejere** (`BEKRAEFT_TAERSKEL` i config)
+- **Sendt til Zeekr** — auto, udledt af `sidst_sendt_dato` (har været med i en afsendt rapport).
+  Før var det dobbeltarbejde: man satte status i hånden, selvom "Dan rapport" allerede
+  gemmer datoen.
+- **Løst!** — det ENESTE manuelle (kun et menneske ved, at Zeekr har fikset den).
+
+Vi viser det **længste trin**, en fejl har nået (Løst > Sendt > Bekræftet > Undersøges).
+
+**Teknisk:** ny `loest_dato`-kolonne (idempotent ALTER). `beregnStatus({loest_dato,
+sidst_sendt_dato, bekraeftedeBiler})` i `config.ts` returnerer en af de eksisterende
+status-strenge, så labels/farver/oversættelser er uændrede — kun kilden skiftede fra det
+lagrede `status`-felt til udledning. Brugt alle display-steder: FejlListe (forside),
+fejl/[id], export PDF + CSV, OpretFlow's dublet-liste (søge-API giver nu
+`alleFejlMedSvar` så bil-tallet er med; `findLignende` gjort generisk). Admin-tabel:
+status vises som "(auto)" + dropdown erstattet af **"✅ Markér løst" / "↩︎ Genåbn"**.
+Ny `/api/admin/loest`; gammel `/api/admin/status` + `opdaterStatus` fjernet.
+
+Verificeret lokalt: 3 biler→Undersøges, 5→Bekræftet, 7+sendt→Sendt til Zeekr, 6+løst→Løst!;
+løst-toggle sætter/rydder `loest_dato`; gammel route → 404. Build grøn.
+
+Note: "Undersøges" er beholdt som default-navn (lidt misvisende da ingen *undersøger* —
+kan omdøbes til "Åben"/"Samler stemmer" hvis ønsket).
+
+---
+
 ## 2026-11-09 — FIX: EN-rapport oversatte ikke (batch for stor) + ▲-glyph i PDF
 
 **Symptom:** EN-rapport kom med engelsk ramme men dansk fejltekst (titler+beskrivelser),

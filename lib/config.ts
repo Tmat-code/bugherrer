@@ -62,3 +62,22 @@ export const STATUS_STYLE: Record<
   'Sendt til Zeekr': { bg: 'bg-asfalt-700', text: 'text-hjelm-300', ikon: '📮' },
   'Løst!': { bg: 'bg-graes', text: 'text-white', ikon: '✅' },
 };
+
+// Antal bil-bekraeftede ejere foer en fejl automatisk regnes som "Bekræftet".
+export const BEKRAEFT_TAERSKEL = 5;
+
+// Status UDLEDES automatisk som et forloeb, saa der er mindst mulig administration:
+//   Undersøges  -> Bekræftet (>= BEKRAEFT_TAERSKEL bil-bekraeftede ejere)
+//               -> Sendt til Zeekr (har vaeret med i en afsendt rapport)
+//               -> Løst! (sat manuelt, naar Zeekr har fikset den)
+// Vi viser det laengste trin, fejlen har naaet. "Løst!" er det eneste manuelle felt.
+export function beregnStatus(f: {
+  loest_dato: string | null;
+  sidst_sendt_dato: string | null;
+  bekraeftedeBiler: number;
+}): Status {
+  if (f.loest_dato) return 'Løst!';
+  if (f.sidst_sendt_dato) return 'Sendt til Zeekr';
+  if (f.bekraeftedeBiler >= BEKRAEFT_TAERSKEL) return 'Bekræftet';
+  return 'Undersøges';
+}

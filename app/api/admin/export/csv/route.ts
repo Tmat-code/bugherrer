@@ -10,6 +10,7 @@ import {
 } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
+import { beregnStatus } from '@/lib/config';
 
 export async function GET(req: Request) {
   if (!erLoggetInd()) {
@@ -61,7 +62,10 @@ export async function GET(req: Request) {
       f.softwareversion,
       f.telefon ?? '',
       f.telefon_os ?? '',
-      oversaetStatus(f.status, sprog),
+      oversaetStatus(
+        beregnStatus({ loest_dato: f.loest_dato, sidst_sendt_dato: f.sidst_sendt_dato, bekraeftedeBiler: bilBekr }),
+        sprog
+      ),
       f.beskrivelse,
       f.oprettet,
       kommentarer,

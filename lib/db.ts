@@ -194,7 +194,10 @@ function migrate(db: Database.Database) {
   // Eksport-sporing: naar en fejl sidst blev taget med i en afsendt rapport,
   // og hvor mange stemmer den havde dengang. Bruges til at vise "NY" / "+N siden
   // sidst" og til at kunne udelade uaendrede, allerede sendte fejl.
-  for (const kolonne of ['sidst_sendt_stemmer INTEGER', 'sidst_sendt_dato TEXT']) {
+  // loest_dato: saettes manuelt naar Zeekr har fikset fejlen (status "Løst!"). De oevrige
+  // statusser udledes automatisk (se beregnStatus i config), saa dette er det ENESTE
+  // manuelle status-felt.
+  for (const kolonne of ['sidst_sendt_stemmer INTEGER', 'sidst_sendt_dato TEXT', 'loest_dato TEXT']) {
     try {
       db.exec(`ALTER TABLE fejl ADD COLUMN ${kolonne}`);
     } catch {
@@ -239,6 +242,7 @@ export interface Fejl {
   telefon_os: string | null; // fx "iOS 18.1" — valgfri
   sidst_sendt_stemmer: number | null; // stemmetal da fejlen sidst blev sendt i en rapport
   sidst_sendt_dato: string | null; // hvornaar fejlen sidst blev markeret som sendt
+  loest_dato: string | null; // sat manuelt naar Zeekr har fikset fejlen (status "Løst!")
 }
 
 export interface Kommentar {
@@ -341,9 +345,13 @@ export const queries = {
     VALUES (@type, @titel, @bilmodel, @softwareversion, @beskrivelse, @telefon, @telefon_os)
   `),
 
-  opdaterStatus: db.prepare(`
-    UPDATE fejl SET status = @status, opdateret = datetime('now') WHERE id = @id
-  `),
+  // Status udledes nu automatisk (beregnStatus i config). Det eneste manuelle er "Løst!":
+  markerLoest: db.prepare(
+    `UPDATE fejl SET loest_dato = datetime('now'), opdateret = datetime('now') WHERE id = ?`
+  ),
+  genaabnFejl: db.prepare(
+    `UPDATE fejl SET loest_dato = NULL, opdateret = datetime('now') WHERE id = ?`
+  ),
 
   // Admin-redigering af en fejl (retter slaafejl i meldinger). Aendrer titel,
   // version, beskrivelse og telefon-felter; cache af oversaettelser ugyldiggoeres

@@ -26,10 +26,10 @@ export function soeg<T extends Fejl>(alle: T[], query: string): T[] {
 
 // Bruges af opret-flowet til at afgoere om der findes et "for taet" match,
 // saa oprettelsen midlertidigt blokeres.
-export function findLignende(alle: Fejl[], query: string): Fejl[] {
+export function findLignende<T extends Fejl>(alle: T[], query: string): T[] {
   const q = query.trim();
   if (q.length < 3) return [];
-  const fuse = new Fuse(alle, { ...OPTIONS, threshold: 0.6 });
+  const fuse = new Fuse(alle, { ...OPTIONS, threshold: 0.6 } as import('fuse.js').IFuseOptions<T>);
   return fuse
     .search(q)
     // Score < 0.62 = "taet nok" til at vaere en sandsynlig dublet. Fanger stavefejl.

@@ -20,7 +20,7 @@ export default function AdminSide() {
   const session = sessionInfo()!;
   const erAdmin = session.rolle === 'admin';
 
-  const fejl = queries.alleFejl.all();
+  const fejl = queries.alleFejlMedSvar.all();
 
   // Adgange + invitationer kun relevant (og kun vist) for admin.
   const adgange: AdgangItem[] = erAdmin

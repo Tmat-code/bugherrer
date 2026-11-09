@@ -7,9 +7,10 @@ import {
   BILMODELLER,
   KUN_EN_MODEL,
   STANDARD_BILMODEL,
+  beregnStatus,
   type MeldingsType,
 } from '@/lib/config';
-import type { Fejl } from '@/lib/db';
+import type { FejlMedSvar } from '@/lib/db';
 import { tilfoejMin } from '@/lib/svar-set';
 import StatusTag from '@/components/StatusTag';
 import Turnstile from '@/components/Turnstile';
@@ -27,7 +28,7 @@ export default function OpretFlow() {
   const [trin, setTrin] = useState<Trin>(startType ? 'soeg' : 'vaelg');
   const [soegeord, setSoegeord] = useState(params.get('q') || '');
   const [harSoegt, setHarSoegt] = useState(false);
-  const [lignende, setLignende] = useState<Fejl[]>([]);
+  const [lignende, setLignende] = useState<FejlMedSvar[]>([]);
   const [soeger, setSoeger] = useState(false);
 
   const erOenske = type === 'oenske';
@@ -190,7 +191,13 @@ export default function OpretFlow() {
                             </span>
                           </span>
                           <span className="ml-3 flex shrink-0 items-center gap-2">
-                            <StatusTag status={f.status} />
+                            <StatusTag
+                              status={beregnStatus({
+                                loest_dato: f.loest_dato,
+                                sidst_sendt_dato: f.sidst_sendt_dato,
+                                bekraeftedeBiler: f.antal_ejer_bekraeftet,
+                              })}
+                            />
                             <span className="font-black text-asfalt-700">▲ {f.stemmer}</span>
                           </span>
                         </Link>

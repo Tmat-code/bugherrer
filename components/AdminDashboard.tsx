@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Fejl } from '@/lib/db';
-import { STATUSSER } from '@/lib/config';
+import type { Fejl, FejlMedSvar } from '@/lib/db';
+import { beregnStatus } from '@/lib/config';
 import { relativTid } from '@/lib/tid';
 import StatusTag from '@/components/StatusTag';
 
@@ -103,7 +103,7 @@ export default function AdminDashboard({
   rapportLog,
   sidstSendt,
 }: {
-  fejl: Fejl[];
+  fejl: FejlMedSvar[];
   overblik: Overblik;
   erAdmin: boolean;
   session: { navn: string; rolle: string };
@@ -137,13 +137,13 @@ export default function AdminDashboard({
   const [invRolle, setInvRolle] = useState<'moderator' | 'admin'>('moderator');
   const [invTravl, setInvTravl] = useState(false);
 
-  async function skiftStatus(id: number, status: string) {
+  async function toggleLoest(id: number, loest: boolean) {
     setTravl(id);
     try {
-      await fetch('/api/admin/status', {
+      await fetch('/api/admin/loest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, loest }),
       });
       router.refresh();
     } finally {
@@ -902,8 +902,8 @@ export default function AdminDashboard({
               <th className="p-3">▲</th>
               <th className="p-3">Titel</th>
               <th className="p-3">Model / Version</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Skift status</th>
+              <th className="p-3">Status (auto)</th>
+              <th className="p-3">Løst?</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -925,18 +925,33 @@ export default function AdminDashboard({
                     </div>
                   )}
                 </td>
-                <td className="p-3"><StatusTag status={f.status} /></td>
                 <td className="p-3">
-                  <select
-                    value={f.status}
-                    onChange={(e) => skiftStatus(f.id, e.target.value)}
-                    disabled={travl === f.id}
-                    className="rounded border-2 border-asfalt-200 px-2 py-1 text-xs"
-                  >
-                    {STATUSSER.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <StatusTag
+                    status={beregnStatus({
+                      loest_dato: f.loest_dato,
+                      sidst_sendt_dato: f.sidst_sendt_dato,
+                      bekraeftedeBiler: f.antal_ejer_bekraeftet,
+                    })}
+                  />
+                </td>
+                <td className="p-3">
+                  {f.loest_dato ? (
+                    <button
+                      onClick={() => toggleLoest(f.id, false)}
+                      disabled={travl === f.id}
+                      className="rounded border-2 border-asfalt-200 px-2 py-1 text-xs font-bold text-asfalt-600 hover:bg-asfalt-50"
+                    >
+                      ↩︎ Genåbn
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => toggleLoest(f.id, true)}
+                      disabled={travl === f.id}
+                      className="rounded border-2 border-graes px-2 py-1 text-xs font-bold text-graes hover:bg-graes hover:text-white"
+                    >
+                      ✅ Markér løst
+                    </button>
+                  )}
                 </td>
                 <td className="p-3">
                   <div className="flex flex-col gap-1">

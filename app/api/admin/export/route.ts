@@ -14,6 +14,7 @@ import {
 } from '@/lib/rapport-i18n';
 import { oversaetFejl } from '@/lib/oversaet';
 import { hentKommentarerTilRapport } from '@/lib/rapport-kommentarer';
+import { beregnStatus } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 // Node-runtime kraeves (pdfkit + filsystem til font-data).
@@ -168,7 +169,12 @@ export async function GET(req: Request) {
       }
       const antalSvar = queries.antalKommForFejl.get(f.id)!.n;
       if (antalSvar > 0) metaDele.push(`${antalSvar} ${t.svar}`);
-      metaDele.push(`${t.metaLabels.status}: ${oversaetStatus(f.status, sprog)}`);
+      const beregnetStatus = beregnStatus({
+        loest_dato: f.loest_dato,
+        sidst_sendt_dato: f.sidst_sendt_dato,
+        bekraeftedeBiler: bilBekr,
+      });
+      metaDele.push(`${t.metaLabels.status}: ${oversaetStatus(beregnetStatus, sprog)}`);
       doc
         .fontSize(9)
         .font('Helvetica-Bold')

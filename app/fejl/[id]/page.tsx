@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { queries } from '@/lib/db';
 import { erLoggetInd } from '@/lib/auth';
-import { MELDINGSTYPER } from '@/lib/config';
+import { MELDINGSTYPER, beregnStatus } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 import UpvoteKnap from '@/components/UpvoteKnap';
 import Kommentarspor from '@/components/Kommentarspor';
@@ -50,6 +50,11 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
 
   const kommentarer = queries.kommentarerForFejl.all(id);
   const bilBekraeftet = queries.antalEjerBekraeftet.get(id)!.n;
+  const status = beregnStatus({
+    loest_dato: fejl.loest_dato,
+    sidst_sendt_dato: fejl.sidst_sendt_dato,
+    bekraeftedeBiler: bilBekraeftet,
+  });
 
   function datoTekst(s: string) {
     return new Date(s.replace(' ', 'T') + 'Z').toLocaleDateString('da-DK', {
@@ -71,7 +76,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
             {MELDINGSTYPER[fejl.type === 'oenske' ? 'oenske' : 'fejl'].ikon}{' '}
             {MELDINGSTYPER[fejl.type === 'oenske' ? 'oenske' : 'fejl'].badge}
           </span>
-          <StatusTag status={fejl.status} />
+          <StatusTag status={status} />
           <span className="rounded bg-asfalt-100 px-2 py-0.5 text-xs font-bold text-asfalt-700">
             🚗 {fejl.bilmodel}
           </span>
@@ -129,7 +134,7 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
           kommentarer={kommentarer}
           loesningId={fejl.loesning_kommentar_id}
           erAdmin={erLoggetInd()}
-          erLoest={fejl.status === 'Løst!'}
+          erLoest={!!fejl.loest_dato}
         />
       </article>
     </div>

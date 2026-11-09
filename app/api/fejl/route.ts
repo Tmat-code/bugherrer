@@ -9,7 +9,7 @@ import { tilladt } from '@/lib/ratelimit';
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get('q') || '';
-  const alle = queries.alleFejl.all();
+  const alle = queries.alleFejlMedSvar.all();
   const lignende = findLignende(alle, q);
   return NextResponse.json({ lignende });
 }
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
 
   // Backend-dublettjek: kun mod meldinger af SAMME type (en fejl og et ønske med
   // samme titel er ikke en dublet).
-  const alle = queries.alleFejl.all().filter((f) => (f.type || 'fejl') === type);
+  const alle = queries.alleFejlMedSvar.all().filter((f) => (f.type || 'fejl') === type);
   const lignende = findLignende(alle, titel);
   if (lignende.length > 0 && lignende[0].titel.toLowerCase() === titel.toLowerCase()) {
     return NextResponse.json(

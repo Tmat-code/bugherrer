@@ -7,7 +7,7 @@ import type { FejlMedSvar } from '@/lib/db';
 import { soeg } from '@/lib/search';
 import { relativTid } from '@/lib/tid';
 import { hentSete, gemSete, hentMine, type SeteSvar } from '@/lib/svar-set';
-import { ZEEKR_VARIANTER, MELDINGSTYPER } from '@/lib/config';
+import { ZEEKR_VARIANTER, MELDINGSTYPER, beregnStatus } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 
 type Sortering = 'stemmer' | 'nyeste' | 'aktivitet';
@@ -320,7 +320,13 @@ export default function FejlListe({
                       {f.softwareversion}
                     </span>
                   )}
-                  <StatusTag status={f.status} />
+                  <StatusTag
+                    status={beregnStatus({
+                      loest_dato: f.loest_dato,
+                      sidst_sendt_dato: f.sidst_sendt_dato,
+                      bekraeftedeBiler: f.antal_ejer_bekraeftet,
+                    })}
+                  />
                   <span className="text-asfalt-400">· 🕑 {relativTid(f.oprettet)}</span>
                   {(() => {
                     const antal = f.antal_kommentarer;
