@@ -4,6 +4,27 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-09 — "Siden sidste rapport"-tracker i admin + fix af "Se listen"-knap
+
+**Tracker (opfølgning):** nyt panel i admin "📈 Siden sidste rapport" (for alle logget ind).
+Viser, hvad der er kommet til siden den seneste "Dan rapport"-markering — så Torben nemt kan
+følge op uden at danne en rapport. Bruger de eksisterende `sidst_sendt_*`-baseliner:
+- **helt nye fejl** (sidst_sendt_dato IS NULL)
+- **med flere stemmer** (stemmer > sidst_sendt_stemmer)
+- **nye stemmer i alt** (SUM(MAX(0, stemmer - sidst_sendt_stemmer)))
+- + en liste over de nye/eskalerede fejl med NY/+N-mærke, link til hver.
+Ny `sidenSidstStats`-query; listen genbruger `topFejlKunAendredeType('fejl',50)`. Kun type=fejl.
+Baseline nulstilles automatisk ved hver "Dan rapport". Verificeret: send → +1 ny +1 eskaleret
+(+8 stemmer) → panel viser nye=1, eskaleret=1, +8, korrekt NY/+5-liste.
+
+**Fix:** "Se listen ↓"-knappen i hero var `btn-ghost` (bg-white) + `!text-white` = hvid på hvid,
+usynlig til hover. Nu gennemsigtig knap med hvid tekst + kant.
+
+**Også (tidligere i dag):** listen viser kun status-mærke for milepæle (Sendt til Zeekr, Løst);
+"Bekræftet" bæres af "N biler bekræftet"-badgen, så signalet ikke står to gange.
+
+---
+
 ## 2026-11-09 — Forside: resultattavle + status-redesign + admin-styret besked
 
 Formål: få forsiden til at føles som **fremdrift**, ikke bare en opsamling (Torbens spørgsmål).

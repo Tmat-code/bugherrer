@@ -513,6 +513,16 @@ export const queries = {
     `INSERT INTO meta (noegle, vaerdi) VALUES (@noegle, @vaerdi)
      ON CONFLICT(noegle) DO UPDATE SET vaerdi = @vaerdi`
   ),
+  // "Siden sidste rapport" (kun fejl): antal helt nye (aldrig sendt), antal der er
+  // eskaleret (flere stemmer end sidst sendt), og samlet stemme-tilvaekst siden sidst.
+  sidenSidstStats: db.prepare<[], { nye: number; eskaleret: number; ekstra_stemmer: number }>(`
+    SELECT
+      COALESCE(SUM(CASE WHEN sidst_sendt_dato IS NULL THEN 1 ELSE 0 END), 0) AS nye,
+      COALESCE(SUM(CASE WHEN sidst_sendt_dato IS NOT NULL AND stemmer > COALESCE(sidst_sendt_stemmer, 0) THEN 1 ELSE 0 END), 0) AS eskaleret,
+      COALESCE(SUM(MAX(0, stemmer - COALESCE(sidst_sendt_stemmer, 0))), 0) AS ekstra_stemmer
+    FROM fejl
+    WHERE type = 'fejl'
+  `),
   // Forside-tal (kun fejl): meldinger, bekraeftede (>= taerskel biler), sendt, loest.
   forsideStats: db.prepare<[{ taerskel: number }], { meldinger: number; bekraeftet: number; sendt: number; loest: number }>(`
     SELECT

@@ -104,6 +104,8 @@ export default function AdminDashboard({
   sidstSendt,
   forsideBesked,
   forsideBeskedAktiv,
+  sidenSidst,
+  aendredeListe,
 }: {
   fejl: FejlMedSvar[];
   overblik: Overblik;
@@ -115,6 +117,8 @@ export default function AdminDashboard({
   sidstSendt: SidstSendt | null;
   forsideBesked: string;
   forsideBeskedAktiv: boolean;
+  sidenSidst: { nye: number; eskaleret: number; ekstra_stemmer: number };
+  aendredeListe: { id: number; titel: string; stemmer: number; nySidenSidst: boolean; vaekst: number }[];
 }) {
   const router = useRouter();
   const [top, setTop] = useState<number | 'alle'>(20);
@@ -738,6 +742,60 @@ export default function AdminDashboard({
           )}
         </div>
       </div>
+
+      {/* Siden sidste rapport — opfølgnings-overblik */}
+      <section className="kort mt-6 p-6">
+        <h2 className="text-lg font-bold text-asfalt-900">📈 Siden sidste rapport</h2>
+        <p className="mt-1 text-sm text-asfalt-500">
+          {sidstSendt
+            ? `Sidst sendt til Zeekr ${dkTidspunkt(sidstSendt.oprettet)} af ${sidstSendt.navn}. Herunder er det, der er kommet til siden.`
+            : 'Du har ikke sendt en rapport til Zeekr endnu — så alt herunder tæller som nyt.'}
+        </p>
+
+        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+          <div className="rounded-lg border-2 border-asfalt-200 p-3">
+            <div className="text-2xl font-black text-asfalt-900">{sidenSidst.nye}</div>
+            <div className="text-xs font-bold text-asfalt-500">helt nye fejl</div>
+          </div>
+          <div className="rounded-lg border-2 border-asfalt-200 p-3">
+            <div className="text-2xl font-black text-asfalt-900">{sidenSidst.eskaleret}</div>
+            <div className="text-xs font-bold text-asfalt-500">med flere stemmer</div>
+          </div>
+          <div className="rounded-lg border-2 border-asfalt-200 p-3">
+            <div className="text-2xl font-black text-asfalt-900">+{sidenSidst.ekstra_stemmer}</div>
+            <div className="text-xs font-bold text-asfalt-500">nye stemmer i alt</div>
+          </div>
+        </div>
+
+        {aendredeListe.length === 0 ? (
+          <p className="mt-4 rounded-md bg-green-50 p-3 text-sm font-bold text-asfalt-700">
+            ✅ Intet nyt siden sidste rapport.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-1">
+            {aendredeListe.slice(0, 15).map((f) => (
+              <li key={f.id} className="flex items-center gap-2 text-sm">
+                {f.nySidenSidst ? (
+                  <span className="shrink-0 rounded bg-hjelm-400 px-1.5 py-0.5 text-xs font-black text-asfalt-900">
+                    NY
+                  </span>
+                ) : (
+                  <span className="shrink-0 rounded bg-asfalt-800 px-1.5 py-0.5 text-xs font-black text-hjelm-300">
+                    +{f.vaekst}
+                  </span>
+                )}
+                <a href={`/fejl/${f.id}`} className="truncate font-bold text-asfalt-800 hover:text-hjelm-700">
+                  {f.titel}
+                </a>
+                <span className="ml-auto shrink-0 text-xs text-asfalt-400">▲ {f.stemmer}</span>
+              </li>
+            ))}
+            {aendredeListe.length > 15 && (
+              <li className="text-xs text-asfalt-400">… og {aendredeListe.length - 15} flere</li>
+            )}
+          </ul>
+        )}
+      </section>
 
       {/* Forside-besked (kun admin) */}
       {erAdmin && (

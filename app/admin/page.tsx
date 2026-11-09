@@ -61,6 +61,16 @@ export default function AdminSide() {
   const forsideBesked = queries.hentMeta.get('forside_besked')?.vaerdi ?? '';
   const forsideBeskedAktiv = queries.hentMeta.get('forside_besked_aktiv')?.vaerdi === '1';
 
+  // "Siden sidste rapport": tal + listen over nye/eskalerede fejl (til opfølgning).
+  const sidenSidst = queries.sidenSidstStats.get()!;
+  const aendredeListe = queries.topFejlKunAendredeType.all('fejl', 50).map((f) => ({
+    id: f.id,
+    titel: f.titel,
+    stemmer: f.stemmer,
+    nySidenSidst: f.sidst_sendt_dato === null,
+    vaekst: f.stemmer - (f.sidst_sendt_stemmer ?? 0),
+  }));
+
   // --- Overblik: server-side "sidst set" (paalideligt, uafhaengigt af browser) ---
   const sidstSet = queries.hentMeta.get('admin_sidst_set')?.vaerdi ?? null;
 
@@ -137,6 +147,8 @@ export default function AdminSide() {
       sidstSendt={sidstSendt}
       forsideBesked={forsideBesked}
       forsideBeskedAktiv={forsideBeskedAktiv}
+      sidenSidst={sidenSidst}
+      aendredeListe={aendredeListe}
     />
   );
 }
