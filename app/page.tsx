@@ -47,15 +47,15 @@ export default function Forside({
             <Link href="/opret" className="btn-primary">
               🛠️ Meld en fejl
             </Link>
-            <Link href="/opret?type=oenske" className="btn-secondary">
-              💡 Foreslå et ønske
-            </Link>
             <a
               href="#listen"
               className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
             >
               Se listen ↓
             </a>
+            <Link href="/opret?type=oenske" className="btn-secondary">
+              💡 Foreslå et ønske
+            </Link>
             <Link
               href="/?type=oenske#listen"
               className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"

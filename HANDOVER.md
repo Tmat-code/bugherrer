@@ -4,6 +4,19 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — FAQ-punkt om følg/afmeld + banner-par i rigtig rækkefølge
+
+- **FAQ** (`app/faq/page.tsx`): nyt spørgsmål "Kan jeg få en mail, når der sker noget
+  på en tråd?" — forklarer 🔔 Følg, double opt-in (bekræft via mail), ingen konto, og
+  afmeld-link i hver mail. Placeret lige efter "Kan jeg følge mine egne meldinger?".
+- **Banner** (`app/page.tsx`): rækkefølge rettet så par hænger sammen — Meld en fejl ·
+  Se listen · Foreslå et ønske · Se ønsker (før stod opret-knapperne sammen og
+  se-knapperne sammen, så fejl/ønske-parrene var splittet).
+
+Build grøn.
+
+---
+
 ## 2026-11-12 — Navigation: ryd header, saml indgange i banner, løft ressourcer op
 
 Torbens observation: "Oversigt" i headeren var redundant (= logoet + landing), og de

@@ -82,6 +82,19 @@ const SAADAN_VIRKER: Punkt[] = [
     ),
   },
   {
+    sp: 'Kan jeg få en mail, når der sker noget på en tråd?',
+    sv: (
+      <>
+        Ja. På en tråd kan du trykke <strong>🔔 Følg</strong> og skrive din mailadresse —
+        så får du besked, hver gang tråden får en <strong>ny status</strong> eller et{' '}
+        <strong>nyt svar</strong> (ikke ved nye stemmer). Ingen konto — kun din mail. Du
+        bekræfter tilmeldingen via et link i en mail, så ingen kan tilmelde en andens
+        adresse. Vil du stoppe igen, er der et <strong>afmeld-link</strong> i bunden af
+        hver mail — ét klik, så er du af.
+      </>
+    ),
+  },
+  {
     sp: 'Hvad betyder statusserne?',
     sv: (
       <>
