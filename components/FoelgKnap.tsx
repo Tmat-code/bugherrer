@@ -7,23 +7,52 @@ import Turnstile from '@/components/Turnstile';
 // "🔔 Følg denne tråd" — virker ens på nye og gamle tråde: enhver kan taste sin mail
 // og få besked ved ny status eller nyt svar. Ingen konto. Double opt-in, så der
 // sendes en bekræft-mail først.
+//
+// Vedvarende "du følger"-hint: når en bruger HAR bekræftet i denne browser, husker vi
+// det i localStorage og viser "Du følger denne tråd" ved senere besøg — i stedet for
+// bare at give Følg-knappen igen. Det er bevidst KUN et browser-lokalt hint: browseren
+// kender ikke mailadressen (sandheden ligger i databasen, koblet til mailen). Derfor
+// gemmer vi intet før bekræftelse — har man ikke bekræftet, får man bare Følg-knappen
+// igen, og det er helt trygt at følge påny (API'et dedupe'r på mail+tråd).
 export default function FoelgKnap({ fejlId, type }: { fejlId: number; type: 'fejl' | 'oenske' }) {
   const ord = type === 'oenske' ? 'dette ønske' : 'denne fejl';
+  const noegle = `foelger:${fejlId}`;
   const sp = useSearchParams();
+
+  const [mounted, setMounted] = useState(false);
+  const [foelger, setFoelger] = useState(false); // bekræftet følger i denne browser
+  const [netopBekraeftet, setNetopBekraeftet] = useState(false);
 
   const [aaben, setAaben] = useState(false);
   const [email, setEmail] = useState('');
   const [sender, setSender] = useState(false);
   const [fejl, setFejl] = useState('');
-  const [resultat, setResultat] = useState<'' | 'bekraeft_sendt' | 'allerede'>('');
+  const [bekraeftSendt, setBekraeftSendt] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [honeypot, setHoneypot] = useState('');
-  const [netopBekraeftet, setNetopBekraeftet] = useState(false);
 
-  // Kommer brugeren tilbage fra bekræft-linket (/fejl/ID?foelg=bekraeftet), så kvittér.
+  // Efter mount: læs gemt status + håndtér retur fra bekræft-linket
+  // (/fejl/ID?foelg=bekraeftet). mounted-flaget sikrer ens server-/klient-render
+  // (begge viser Følg-knappen først), så der ingen hydration-mismatch er.
   useEffect(() => {
-    if (sp.get('foelg') === 'bekraeftet') setNetopBekraeftet(true);
-  }, [sp]);
+    setMounted(true);
+    let ja = false;
+    try {
+      ja = localStorage.getItem(noegle) === 'ja';
+    } catch {
+      /* privat vindue e.l. */
+    }
+    if (sp.get('foelg') === 'bekraeftet') {
+      ja = true;
+      setNetopBekraeftet(true);
+      try {
+        localStorage.setItem(noegle, 'ja');
+      } catch {
+        /* ignorér */
+      }
+    }
+    setFoelger(ja);
+  }, [noegle, sp]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,11 +66,18 @@ export default function FoelgKnap({ fejlId, type }: { fejlId: number; type: 'fej
       });
       const data = await res.json();
       if (res.ok) {
-        setResultat(data.status === 'allerede' ? 'allerede' : 'bekraeft_sendt');
-        try {
-          localStorage.setItem(`foelger:${fejlId}`, '1');
-        } catch {
-          /* privat vindue e.l. — ligegyldigt */
+        setAaben(false);
+        if (data.status === 'allerede') {
+          // Adressen var bekræftet i forvejen -> vis "du følger" med det samme.
+          setFoelger(true);
+          try {
+            localStorage.setItem(noegle, 'ja');
+          } catch {
+            /* ignorér */
+          }
+        } else {
+          // Ny tilmelding -> afventer bekræftelse (gemmer intet før bekræft-klik).
+          setBekraeftSendt(true);
         }
       } else {
         setFejl(data.error || 'Noget gik galt.');
@@ -53,30 +89,32 @@ export default function FoelgKnap({ fejlId, type }: { fejlId: number; type: 'fej
     }
   }
 
-  if (netopBekraeftet) {
+  // Bekræftet følger (vedvarende i denne browser).
+  if (mounted && foelger) {
     return (
       <div className="mt-6 rounded-md border-2 border-hjelm-400 bg-hjelm-50 p-4 text-sm text-asfalt-800">
-        <span className="font-bold">🔔 Tak — du følger nu {ord}.</span> Du får en mail,
-        hver gang der kommer ny status eller et nyt svar. Hver mail har et afmeld-link.
+        {netopBekraeftet ? (
+          <>
+            <span className="font-bold">🔔 Tak — du følger nu {ord}.</span> Du får en mail,
+            hver gang tråden får ny status eller et nyt svar.
+          </>
+        ) : (
+          <>
+            <span className="font-bold">🔔 Du følger {ord}.</span> Du får en mail ved ny
+            status eller nyt svar. Afmeld-linket står i bunden af hver mail.
+          </>
+        )}
       </div>
     );
   }
 
-  if (resultat === 'bekraeft_sendt') {
+  // Lige tilmeldt (denne session) — afventer bekræftelse i mailen.
+  if (bekraeftSendt) {
     return (
       <div className="mt-6 rounded-md border-2 border-hjelm-400 bg-hjelm-50 p-4 text-sm text-asfalt-800">
         <span className="font-bold">📬 Tjek din indbakke.</span> Vi har sendt en mail — klik
         bekræft-linket, så er du tilmeldt. (Intet sker, før du klikker — så ingen kan tilmelde
         en andens adresse.)
-      </div>
-    );
-  }
-
-  if (resultat === 'allerede') {
-    return (
-      <div className="mt-6 rounded-md border-2 border-asfalt-200 bg-asfalt-50 p-4 text-sm text-asfalt-700">
-        <span className="font-bold">✓ Du følger allerede {ord}.</span> Du får besked ved ny
-        status og nye svar.
       </div>
     );
   }

@@ -4,6 +4,23 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — Følg-knap: vedvarende "du følger"-hint (browser-lokalt)
+
+Feedback (Torben): som bruger var det svært at se, at man følger en tråd, når man
+kom tilbage — man fik bare Følg-knappen igen. FoelgKnap husker nu i localStorage, at
+man har bekræftet (`foelger:<id> = 'ja'`), og viser "🔔 Du følger denne tråd" ved
+senere besøg. Sættes ved bekræft-retur (`?foelg=bekraeftet`) og ved svar `allerede`.
+Bevidst KUN et browser-lokalt hint: browseren kender ikke mailadressen (sandheden
+ligger i DB koblet til mailen). Vi gemmer derfor INTET før bekræftelse — har man ikke
+bekræftet, får man Følg-knappen igen, og re-følg er trygt (API dedupe'r på mail+tråd).
+Droppet en overvejet "afventer/send igen"-tilstand: meningsløs, da browseren ikke har
+mailen, så "send igen" = bare at følge forfra. Build grøn.
+
+Hele kæden verificeret live i produktion (følg → bekræft-mail → bekræft → kommentar →
+"nyt svar"-mail landede alle).
+
+---
+
 ## 2026-11-12 — FIX: bekræft-link redirectede til 0.0.0.0:3000
 
 Live-test: domænet verificeret i Resend, mails sendte fint (bekræft-mailen landede
