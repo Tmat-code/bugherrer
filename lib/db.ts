@@ -549,6 +549,16 @@ export const queries = {
     INSERT INTO kommentarer (fejl_id, navn, tekst) VALUES (@fejl_id, @navn, @tekst)
   `),
 
+  // --- Moderation af kommentarer (admin + moderator) ---
+  sletKommentarRaekke: db.prepare(`DELETE FROM kommentarer WHERE id = ?`),
+  opdaterKommentar: db.prepare(
+    `UPDATE kommentarer SET tekst = @tekst WHERE id = @id`
+  ),
+  // Hvis en slettet kommentar var markeret som løsningen, så ryd pegepinden.
+  ryddLoesningHvis: db.prepare(
+    `UPDATE fejl SET loesning_kommentar_id = NULL, opdateret = datetime('now') WHERE loesning_kommentar_id = ?`
+  ),
+
   topFejl: db.prepare<[number], Fejl>(
     `SELECT * FROM fejl ORDER BY stemmer DESC, oprettet DESC LIMIT ?`
   ),
@@ -740,6 +750,13 @@ export const rydStemmerFoer = db.transaction((cutoff: string): number => {
   const info = queries.sletStemmerFoer.run(cutoff);
   for (const r of perFejl) queries.nedskrivStemmer.run({ id: r.fejl_id, antal: r.n });
   return Number(info.changes);
+});
+
+// Slet en kommentar og ryd samtidig en evt. "løsning"-pegepind, der peger paa den.
+// Returnerer antal slettede (0 hvis kommentaren ikke fandtes). Atomar.
+export const fjernKommentar = db.transaction((id: number): number => {
+  queries.ryddLoesningHvis.run(id);
+  return Number(queries.sletKommentarRaekke.run(id).changes);
 });
 
 // Stemme-transaktion: tjekker dublet, logger og taeller op i én atomar handling.

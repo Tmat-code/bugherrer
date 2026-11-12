@@ -29,6 +29,10 @@ export default function Kommentarspor({
   const [honeypot, setHoneypot] = useState('');
   const [loesningTravl, setLoesningTravl] = useState(false);
   const [visAlle, setVisAlle] = useState(false);
+  // Moderation (admin + moderator): slet / ret en kommentar.
+  const [modTravl, setModTravl] = useState(false);
+  const [redigerId, setRedigerId] = useState<number | null>(null);
+  const [redigerTekst, setRedigerTekst] = useState('');
 
   const loesning = loesningId ? kommentarer.find((k) => k.id === loesningId) : undefined;
   const ovrige = kommentarer.filter((k) => k.id !== loesningId);
@@ -55,6 +59,103 @@ export default function Kommentarspor({
     } finally {
       setLoesningTravl(false);
     }
+  }
+
+  async function sletKommentar(id: number) {
+    if (!confirm('Slet denne kommentar? Det kan ikke fortrydes.')) return;
+    setModTravl(true);
+    try {
+      const res = await fetch('/api/admin/slet-kommentar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) router.refresh();
+      else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Kunne ikke slette kommentaren.');
+      }
+    } catch {
+      alert('Kunne ikke få forbindelse.');
+    } finally {
+      setModTravl(false);
+    }
+  }
+
+  function startRet(k: Kommentar) {
+    setRedigerId(k.id);
+    setRedigerTekst(k.tekst);
+  }
+
+  async function gemRet() {
+    if (redigerId == null) return;
+    setModTravl(true);
+    try {
+      const res = await fetch('/api/admin/rediger-kommentar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: redigerId, tekst: redigerTekst }),
+      });
+      if (res.ok) {
+        setRedigerId(null);
+        router.refresh();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Kunne ikke gemme ændringen.');
+      }
+    } catch {
+      alert('Kunne ikke få forbindelse.');
+    } finally {
+      setModTravl(false);
+    }
+  }
+
+  // Moderations-knapper (Ret/Slet) — vises kun for admin/moderator.
+  function modKnapper(k: Kommentar) {
+    if (!erAdmin) return null;
+    return (
+      <span className="ml-auto flex gap-3">
+        <button
+          onClick={() => startRet(k)}
+          disabled={modTravl}
+          className="text-xs font-bold text-asfalt-500 hover:text-hjelm-700"
+        >
+          ✏️ Ret
+        </button>
+        <button
+          onClick={() => sletKommentar(k.id)}
+          disabled={modTravl}
+          className="text-xs font-bold text-asfalt-500 hover:text-murstensroed"
+        >
+          🗑️ Slet
+        </button>
+      </span>
+    );
+  }
+
+  // Inline redigerings-felt til en kommentar.
+  function redigerFelt() {
+    return (
+      <div className="mt-2">
+        <textarea
+          value={redigerTekst}
+          onChange={(e) => setRedigerTekst(e.target.value)}
+          rows={3}
+          className="input"
+        />
+        <div className="mt-2 flex justify-end gap-3">
+          <button
+            onClick={() => setRedigerId(null)}
+            className="text-xs font-bold text-asfalt-400 hover:text-asfalt-600"
+          >
+            Annullér
+          </button>
+          <button onClick={gemRet} disabled={modTravl} className="btn-primary !px-3 !py-1.5 text-sm">
+            {modTravl ? 'Gemmer…' : 'Gem'}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Når fejlen vises (og efter nye svar), markér svarene som set i denne browser,
@@ -128,7 +229,14 @@ export default function Kommentarspor({
             <span className="font-bold text-asfalt-800">{loesning.navn}</span>
             <span className="text-xs text-asfalt-400">{datoTekst(loesning.oprettet)}</span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{loesning.tekst}</p>
+          {redigerId === loesning.id ? (
+            redigerFelt()
+          ) : (
+            <>
+              <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{loesning.tekst}</p>
+              {erAdmin && <div className="mt-2 flex">{modKnapper(loesning)}</div>}
+            </>
+          )}
         </div>
       )}
 
@@ -155,15 +263,24 @@ export default function Kommentarspor({
               <span className="font-bold text-asfalt-800">{k.navn}</span>
               <span className="text-xs text-asfalt-400">{datoTekst(k.oprettet)}</span>
             </div>
-            <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{k.tekst}</p>
-            {(!loesning || erAdmin) && (
-              <button
-                onClick={() => saetLoesning(k.id)}
-                disabled={loesningTravl}
-                className="mt-2 text-xs font-bold text-green-700 hover:underline"
-              >
-                ✅ Markér som løsning
-              </button>
+            {redigerId === k.id ? (
+              redigerFelt()
+            ) : (
+              <>
+                <p className="mt-1 whitespace-pre-wrap text-asfalt-700">{k.tekst}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  {(!loesning || erAdmin) && (
+                    <button
+                      onClick={() => saetLoesning(k.id)}
+                      disabled={loesningTravl}
+                      className="text-xs font-bold text-green-700 hover:underline"
+                    >
+                      ✅ Markér som løsning
+                    </button>
+                  )}
+                  {modKnapper(k)}
+                </div>
+              </>
             )}
           </li>
         ))}

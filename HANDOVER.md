@@ -4,6 +4,23 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — Moderation: slet + ret enkelt kommentar (admin + moderator)
+
+Før kunne man kun slette en HEL tråd (fjerner alle kommentarer via cascade) — ingen
+måde at fjerne eller rette ét enkelt indlæg. Nu:
+- `POST /api/admin/slet-kommentar` {id} → `fjernKommentar(id)` (transaktion: rydder
+  samtidig en evt. `loesning_kommentar_id`-pegepind, hvis den slettede kommentar var
+  markeret som løsning).
+- `POST /api/admin/rediger-kommentar` {id, tekst} → `opdaterKommentar` (2–2000 tegn).
+- Begge gated på `erLoggetInd()` (admin + moderator).
+- UI i `Kommentarspor.tsx`: "✏️ Ret" (inline textarea → Gem/Annullér) og "🗑️ Slet"
+  (med confirm) på hver kommentar OG på den pinnede løsning — vises kun når man er
+  logget ind (`erAdmin`-prop = erLoggetInd). Nye db-queries: `sletKommentarRaekke`,
+  `opdaterKommentar`, `ryddLoesningHvis` + eksporteret transaktion `fjernKommentar`.
+Build grøn.
+
+---
+
 ## 2026-11-12 — Følg-knap: vedvarende "du følger"-hint (browser-lokalt)
 
 Feedback (Torben): som bruger var det svært at se, at man følger en tråd, når man
