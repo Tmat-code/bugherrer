@@ -11,7 +11,9 @@ Løbende status-log. Opdateres ved hver ændring.
   afmeld-link i hver mail. Placeret lige efter "Kan jeg følge mine egne meldinger?".
 - **Banner** (`app/page.tsx`): rækkefølge rettet så par hænger sammen — Meld en fejl ·
   Se listen · Foreslå et ønske · Se ønsker (før stod opret-knapperne sammen og
-  se-knapperne sammen, så fejl/ønske-parrene var splittet).
+  se-knapperne sammen, så fejl/ønske-parrene var splittet). Tilføjet en synlig
+  adskillelse mellem de to par (lodret streg på desktop, vandret på mobil) ved at
+  gruppere hvert par i egen flex-div med en divider imellem.
 
 Build grøn.
 

@@ -43,25 +43,38 @@ export default function Forside({
             <span className="font-mono text-hjelm-300">bugs</span> 😅) vi oplever — <strong className="text-white">og dine ønsker til ny funktionalitet</strong>.
             Vi stemmer dem op, bekræfter dem sammen, og sender de vigtigste videre til producenten.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/opret" className="btn-primary">
-              🛠️ Meld en fejl
-            </Link>
-            <a
-              href="#listen"
-              className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
-            >
-              Se listen ↓
-            </a>
-            <Link href="/opret?type=oenske" className="btn-secondary">
-              💡 Foreslå et ønske
-            </Link>
-            <Link
-              href="/?type=oenske#listen"
-              className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
-            >
-              💡 Se ønsker ↓
-            </Link>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+            {/* Fejl-par */}
+            <div className="flex flex-wrap gap-3">
+              <Link href="/opret" className="btn-primary">
+                🛠️ Meld en fejl
+              </Link>
+              <a
+                href="#listen"
+                className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
+              >
+                Se listen ↓
+              </a>
+            </div>
+
+            {/* Synlig adskillelse mellem fejl- og ønske-par (lodret på desktop, vandret på mobil) */}
+            <div
+              className="h-px w-full self-stretch bg-asfalt-600 sm:h-auto sm:w-px"
+              aria-hidden
+            />
+
+            {/* Ønske-par */}
+            <div className="flex flex-wrap gap-3">
+              <Link href="/opret?type=oenske" className="btn-secondary">
+                💡 Foreslå et ønske
+              </Link>
+              <Link
+                href="/?type=oenske#listen"
+                className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
+              >
+                💡 Se ønsker ↓
+              </Link>
+            </div>
           </div>
         </div>
         <div className="h-3 w-full bg-advarselsstriber" aria-hidden />
