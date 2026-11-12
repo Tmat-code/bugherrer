@@ -19,12 +19,6 @@ export default function Footer() {
             <Link href="/faq" className="hover:text-hjelm-400">
               FAQ &amp; spilleregler
             </Link>
-            <Link href="/links" className="hover:text-hjelm-400">
-              Nyttige links
-            </Link>
-            <Link href="/tjekliste" className="hover:text-hjelm-400">
-              Tjekliste
-            </Link>
             <Link href="/kontakt" className="hover:text-hjelm-400">
               Kontakt
             </Link>

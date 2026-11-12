@@ -4,6 +4,27 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — Navigation: ryd header, saml indgange i banner, løft ressourcer op
+
+Torbens observation: "Oversigt" i headeren var redundant (= logoet + landing), og de
+efterspurgte sider (Links — folk spørger konstant efter dem i FB-grupperne — og
+afhentnings-Tjeklisten) gemte sig nederst i footeren.
+
+- **Header** (`Header.tsx`): fjernet "Oversigt" og "💡 Ønsker". Ny nav:
+  🔗 Links · 📋 Tjekliste · + Meld ind. Ønsker bor nu på listens egen filter-fane +
+  i banneret; Oversigt dækkes af logoet. "+ Meld ind" BEHOLDT bevidst i headeren —
+  banneret findes kun på forsiden, så headeren er den eneste faste handling på
+  tråd-/FAQ-/links-sider.
+- **Banner** (`app/page.tsx`): tilføjet "💡 Se ønsker ↓" (→ `/?type=oenske#listen`)
+  ved siden af "Se listen ↓", så forsidens hero samler alle indgange (Meld en fejl ·
+  Foreslå et ønske · Se listen · Se ønsker).
+- **Footer** (`Footer.tsx`): trimmet gengangerne (Nyttige links, Tjekliste) væk, nu de
+  er i headeren → disclaimer · FAQ & spilleregler · Kontakt · 🔐 Formandens login.
+
+Build grøn. Torben følger selv op visuelt.
+
+---
+
 ## 2026-11-12 — Moderation: slet + ret enkelt kommentar (admin + moderator)
 
 Før kunne man kun slette en HEL tråd (fjerner alle kommentarer via cascade) — ingen

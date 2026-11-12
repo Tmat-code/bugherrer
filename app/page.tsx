@@ -56,6 +56,12 @@ export default function Forside({
             >
               Se listen ↓
             </a>
+            <Link
+              href="/?type=oenske#listen"
+              className="btn border-2 border-asfalt-600 px-4 py-2 text-white hover:bg-asfalt-700"
+            >
+              💡 Se ønsker ↓
+            </Link>
           </div>
         </div>
         <div className="h-3 w-full bg-advarselsstriber" aria-hidden />

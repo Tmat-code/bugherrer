@@ -12,11 +12,11 @@ export default function Header() {
           </span>
         </Link>
         <nav className="flex flex-wrap items-center gap-1.5 text-sm sm:gap-2">
-          <Link href="/" className="rounded px-3 py-1.5 hover:bg-asfalt-700">
-            Oversigt
+          <Link href="/links" className="rounded px-3 py-1.5 hover:bg-asfalt-700">
+            🔗 Links
           </Link>
-          <Link href="/?type=oenske#listen" className="rounded px-3 py-1.5 hover:bg-asfalt-700">
-            💡 Ønsker
+          <Link href="/tjekliste" className="rounded px-3 py-1.5 hover:bg-asfalt-700">
+            📋 Tjekliste
           </Link>
           <Link href="/opret" className="btn-primary !py-1.5 !px-3 text-sm">
             + Meld ind
