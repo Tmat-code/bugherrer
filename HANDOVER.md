@@ -4,6 +4,18 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — FIX: bekræft-link redirectede til 0.0.0.0:3000
+
+Live-test: domænet verificeret i Resend, mails sendte fint (bekræft-mailen landede
+pænt i indbakken). Men bekræft-linket (`/api/foelg/bekraeft`) sendte brugeren til
+`https://0.0.0.0:3000/fejl/…` → Safari-fejl. Årsag: redirect'en blev bygget af
+`req.url`, og bag Cloudflare Tunnel + Coolify ser appen sig selv som 0.0.0.0:3000
+indvendigt. Fix: byg redirect-URL'en ud fra `SITE_URL` via `basisUrl()` i stedet.
+(Selve bekræftelsen virkede — bekraeftet=1 blev sat før redirect'en — så kun
+landingssiden var ramt.) Build grøn.
+
+---
+
 ## 2026-11-12 — Mail-notifikationer: "følg en tråd" (double opt-in, Resend, outbox)
 
 Formål: en bruger kan vælge at få mail, når en tråd får **ny status** eller **nyt svar**
