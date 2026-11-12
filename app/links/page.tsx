@@ -142,21 +142,6 @@ export default function LinksSide() {
         <div className="h-3 w-full bg-advarselsstriber" aria-hidden />
       </section>
 
-      {/* Fremhævet: tjekliste til afhentning */}
-      <Link
-        href="/tjekliste"
-        className="mt-6 flex items-center gap-4 rounded-xl border-2 border-hjelm-500 bg-hjelm-50 p-5 transition-colors hover:bg-hjelm-100"
-      >
-        <span className="text-3xl" aria-hidden>📋</span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-bold text-asfalt-900">Tjekliste til afhentning</span>
-          <span className="block text-sm text-asfalt-600">
-            Få styr på det hele, når du henter bilen — klik af på skærmen eller hent som PDF og tag med.
-          </span>
-        </span>
-        <span className="shrink-0 font-bold text-hjelm-700" aria-hidden>→</span>
-      </Link>
-
       {/* Link-kort */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {LINKS.map((l) => (

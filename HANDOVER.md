@@ -4,6 +4,15 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — Fjernet fremhævet Tjekliste-kort fra links-siden (nu redundant)
+
+Da Tjekliste nu er i headeren, var den store gule "Tjekliste til afhentning"-boks
+øverst på `/links` både redundant OG den eneste interne ting på en side ellers fuld
+af eksterne links. Fjernet kortet; link-grid'et står nu direkte under banneret.
+Build grøn.
+
+---
+
 ## 2026-11-12 — FAQ-punkt om følg/afmeld + banner-par i rigtig rækkefølge
 
 - **FAQ** (`app/faq/page.tsx`): nyt spørgsmål "Kan jeg få en mail, når der sker noget
