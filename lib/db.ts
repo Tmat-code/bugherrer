@@ -152,10 +152,44 @@ function migrate(db: Database.Database) {
       oprettet  TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- Notifikations-tilmeldinger: en bruger kan "følge" en tråd (fejl/ønske) og få
+    -- mail ved ny status eller ny kommentar. INGEN login — email + fejl_id er nok.
+    -- token bruges til BÅDE bekræft-linket og afmeld-linket. Double opt-in: en ny
+    -- tilmelding starter som bekraeftet=0 og får først mail efter bekræft-linket er
+    -- klikket, så ingen kan tilmelde en andens adresse (og vi sender aldrig til nogen,
+    -- der ikke selv bad om det — godt for domænets omdømme). Mailadressen er den første
+    -- rigtige personoplysning på boardet; den ligger kun her i SQLite, ikke i cookies.
+    CREATE TABLE IF NOT EXISTS notifikation_tilmelding (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      fejl_id    INTEGER NOT NULL,
+      email      TEXT NOT NULL,
+      token      TEXT NOT NULL UNIQUE,
+      bekraeftet INTEGER NOT NULL DEFAULT 0,
+      oprettet   TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (fejl_id, email),
+      FOREIGN KEY (fejl_id) REFERENCES fejl(id) ON DELETE CASCADE
+    );
+
+    -- Udbakke (outbox): hook-stederne (ny kommentar, ny status) SKRIVER bare en
+    -- færdig-renderet mail hertil — hurtigt, lokalt, kan ikke fejle request'en. Et
+    -- token-beskyttet flush-endpoint (kaldt af n8n på en tidsplan) sender dem via
+    -- Resend og sætter sendt. Fejler Resend, bliver rækken liggende (sendt IS NULL)
+    -- og prøves igen ved næste flush — så en mail aldrig tabes.
+    CREATE TABLE IF NOT EXISTS notifikation_koe (
+      id       INTEGER PRIMARY KEY AUTOINCREMENT,
+      email    TEXT NOT NULL,
+      emne     TEXT NOT NULL,
+      html     TEXT NOT NULL,
+      oprettet TEXT NOT NULL DEFAULT (datetime('now')),
+      sendt    TEXT
+    );
+
     CREATE INDEX IF NOT EXISTS idx_fejl_stemmer ON fejl(stemmer DESC);
     CREATE INDEX IF NOT EXISTS idx_fejl_oprettet ON fejl(oprettet DESC);
     CREATE INDEX IF NOT EXISTS idx_kommentar_fejl ON kommentarer(fejl_id);
     CREATE INDEX IF NOT EXISTS idx_kommentar_oprettet ON kommentarer(oprettet DESC);
+    CREATE INDEX IF NOT EXISTS idx_tilmelding_fejl ON notifikation_tilmelding(fejl_id);
+    CREATE INDEX IF NOT EXISTS idx_koe_usendt ON notifikation_koe(sendt);
   `);
 
   // Tilfoej "loesning"-kolonne til eksisterende databaser (peger paa den kommentar
@@ -275,6 +309,24 @@ export interface Henvendelse {
   email: string;
   besked: string;
   oprettet: string;
+}
+
+export interface NotifikationTilmelding {
+  id: number;
+  fejl_id: number;
+  email: string;
+  token: string;
+  bekraeftet: number;
+  oprettet: string;
+}
+
+export interface KoeMail {
+  id: number;
+  email: string;
+  emne: string;
+  html: string;
+  oprettet: string;
+  sendt: string | null;
 }
 
 export interface AdminAdgang {
@@ -622,6 +674,47 @@ export const queries = {
   `),
   senesteRapportLog: db.prepare<[number], RapportLog>(
     `SELECT * FROM rapport_log ORDER BY oprettet DESC LIMIT ?`
+  ),
+
+  // --- Notifikations-tilmeldinger (følg en tråd) ---
+  // Opret en tilmelding (ubekraeftet). Dubletter (samme email+fejl) afvises af
+  // UNIQUE-constraint; kaldersiden fanger det og gen-sender bare bekræft-mailen.
+  opretTilmelding: db.prepare(
+    `INSERT INTO notifikation_tilmelding (fejl_id, email, token) VALUES (@fejl_id, @email, @token)`
+  ),
+  findTilmelding: db.prepare<[number, string], NotifikationTilmelding>(
+    `SELECT * FROM notifikation_tilmelding WHERE fejl_id = ? AND email = ?`
+  ),
+  findTilmeldingVedToken: db.prepare<[string], NotifikationTilmelding>(
+    `SELECT * FROM notifikation_tilmelding WHERE token = ?`
+  ),
+  bekraeftTilmelding: db.prepare(
+    `UPDATE notifikation_tilmelding SET bekraeftet = 1 WHERE token = ?`
+  ),
+  nytTokenPaaTilmelding: db.prepare(
+    `UPDATE notifikation_tilmelding SET token = @token, bekraeftet = 0 WHERE id = @id`
+  ),
+  sletTilmelding: db.prepare(`DELETE FROM notifikation_tilmelding WHERE token = ?`),
+  // Alle bekraeftede følgere af en tråd — modtagerne af en notifikation.
+  foelgereForFejl: db.prepare<[number], { email: string; token: string }>(
+    `SELECT email, token FROM notifikation_tilmelding WHERE fejl_id = ? AND bekraeftet = 1`
+  ),
+  antalFoelgereForFejl: db.prepare<[number], { n: number }>(
+    `SELECT COUNT(*) AS n FROM notifikation_tilmelding WHERE fejl_id = ? AND bekraeftet = 1`
+  ),
+
+  // --- Notifikations-kø (outbox) ---
+  koeMail: db.prepare(
+    `INSERT INTO notifikation_koe (email, emne, html) VALUES (@email, @emne, @html)`
+  ),
+  usendteMails: db.prepare<[number], KoeMail>(
+    `SELECT * FROM notifikation_koe WHERE sendt IS NULL ORDER BY oprettet ASC LIMIT ?`
+  ),
+  markerMailSendt: db.prepare(
+    `UPDATE notifikation_koe SET sendt = datetime('now') WHERE id = ?`
+  ),
+  antalUsendte: db.prepare<[], { n: number }>(
+    `SELECT COUNT(*) AS n FROM notifikation_koe WHERE sendt IS NULL`
   ),
 
   // --- Oversaettelses-cache ---

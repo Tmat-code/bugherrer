@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
 import { verificerTurnstile, klientIp } from '@/lib/turnstile';
 import { tilladt } from '@/lib/ratelimit';
+import { underretNyKommentar } from '@/lib/notifikationer';
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -44,5 +45,14 @@ export async function POST(req: Request) {
   if (!fejl) return NextResponse.json({ error: 'Bugherren findes ikke' }, { status: 404 });
 
   queries.opretKommentar.run({ fejl_id, navn, tekst });
+
+  // Notificér følgere af tråden (lægges i køen; sendes af flush-endpointet).
+  // Må aldrig vælte selve kommentar-oprettelsen, så den er pakket ind.
+  try {
+    underretNyKommentar(fejl, { navn, tekst });
+  } catch (e) {
+    console.error('Notifikation (kommentar) fejlede:', e);
+  }
+
   return NextResponse.json({ ok: true }, { status: 201 });
 }

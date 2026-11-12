@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { queries, danRapportMarkering } from '@/lib/db';
 import { erAdmin, sessionInfo } from '@/lib/auth';
 import { erGyldigRapportType } from '@/lib/rapport-i18n';
+import { underretStatus } from '@/lib/notifikationer';
 
 // POST /api/admin/marker-sendt — "Dan Zeekr-rapport": markér de valgte fejl (samme
 // udvalg som eksporten) som sendt til Zeekr nu. Gemmer deres nuvaerende stemmetal som
@@ -40,6 +41,19 @@ export async function POST(req: Request) {
     s.navn,
     s.rolle
   );
+
+  // Notificér følgere af de tråde, der FØRSTE gang skifter til "Sendt til Zeekr"
+  // (dem der aldrig var sendt før). Allerede-sendte skifter ikke status, så de
+  // udløser ingen mail. Løste tråde er længere i forløbet og springes over.
+  try {
+    for (const f of fejl) {
+      if (f.sidst_sendt_dato) continue; // var allerede sendt -> ingen statusskift
+      const frisk = queries.fejlById.get(f.id);
+      if (frisk && !frisk.loest_dato) underretStatus(frisk, 'Sendt til Zeekr');
+    }
+  } catch (e) {
+    console.error('Notifikation (sendt) fejlede:', e);
+  }
 
   return NextResponse.json({ ok: true, antal: n });
 }

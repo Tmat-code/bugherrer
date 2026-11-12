@@ -6,6 +6,7 @@ import { erLoggetInd } from '@/lib/auth';
 import { MELDINGSTYPER, beregnStatus } from '@/lib/config';
 import StatusTag from '@/components/StatusTag';
 import UpvoteKnap from '@/components/UpvoteKnap';
+import FoelgKnap from '@/components/FoelgKnap';
 import Kommentarspor from '@/components/Kommentarspor';
 
 export const dynamic = 'force-dynamic';
@@ -129,6 +130,9 @@ export default function FejlDetalje({ params }: { params: { id: string } }) {
             type={fejl.type === 'oenske' ? 'oenske' : 'fejl'}
           />
         </div>
+
+        {/* Følg tråden (mail-notifikationer) */}
+        <FoelgKnap fejlId={fejl.id} type={fejl.type === 'oenske' ? 'oenske' : 'fejl'} />
 
         {/* Kommentarer */}
         <Kommentarspor

@@ -4,6 +4,57 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-12 — Mail-notifikationer: "følg en tråd" (double opt-in, Resend, outbox)
+
+Formål: en bruger kan vælge at få mail, når en tråd får **ny status** eller **nyt svar**
+— uden login, uden brugeroprettelse (Torbens krav: sitet skal være nemt). IKKE ved nye
+stemmer.
+
+**Hvor data ligger:** mailadresser gemmes i **SQLite på Pixa** (ikke Supabase, ikke
+cookies — cookien er fortsat kun det anonyme stemme-token). To nye tabeller:
+- `notifikation_tilmelding(fejl_id, email, token UNIQUE, bekraeftet, …)` — én "følg"
+  pr. (tråd, email). `token` bruges til BÅDE bekræft- og afmeld-link.
+- `notifikation_koe(email, emne, html, sendt)` — outbox. Hook-stederne skriver en
+  færdig mail hertil; et flush-endpoint sender den. Så brugerens handling aldrig
+  venter på eller væltes af et eksternt kald.
+
+**Følg-mekanik = universel (nye OG gamle tråde):** en `🔔 Følg`-knap på hver
+`fejl/[id]`-side (`components/FoelgKnap.tsx`). Virker ens på en splinterny og en
+måneder gammel tråd — ingen bagud-migrering. "Opretteren får besked" er bare samme
+tilmelding (kan senere også tilbydes i opret-flowet).
+
+**Double opt-in:** tilmelding gemmes `bekraeftet=0` + en bekræft-mail lægges i køen.
+Først når bekræft-linket (`GET /api/foelg/bekraeft`) er klikket, får adressen
+notifikationer. Beskytter mod at tilmelde andres adresser og mod at sende til
+adresser, der ikke bad om det (godt for Resend-domænets omdømme). Hver mail har et
+**afmeld-link** → `/foelg/afmeld`-side med en bekræft-knap der POST'er til
+`/api/foelg/afmeld` (POST, ikke GET, så mail-klienters prefetch ikke afmelder folk).
+
+**Afsendelse (Resend, ingen SMTP):** `lib/resend.ts` sender via Resends HTTPS-API.
+Flush-endpoint `GET /api/notifikationer/send?token=…` tømmer køen — beregnet til at
+blive kaldt af **n8n på en tidsplan** (samme mønster som `/api/admin/notifikation`).
+Lykkes en mail → markeres sendt; permanent 4xx → gives op; midlertidig fejl (5xx/429/
+netværk) → bliver i køen, prøves igen næste flush. Alt er graceful: uden `RESEND_API_KEY`
+kan folk stadig tilmelde sig (lægges i kø), der sendes bare intet endnu.
+
+**De fire hook-steder** (status udledes jo automatisk, men hver overgang har ét
+konkret kodested): `api/kommentar` (nyt svar), `api/bekraeft-ejer` (når 5.
+bil-bekræftelse → "Bekræftet"), `api/admin/marker-sendt` (→ "Sendt til Zeekr", kun
+tråde der ikke var sendt før), `api/admin/loest` (→ "Løst!", kun ved overgang, ikke
+genåbn). Hvert hook er pakket i try/catch, så en notifikations-fejl aldrig vælter
+selve handlingen.
+
+**Nye env-nøgler** (alle valgfrie, se `.env.example`): `RESEND_API_KEY`, `RESEND_FROM`
+(default `Bugherrer <svar@bugherrer.dk>`), `SITE_URL` (links i mails),
+`NOTIFIKATION_SEND_TOKEN` (falder tilbage til `NOTIFIKATION_TOKEN`).
+
+Build grøn lokalt. UDESTÅR (Torben): verificér `bugherrer.dk` i Resend (SPF+DKIM i
+Cloudflare), sæt nøglerne i Coolify, og peg en n8n-schedule på flush-endpointet.
+MULIG NÆSTE: forudfyld følg-feltet i opret-flowet; evt. gruppér flere køede mails til
+samme adresse i én mail pr. flush.
+
+---
+
 ## 2026-11-09 — "Siden sidste rapport"-tracker i admin + fix af "Se listen"-knap
 
 **Tracker (opfølgning):** nyt panel i admin "📈 Siden sidste rapport" (for alle logget ind).
