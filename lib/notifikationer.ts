@@ -60,6 +60,11 @@ function layout(opts: { overskrift: string; brødtekst: string; knapTekst?: stri
   </body></html>`;
 }
 
+// Fuld HTML-escape (ingen trunkering) — til felter hvor vi vil vise hele teksten.
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function uddrag(s: string, maks = 180): string {
   const t = s.replace(/\s+/g, ' ').trim();
   const e = t.length > maks ? t.slice(0, maks) + '…' : t;
@@ -140,4 +145,54 @@ export function aktuelStatus(fejl: Fejl): Status {
     sidst_sendt_dato: fejl.sidst_sendt_dato,
     bekraeftedeBiler: queries.antalEjerBekraeftet.get(fejl.id)!.n,
   });
+}
+
+// --- Enqueue: ny henvendelse via kontaktformularen → mail til formanden ---
+// Lægger EN mail i udbakken i samme sekund en henvendelse kommer ind, så formanden
+// får SELVE beskeden (navn, e-mail, tekst) med det samme — ikke et tal én gang om
+// dagen, og uden at skulle ind på /admin. Samme robuste vej som følg-mails: den
+// lægges bare i køen (hurtigt, lokalt), og flush-endpointet sender den via Resend.
+//
+// Modtageren sættes i FORMAND_EMAIL (Coolify). Er den ikke sat, gør funktionen
+// INGENTING — henvendelsen er stadig gemt, og alt andet virker uændret.
+export function underretFormandOmHenvendelse(h: { navn: string; email: string; besked: string }) {
+  const til = (process.env.FORMAND_EMAIL || '').trim();
+  if (!til) return;
+
+  const navnRaw = h.navn.trim();
+  const navn = navnRaw || 'Anonym';
+  const svarTil = h.email.trim();
+
+  const emne = `📨 Ny henvendelse på ${SITE.name}${navnRaw ? ` fra ${navnRaw.slice(0, 40)}` : ''}`;
+
+  const kontaktRaekke = svarTil
+    ? `<strong>Svar til:</strong> <a href="mailto:${esc(svarTil)}" style="color:${FARVE.moerk};">${esc(svarTil)}</a>`
+    : `<span style="color:${FARVE.svag};">Ingen e-mail oplyst — du kan kun svare her på sitet.</span>`;
+
+  const html = `<!doctype html><html lang="da"><body style="margin:0;background:#f4f5f6;padding:24px 12px;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${FARVE.tekst};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;
+      background:#ffffff;border:1px solid ${FARVE.kant};border-radius:12px;overflow:hidden;">
+      <tr><td style="background:${FARVE.moerk};padding:16px 24px;">
+        <span style="color:#ffffff;font-weight:800;font-size:18px;letter-spacing:.3px;">🔧 ${SITE.name}</span>
+        <span style="color:${FARVE.gul};font-weight:700;font-size:13px;"> · ny henvendelse</span>
+      </td></tr>
+      <tr><td style="padding:24px;">
+        <h1 style="margin:0 0 4px;font-size:19px;color:${FARVE.moerk};">Ny henvendelse fra ${esc(navn)}</h1>
+        <p style="margin:0 0 14px;font-size:14px;">${kontaktRaekke}</p>
+        <div style="border-left:3px solid ${FARVE.gul};padding:8px 0 8px 14px;font-size:15px;line-height:1.55;
+          white-space:pre-wrap;color:${FARVE.tekst};">${esc(h.besked.trim())}</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr><td>
+          <a href="${basisUrl()}/admin" style="display:inline-block;background:${FARVE.gul};color:${FARVE.moerk};
+            text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px;font-size:15px;">
+            Åbn indbakken i admin</a>
+        </td></tr></table>
+      </td></tr>
+      <tr><td style="padding:16px 24px;border-top:1px solid ${FARVE.kant};font-size:12px;color:${FARVE.svag};line-height:1.5;">
+        Sendt automatisk, fordi nogen skrev via kontaktformularen på ${SITE.domain}.
+      </td></tr>
+    </table>
+  </body></html>`;
+
+  queries.koeMail.run({ email: til, emne, html });
 }

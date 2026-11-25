@@ -4,6 +4,31 @@ Løbende status-log. Opdateres ved hver ændring.
 
 ---
 
+## 2026-11-25 — Instant-mail til formanden ved ny henvendelse (via Resend-udbakke)
+
+**Problem:** Kontaktformularen (`/api/kontakt`) gemte kun henvendelsen i DB — ingen
+mail. Den eneste mail Torben fik, var n8n-digestet `/api/admin/notifikation` (dagligt
+kl. 8): bare et ANTAL ("1 ulæst henvendelse"), ikke selve beskeden, og kun hvis der
+var ulæste — og tælleren nulstilles i det øjeblik man åbner `/admin`
+(`admin_sidst_set`). Dårlig løsning: forsinket, indholdsløs, selv-annullerende.
+
+**Fix:** Ny `underretFormandOmHenvendelse()` i `lib/notifikationer.ts`. `/api/kontakt`
+kalder den efter `opretHenvendelse` (i try/catch, så en mail-fejl aldrig vælter selve
+henvendelsen). Den lægger EN mail med SELVE beskeden (navn, svar-til-adresse som
+mailto, hele teksten + knap til `/admin`) i samme outbox (`notifikation_koe`) som
+følg-mails. Det eksisterende flush-workflow (`/api/notifikationer/send`, Resend)
+sender den inden for få minutter — instant, med indhold, uafhængigt af digestet.
+Byggeplads-palet (asfalt + gul, ingen grøn/blå). Ingen afmeld-footer (admin-mail).
+
+**Ny env-nøgle:** `FORMAND_EMAIL` (se `.env.example`). Modtager-adressen. Er den tom,
+sendes ingen henvendelses-mail (henvendelsen gemmes stadig). Kræver `RESEND_API_KEY`.
+
+**UDESTÅR (Torben):** sæt `FORMAND_EMAIL` i Coolify (fx din Outlook) → redeploy. Test:
+send en henvendelse på `/kontakt`, vent på næste flush. Det daglige n8n-digest kan
+blive liggende som backup. Build grøn.
+
+---
+
 ## 2026-11-12 — Fjernet fremhævet Tjekliste-kort fra links-siden (nu redundant)
 
 Da Tjekliste nu er i headeren, var den store gule "Tjekliste til afhentning"-boks
