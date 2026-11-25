@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { queries } from '@/lib/db';
 import { verificerTurnstile, klientIp } from '@/lib/turnstile';
 import { tilladt } from '@/lib/ratelimit';
+import { underretFormandOmHenvendelse } from '@/lib/notifikationer';
 
 // POST /api/kontakt  -> gemmer en henvendelse (vises i admin)
 export async function POST(req: Request) {
@@ -42,5 +43,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Angiv en gyldig e-mail, eller lad feltet stå tomt.' }, { status: 422 });
 
   queries.opretHenvendelse.run({ navn, email, besked });
+
+  // Underret formanden med det samme: læg selve beskeden i Resend-udbakken, så den
+  // sendes ved næste flush. Pakket i try/catch — en mail-fejl må ALDRIG vælte selve
+  // henvendelsen (den er allerede gemt og synlig i /admin).
+  try {
+    underretFormandOmHenvendelse({ navn, email, besked });
+  } catch {
+    // bevidst tavs: henvendelsen er gemt; mailen er best-effort.
+  }
+
   return NextResponse.json({ ok: true }, { status: 201 });
 }
